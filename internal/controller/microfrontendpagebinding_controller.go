@@ -30,6 +30,7 @@ import (
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -177,8 +178,22 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 // SetupWithManager sets up the controller with the Manager.
 func (r *MicroFrontEndPageBindingReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		// Uncomment the following line adding a pointer to an instance of the controlled resource as an argument
-		// For().
+		For(&kdexv1alpha1.MicroFrontEndPageBinding{}).
+		Watches(
+			&kdexv1alpha1.MicroFrontEndApp{},
+			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForApp)).
+		Watches(
+			&kdexv1alpha1.MicroFrontEndPageArchetype{},
+			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForPageArchetype)).
+		Watches(
+			&kdexv1alpha1.MicroFrontEndPageNavigation{},
+			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForPageNavigations)).
+		Watches(
+			&kdexv1alpha1.MicroFrontEndPageHeader{},
+			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForPageHeader)).
+		Watches(
+			&kdexv1alpha1.MicroFrontEndPageFooter{},
+			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForPageFooter)).
 		Named("microfrontendpagebinding").
 		Complete(r)
 }
