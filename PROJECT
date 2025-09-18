@@ -13,4 +13,8 @@ resources:
   domain: kdex.dev
   kind: MicroFrontEndPageBinding
   version: v1alpha1
+- controller: true
+  domain: kdex.dev
+  kind: MicroFrontEndPageArchetype
+  version: v1alpha1
 version: "3"
