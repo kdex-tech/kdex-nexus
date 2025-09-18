@@ -153,23 +153,23 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 			return ctrl.Result{}, err
 		}
 
-		if !apimeta.IsStatusConditionTrue(header.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady)) {
-			log.Error(fmt.Errorf("referenced MicroFrontEndPageHeader %s is not ready", headerRef.Name), "")
-			apimeta.SetStatusCondition(
-				&pageBinding.Status.Conditions,
-				*kdexv1alpha1.NewCondition(
-					kdexv1alpha1.ConditionTypeReady,
-					metav1.ConditionFalse,
-					kdexv1alpha1.ConditionReasonReconcileError,
-					fmt.Sprintf("referenced MicroFrontEndPageHeader %s is not ready", headerRef.Name),
-				),
-			)
-			if err := r.Status().Update(ctx, &pageBinding); err != nil {
-				return ctrl.Result{}, err
-			}
+		// if !apimeta.IsStatusConditionTrue(header.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady)) {
+		// 	log.Error(fmt.Errorf("referenced MicroFrontEndPageHeader %s is not ready", headerRef.Name), "")
+		// 	apimeta.SetStatusCondition(
+		// 		&pageBinding.Status.Conditions,
+		// 		*kdexv1alpha1.NewCondition(
+		// 			kdexv1alpha1.ConditionTypeReady,
+		// 			metav1.ConditionFalse,
+		// 			kdexv1alpha1.ConditionReasonReconcileError,
+		// 			fmt.Sprintf("referenced MicroFrontEndPageHeader %s is not ready", headerRef.Name),
+		// 		),
+		// 	)
+		// 	if err := r.Status().Update(ctx, &pageBinding); err != nil {
+		// 		return ctrl.Result{}, err
+		// 	}
 
-			return ctrl.Result{RequeueAfter: 15 * time.Second}, nil
-		}
+		// 	return ctrl.Result{RequeueAfter: 15 * time.Second}, nil
+		// }
 	}
 
 	var footer kdexv1alpha1.MicroFrontEndPageFooter
@@ -206,23 +206,23 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 			return ctrl.Result{}, err
 		}
 
-		if !apimeta.IsStatusConditionTrue(footer.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady)) {
-			log.Error(fmt.Errorf("referenced MicroFrontEndPageFooter %s is not ready", footerRef.Name), "")
-			apimeta.SetStatusCondition(
-				&pageBinding.Status.Conditions,
-				*kdexv1alpha1.NewCondition(
-					kdexv1alpha1.ConditionTypeReady,
-					metav1.ConditionFalse,
-					kdexv1alpha1.ConditionReasonReconcileError,
-					fmt.Sprintf("referenced MicroFrontEndPageFooter %s is not ready", footerRef.Name),
-				),
-			)
-			if err := r.Status().Update(ctx, &pageBinding); err != nil {
-				return ctrl.Result{}, err
-			}
+		// if !apimeta.IsStatusConditionTrue(footer.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady)) {
+		// 	log.Error(fmt.Errorf("referenced MicroFrontEndPageFooter %s is not ready", footerRef.Name), "")
+		// 	apimeta.SetStatusCondition(
+		// 		&pageBinding.Status.Conditions,
+		// 		*kdexv1alpha1.NewCondition(
+		// 			kdexv1alpha1.ConditionTypeReady,
+		// 			metav1.ConditionFalse,
+		// 			kdexv1alpha1.ConditionReasonReconcileError,
+		// 			fmt.Sprintf("referenced MicroFrontEndPageFooter %s is not ready", footerRef.Name),
+		// 		),
+		// 	)
+		// 	if err := r.Status().Update(ctx, &pageBinding); err != nil {
+		// 		return ctrl.Result{}, err
+		// 	}
 
-			return ctrl.Result{RequeueAfter: 15 * time.Second}, nil
-		}
+		// 	return ctrl.Result{RequeueAfter: 15 * time.Second}, nil
+		// }
 	}
 
 	log.Info("reconciled MicroFrontEndPageBinding", "pageBinding", pageBinding, "pageArchetype", pageArchetype, "apps", apps, "navigations", navigations, "header", header, "footer", footer)
@@ -404,23 +404,23 @@ func (r *MicroFrontEndPageBindingReconciler) navigation(
 		return nil, ctrl.Result{}, err
 	}
 
-	if !apimeta.IsStatusConditionTrue(navigation.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady)) {
-		log.Error(fmt.Errorf("referenced MicroFrontEndPageNavigation %s is not ready", navigationRef.Name), "")
-		apimeta.SetStatusCondition(
-			&pageBinding.Status.Conditions,
-			*kdexv1alpha1.NewCondition(
-				kdexv1alpha1.ConditionTypeReady,
-				metav1.ConditionFalse,
-				kdexv1alpha1.ConditionReasonReconcileError,
-				fmt.Sprintf("referenced MicroFrontEndPageNavigation %s is not ready", navigationRef.Name),
-			),
-		)
-		if err := r.Status().Update(ctx, pageBinding); err != nil {
-			return nil, ctrl.Result{}, err
-		}
+	// if !apimeta.IsStatusConditionTrue(navigation.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady)) {
+	// 	log.Error(fmt.Errorf("referenced MicroFrontEndPageNavigation %s is not ready", navigationRef.Name), "")
+	// 	apimeta.SetStatusCondition(
+	// 		&pageBinding.Status.Conditions,
+	// 		*kdexv1alpha1.NewCondition(
+	// 			kdexv1alpha1.ConditionTypeReady,
+	// 			metav1.ConditionFalse,
+	// 			kdexv1alpha1.ConditionReasonReconcileError,
+	// 			fmt.Sprintf("referenced MicroFrontEndPageNavigation %s is not ready", navigationRef.Name),
+	// 		),
+	// 	)
+	// 	if err := r.Status().Update(ctx, pageBinding); err != nil {
+	// 		return nil, ctrl.Result{}, err
+	// 	}
 
-		return nil, ctrl.Result{RequeueAfter: 15 * time.Second}, nil
-	}
+	// 	return nil, ctrl.Result{RequeueAfter: 15 * time.Second}, nil
+	// }
 
 	return &navigation, ctrl.Result{}, nil
 }
