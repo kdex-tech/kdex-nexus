@@ -18,15 +18,24 @@ package controller
 
 import (
 	"context"
+	"fmt"
+	"time"
 
+	"k8s.io/apimachinery/pkg/api/errors"
+	apimeta "k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // MicroFrontEndPageArchetypeReconciler reconciles a MicroFrontEndPageArchetype object
 type MicroFrontEndPageArchetypeReconciler struct {
+	MicroFrontEndCommonReconciler
 	client.Client
 	Scheme *runtime.Scheme
 }
@@ -45,9 +54,116 @@ type MicroFrontEndPageArchetypeReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.21.0/pkg/reconcile
 func (r *MicroFrontEndPageArchetypeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = logf.FromContext(ctx)
+	log := logf.FromContext(ctx)
 
-	// TODO(user): your logic here
+	var pageArchetype kdexv1alpha1.MicroFrontEndPageArchetype
+	if err := r.Get(ctx, req.NamespacedName, &pageArchetype); err != nil {
+		log.Error(err, "unable to fetch MicroFrontEndPageArchetype")
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	if pageArchetype.Spec.DefaultFooterRef != nil {
+		var footer kdexv1alpha1.MicroFrontEndPageFooter
+		footerName := types.NamespacedName{
+			Name:      pageArchetype.Spec.DefaultFooterRef.Name,
+			Namespace: pageArchetype.Namespace,
+		}
+
+		if err := r.Get(ctx, footerName, &footer); err != nil {
+			if errors.IsNotFound(err) {
+				log.Error(err, "referenced MicroFrontEndPageFooter %s not found", pageArchetype.Spec.DefaultFooterRef.Name)
+				apimeta.SetStatusCondition(
+					&pageArchetype.Status.Conditions,
+					*kdexv1alpha1.NewCondition(
+						kdexv1alpha1.ConditionTypeReady,
+						metav1.ConditionFalse,
+						kdexv1alpha1.ConditionReasonReconcileError,
+						fmt.Sprintf("referenced MicroFrontEndPageFooter %s not found", pageArchetype.Spec.DefaultFooterRef.Name),
+					),
+				)
+				if err := r.Status().Update(ctx, &pageArchetype); err != nil {
+					return ctrl.Result{}, err
+				}
+
+				return ctrl.Result{RequeueAfter: 15 * time.Second}, nil
+			}
+
+			log.Error(err, "unable to fetch MicroFrontEndPageFooter %s", pageArchetype.Spec.DefaultFooterRef.Name)
+			return ctrl.Result{}, err
+		}
+	}
+
+	if pageArchetype.Spec.DefaultHeaderRef != nil {
+		var header kdexv1alpha1.MicroFrontEndPageHeader
+		headerName := types.NamespacedName{
+			Name:      pageArchetype.Spec.DefaultHeaderRef.Name,
+			Namespace: pageArchetype.Namespace,
+		}
+
+		if err := r.Get(ctx, headerName, &header); err != nil {
+			if errors.IsNotFound(err) {
+				log.Error(err, "referenced MicroFrontEndPageHeader %s not found", pageArchetype.Spec.DefaultHeaderRef.Name)
+				apimeta.SetStatusCondition(
+					&pageArchetype.Status.Conditions,
+					*kdexv1alpha1.NewCondition(
+						kdexv1alpha1.ConditionTypeReady,
+						metav1.ConditionFalse,
+						kdexv1alpha1.ConditionReasonReconcileError,
+						fmt.Sprintf("referenced MicroFrontEndPageHeader %s not found", pageArchetype.Spec.DefaultHeaderRef.Name),
+					),
+				)
+				if err := r.Status().Update(ctx, &pageArchetype); err != nil {
+					return ctrl.Result{}, err
+				}
+
+				return ctrl.Result{RequeueAfter: 15 * time.Second}, nil
+			}
+
+			log.Error(err, "unable to fetch MicroFrontEndPageHeader %s", pageArchetype.Spec.DefaultHeaderRef.Name)
+			return ctrl.Result{}, err
+		}
+	}
+
+	if pageArchetype.Spec.DefaultMainNavigationRef != nil {
+		navigation, response, err := r.GetNavigation(
+			ctx, log, *pageArchetype.Spec.DefaultMainNavigationRef, ClientObjectWithConditions{
+				Object:     &pageArchetype,
+				Conditions: pageArchetype.Status.Conditions,
+			})
+
+		if navigation == nil {
+			return response, err
+		}
+	}
+
+	if pageArchetype.Spec.ExtraNavigations != nil {
+		for _, navigationRef := range *pageArchetype.Spec.ExtraNavigations {
+			navigation, response, err := r.GetNavigation(
+				ctx, log, navigationRef, ClientObjectWithConditions{
+					Object:     &pageArchetype,
+					Conditions: pageArchetype.Status.Conditions,
+				})
+
+			if navigation == nil {
+				return response, err
+			}
+		}
+	}
+
+	log.Info("reconciled MicroFrontEndPageArchetype", "pageArchetype", pageArchetype)
+
+	apimeta.SetStatusCondition(
+		&pageArchetype.Status.Conditions,
+		*kdexv1alpha1.NewCondition(
+			kdexv1alpha1.ConditionTypeReady,
+			metav1.ConditionTrue,
+			kdexv1alpha1.ConditionReasonReconcileSuccess,
+			"all references resolved successfully",
+		),
+	)
+	if err := r.Status().Update(ctx, &pageArchetype); err != nil {
+		return ctrl.Result{}, err
+	}
 
 	return ctrl.Result{}, nil
 }
@@ -56,7 +172,16 @@ func (r *MicroFrontEndPageArchetypeReconciler) Reconcile(ctx context.Context, re
 func (r *MicroFrontEndPageArchetypeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		// Uncomment the following line adding a pointer to an instance of the controlled resource as an argument
-		// For().
+		For(&kdexv1alpha1.MicroFrontEndPageArchetype{}).
+		Watches(
+			&kdexv1alpha1.MicroFrontEndPageFooter{},
+			handler.EnqueueRequestsFromMapFunc(r.findPageArchetypesForPageFooter)).
+		Watches(
+			&kdexv1alpha1.MicroFrontEndPageHeader{},
+			handler.EnqueueRequestsFromMapFunc(r.findPageArchetypesForPageHeader)).
+		Watches(
+			&kdexv1alpha1.MicroFrontEndPageNavigation{},
+			handler.EnqueueRequestsFromMapFunc(r.findPageArchetypesForPageNavigations)).
 		Named("microfrontendpagearchetype").
 		Complete(r)
 }

@@ -2,7 +2,7 @@ module kdex.dev/app-server
 
 go 1.24.5
 
-replace kdex.dev/crds => github.com/kdex-tech/kdex-crds v0.2.6
+replace kdex.dev/crds => github.com/kdex-tech/kdex-crds v0.2.7
 
 require (
 	github.com/go-logr/logr v1.4.3
