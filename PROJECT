@@ -8,4 +8,9 @@ layout:
 - go.kubebuilder.io/v4
 projectName: kdex-app-server
 repo: kdex.dev/app-server
+resources:
+- controller: true
+  domain: kdex.dev
+  kind: MicroFrontEndPageBinding
+  version: v1alpha1
 version: "3"
