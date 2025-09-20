@@ -12,6 +12,7 @@ import (
 
 type Renderer struct {
 	Context      context.Context
+	Date         time.Time
 	FootScript   string
 	HeadScript   string
 	Lang         string
@@ -27,16 +28,21 @@ func (r *Renderer) RenderAll(
 	header string,
 	footer string,
 ) (string, error) {
+	date := r.Date
+	if date.IsZero() {
+		date = time.Now()
+	}
+
 	templateData := TemplateData{
 		Values: Values{
-			Date:         time.Now(),
-			FootScript:   r.FootScript,
-			HeadScript:   r.HeadScript,
+			Date:         date,
+			FootScript:   template.HTML(r.FootScript),
+			HeadScript:   template.HTML(r.HeadScript),
 			Lang:         r.Lang,
 			MenuEntries:  r.MenuEntries,
-			Meta:         r.Meta,
+			Meta:         template.HTML(r.Meta),
 			Organization: r.Organization,
-			Stylesheet:   r.Stylesheet,
+			Stylesheet:   template.HTML(r.Stylesheet),
 			Title:        page.Label,
 		},
 	}
@@ -46,57 +52,51 @@ func (r *Renderer) RenderAll(
 		return "", err
 	}
 
-	templateData.Values.Header = &headerOutput
+	templateData.Values.Header = template.HTML(headerOutput)
 
 	footerOutput, err := r.RenderOne(fmt.Sprintf("%s-footer", page.TemplateName), footer, templateData)
 	if err != nil {
 		return "", err
 	}
 
-	templateData.Values.Footer = &footerOutput
+	templateData.Values.Footer = template.HTML(footerOutput)
 
-	navigationsOutput := make(map[string]string)
+	navigationsOutput := make(map[string]template.HTML)
 	for name, content := range navigations {
 		currentNavigationOutput, err := r.RenderOne(fmt.Sprintf("%s-navigation-%s", page.TemplateName, name), content, templateData)
 		if err != nil {
 			return "", err
 		}
-		navigationsOutput[name] = currentNavigationOutput
+		navigationsOutput[name] = template.HTML(currentNavigationOutput)
 	}
 
-	templateData.Values.Navigation = &navigationsOutput
+	templateData.Values.Navigation = navigationsOutput
 
-	contentOutputs := make(map[string]string)
+	contentOutputs := make(map[string]template.HTML)
 	for _, contentEntry := range page.ContentEntries {
-		var data any
-		var template string
-		var contentOutput string
+		var currentTemplate string
+		var currentOutput string
 
 		if contentEntry.AppRef == nil {
-			template = contentEntry.RawHTML
-			data = templateData
+			currentTemplate = contentEntry.RawHTML
 		} else {
-			template = `
-				<{{.CustomElementName}} 
-					data-date="{{.Values.Date.Format('2006-01-02')}}"
+			currentTemplate = fmt.Sprintf(`
+				<%s
+					data-date="{{.Values.Date.Format "2006-01-02"}}"
 				>
-				</{{.CustomElementName}}>
-			`
-			data = AppData{
-				CustomElementName: contentEntry.CustomElementName,
-				Values:            templateData.Values,
-			}
+				</%s>
+			`, contentEntry.CustomElementName, contentEntry.CustomElementName)
 		}
 
-		contentOutput, err = r.RenderOne(fmt.Sprintf("%s-content-%s", page.TemplateName, contentEntry.Slot), template, data)
+		currentOutput, err = r.RenderOne(fmt.Sprintf("%s-content-%s", page.TemplateName, contentEntry.Slot), currentTemplate, templateData)
 		if err != nil {
 			return "", err
 		}
 
-		contentOutputs[contentEntry.Slot] = contentOutput
+		contentOutputs[contentEntry.Slot] = template.HTML(currentOutput)
 	}
 
-	templateData.Values.Content = &contentOutputs
+	templateData.Values.Content = contentOutputs
 
 	return r.RenderOne(page.TemplateName, page.TemplateContent, templateData)
 }

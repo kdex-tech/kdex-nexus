@@ -1,16 +1,12 @@
 package render
 
 import (
+	"html/template"
 	"time"
 
 	"kdex.dev/app-server/internal/menu"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 )
-
-type AppData struct {
-	CustomElementName string
-	Values            Values
-}
 
 type Page struct {
 	ContentEntries  []kdexv1alpha1.ContentEntry
@@ -24,17 +20,17 @@ type TemplateData struct {
 }
 
 type Values struct {
-	Content      *map[string]string
+	Content      map[string]template.HTML
 	Date         time.Time
-	Footer       *string
-	FootScript   string
-	Header       *string
-	HeadScript   string
+	Footer       template.HTML
+	FootScript   template.HTML
+	Header       template.HTML
+	HeadScript   template.HTML
 	Lang         string
-	Meta         string
+	Meta         template.HTML
 	MenuEntries  map[string]menu.MenuEntry
-	Navigation   *map[string]string
+	Navigation   map[string]template.HTML
 	Organization string
 	Title        string
-	Stylesheet   string
+	Stylesheet   template.HTML
 }

@@ -7,6 +7,8 @@ rules:
 - apiGroups:
   - kdex.dev
   resources:
+  - microfrontendapps
+  - microfrontendpagearchetypes
   - microfrontendpagebindings
   verbs:
   - create
@@ -19,12 +21,16 @@ rules:
 - apiGroups:
   - kdex.dev
   resources:
+  - microfrontendapps/finalizers
+  - microfrontendpagearchetypes/finalizers
   - microfrontendpagebindings/finalizers
   verbs:
   - update
 - apiGroups:
   - kdex.dev
   resources:
+  - microfrontendapps/status
+  - microfrontendpagearchetypes/status
   - microfrontendpagebindings/status
   verbs:
   - get
