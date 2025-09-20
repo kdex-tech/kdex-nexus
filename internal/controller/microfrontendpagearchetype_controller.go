@@ -171,7 +171,6 @@ func (r *MicroFrontEndPageArchetypeReconciler) Reconcile(ctx context.Context, re
 // SetupWithManager sets up the controller with the Manager.
 func (r *MicroFrontEndPageArchetypeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		// Uncomment the following line adding a pointer to an instance of the controlled resource as an argument
 		For(&kdexv1alpha1.MicroFrontEndPageArchetype{}).
 		Watches(
 			&kdexv1alpha1.MicroFrontEndPageFooter{},
