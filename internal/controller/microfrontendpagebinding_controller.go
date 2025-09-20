@@ -17,8 +17,11 @@ limitations under the License.
 package controller
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"html/template"
+	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -189,9 +192,23 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 		}
 	}
 
-	// TODO: render the page, and if successful ...
+	knownPageBindings := &kdexv1alpha1.MicroFrontEndPageBindingList{}
+	if err := r.List(ctx, knownPageBindings, &client.ListOptions{
+		Namespace: pageBinding.Namespace,
+	}); err != nil {
+		log.Error(err, "unable to list MicroFrontEndPageBindings in namespace %s", pageBinding.Namespace)
+		return ctrl.Result{}, err
+	}
 
-	log.Info("reconciled MicroFrontEndPageBinding", "pageBinding", pageBinding, "pageArchetype", pageArchetype, "apps", apps, "navigations", navigations, "header", header, "footer", footer)
+	menuEntries := r.toMenuEntries(knownPageBindings.Items, &pageBinding)
+
+	html, err := r.renderAll(pageBinding, pageArchetype, menuEntries, apps, navigations, header, footer)
+	if err != nil {
+		log.Error(err, "unable to render HTML")
+		return ctrl.Result{}, err
+	}
+
+	log.Info("reconciled MicroFrontEndPageBinding", "pageBinding", pageBinding, "pageArchetype", pageArchetype, "apps", apps, "navigations", navigations, "header", header, "footer", footer, "html", html)
 
 	apimeta.SetStatusCondition(
 		&pageBinding.Status.Conditions,
@@ -207,6 +224,57 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 	}
 
 	return ctrl.Result{}, nil
+}
+
+func (r *MicroFrontEndPageBindingReconciler) toMenuEntries(
+	items []kdexv1alpha1.MicroFrontEndPageBinding,
+	binding *kdexv1alpha1.MicroFrontEndPageBinding,
+) map[string]MenuEntry {
+	menuEntries := make(map[string]MenuEntry)
+
+	items = append(items, *binding)
+
+	for _, item := range items {
+		if item.Spec.NavigationHints == nil {
+			continue
+		}
+
+		label := item.Spec.Label
+		menuEntry := MenuEntry{
+			Icon:   item.Spec.NavigationHints.Icon,
+			Path:   item.Spec.Path,
+			Weight: item.Spec.NavigationHints.Weight,
+		}
+
+		if item.Spec.NavigationHints.Parent != "" {
+			currentMenuEntries := menuEntries
+			parents := strings.Split(item.Spec.NavigationHints.Parent, "/")
+			for _, parent := range parents {
+				parent = strings.Trim(parent, " 	")
+				if parent == "" {
+					continue
+				}
+				if currentMenuEntry, ok := currentMenuEntries[parent]; ok {
+					if currentMenuEntry.Children == nil {
+						children := make(map[string]MenuEntry)
+						currentMenuEntry.Children = &children
+					}
+					currentMenuEntries = *currentMenuEntry.Children
+				} else {
+					children := make(map[string]MenuEntry)
+					currentMenuEntries[parent] = MenuEntry{
+						Children: &children,
+					}
+					currentMenuEntries = *currentMenuEntries[parent].Children
+				}
+			}
+			currentMenuEntries[label] = menuEntry
+		} else {
+			menuEntries[label] = menuEntry
+		}
+	}
+
+	return menuEntries
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -342,4 +410,105 @@ func (r *MicroFrontEndPageBindingReconciler) navigations(
 	}
 
 	return navigations, ctrl.Result{}, nil
+}
+
+func (r *MicroFrontEndPageBindingReconciler) renderAll(
+	pageBinding kdexv1alpha1.MicroFrontEndPageBinding,
+	pageArchetype kdexv1alpha1.MicroFrontEndPageArchetype,
+	menuEntries map[string]MenuEntry,
+	apps map[string]kdexv1alpha1.MicroFrontEndApp,
+	navigations map[string]kdexv1alpha1.MicroFrontEndPageNavigation,
+	header kdexv1alpha1.MicroFrontEndPageHeader,
+	footer kdexv1alpha1.MicroFrontEndPageFooter,
+) (string, error) {
+	tmpl, err := template.New(pageBinding.Name).Parse(pageArchetype.Spec.Content)
+	if err != nil {
+		return "", err
+	}
+
+	templateData := TemplateData{
+		Values: Values{
+			Date:         time.Now(),
+			FootScript:   "",
+			HeadScript:   "",
+			Lang:         "en",
+			Meta:         "",
+			MenuEntries:  menuEntries,
+			Organization: "My Organization Inc.",
+			Stylesheet:   "",
+			Title:        pageBinding.Spec.Label,
+		},
+	}
+
+	headerOutput, err := r.renderOne(header.Name, header.Spec.Content, templateData)
+	if err != nil {
+		return "", err
+	}
+
+	templateData.Values.Header = &headerOutput
+
+	footerOutput, err := r.renderOne(footer.Name, footer.Spec.Content, templateData)
+	if err != nil {
+		return "", err
+	}
+
+	templateData.Values.Footer = &footerOutput
+
+	navigationsOutput := make(map[string]string)
+	for name, navigation := range navigations {
+		currentNavigationOutput, err := r.renderOne(navigation.Name, navigation.Spec.Content, templateData)
+		if err != nil {
+			return "", err
+		}
+		navigationsOutput[name] = currentNavigationOutput
+	}
+
+	templateData.Values.Navigation = &navigationsOutput
+
+	contentOutputs := make(map[string]string)
+	for _, contentEntry := range pageBinding.Spec.ContentEntries {
+		var data any
+		var template string
+		var contentOutput string
+
+		if contentEntry.AppRef == nil {
+			template = contentEntry.RawHTML
+			data = templateData
+		} else {
+			template = `<{{.CustomElementName}} data-date="{{.Values.Date.Format('2006-01-02')}}"></{{.CustomElementName}}>`
+			data = AppData{
+				CustomElementName: contentEntry.CustomElementName,
+				Values:            templateData.Values,
+			}
+		}
+
+		contentOutput, err = r.renderOne(contentEntry.Slot, template, data)
+		if err != nil {
+			return "", err
+		}
+		contentOutputs[contentEntry.Slot] = contentOutput
+	}
+
+	templateData.Values.Content = &contentOutputs
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, templateData); err != nil {
+		return "", err
+	}
+
+	return buf.String(), nil
+}
+
+func (r *MicroFrontEndPageBindingReconciler) renderOne(name string, content string, data any) (string, error) {
+	tmpl, err := template.New(name).Parse(content)
+	if err != nil {
+		return "", err
+	}
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, data); err != nil {
+		return "", err
+	}
+
+	return buf.String(), nil
 }
