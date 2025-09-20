@@ -22,12 +22,7 @@ type Renderer struct {
 	Stylesheet   string
 }
 
-func (r *Renderer) RenderAll(
-	page Page,
-	navigations map[string]string,
-	header string,
-	footer string,
-) (string, error) {
+func (r *Renderer) RenderPage(page Page) (string, error) {
 	date := r.Date
 	if date.IsZero() {
 		date = time.Now()
@@ -47,14 +42,14 @@ func (r *Renderer) RenderAll(
 		},
 	}
 
-	headerOutput, err := r.RenderOne(fmt.Sprintf("%s-header", page.TemplateName), header, templateData)
+	headerOutput, err := r.RenderOne(fmt.Sprintf("%s-header", page.TemplateName), page.Header, templateData)
 	if err != nil {
 		return "", err
 	}
 
 	templateData.Values.Header = template.HTML(headerOutput)
 
-	footerOutput, err := r.RenderOne(fmt.Sprintf("%s-footer", page.TemplateName), footer, templateData)
+	footerOutput, err := r.RenderOne(fmt.Sprintf("%s-footer", page.TemplateName), page.Footer, templateData)
 	if err != nil {
 		return "", err
 	}
@@ -62,7 +57,7 @@ func (r *Renderer) RenderAll(
 	templateData.Values.Footer = template.HTML(footerOutput)
 
 	navigationsOutput := make(map[string]template.HTML)
-	for name, content := range navigations {
+	for name, content := range page.Navigations {
 		currentNavigationOutput, err := r.RenderOne(fmt.Sprintf("%s-navigation-%s", page.TemplateName, name), content, templateData)
 		if err != nil {
 			return "", err

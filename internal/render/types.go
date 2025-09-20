@@ -10,7 +10,10 @@ import (
 
 type Page struct {
 	ContentEntries  []kdexv1alpha1.ContentEntry
+	Footer          string
+	Header          string
 	Label           string
+	Navigations     map[string]string
 	TemplateContent string
 	TemplateName    string
 }

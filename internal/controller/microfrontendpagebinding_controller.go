@@ -213,13 +213,16 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 		Stylesheet:   "",
 	}
 
-	html, err := renderer.RenderAll(
+	html, err := renderer.RenderPage(
 		render.Page{
 			ContentEntries:  pageBinding.Spec.ContentEntries,
+			Footer:          footer.Spec.Content,
+			Header:          header.Spec.Content,
 			Label:           pageBinding.Spec.Label,
+			Navigations:     navigations,
 			TemplateContent: pageArchetype.Spec.Content,
 			TemplateName:    pageArchetype.Name,
-		}, navigations, header.Spec.Content, footer.Spec.Content,
+		},
 	)
 	if err != nil {
 		log.Error(err, "failed to render HTML")

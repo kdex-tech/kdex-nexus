@@ -79,16 +79,14 @@ func TestRenderAll(t *testing.T) {
 				CustomElementName: "my-app-element",
 			},
 		},
+		Navigations: map[string]string{
+			"main": "main-nav",
+		},
+		Header: "Page Header",
+		Footer: "Page Footer",
 	}
 
-	navigations := map[string]string{
-		"main": "main-nav",
-	}
-
-	header := "Page Header"
-	footer := "Page Footer"
-
-	actual, err := r.RenderAll(page, navigations, header, footer)
+	actual, err := r.RenderPage(page)
 	assert.NoError(t, err)
 
 	assert.Contains(t, actual, "<title>Test Page</title>")
@@ -108,8 +106,11 @@ func TestRenderAll_InvalidHeaderTemplate(t *testing.T) {
 	r := &Renderer{}
 	page := Page{
 		TemplateName: "main",
+		Navigations:  nil,
+		Header:       "{{.Invalid}}",
+		Footer:       "",
 	}
-	_, err := r.RenderAll(page, nil, "{{.Invalid}}", "")
+	_, err := r.RenderPage(page)
 	assert.Error(t, err)
 }
 
@@ -117,8 +118,11 @@ func TestRenderAll_InvalidFooterTemplate(t *testing.T) {
 	r := &Renderer{}
 	page := Page{
 		TemplateName: "main",
+		Navigations:  nil,
+		Header:       "",
+		Footer:       "{{.Invalid}}",
 	}
-	_, err := r.RenderAll(page, nil, "", "{{.Invalid}}")
+	_, err := r.RenderPage(page)
 	assert.Error(t, err)
 }
 
@@ -126,11 +130,13 @@ func TestRenderAll_InvalidNavigationTemplate(t *testing.T) {
 	r := &Renderer{}
 	page := Page{
 		TemplateName: "main",
+		Navigations: map[string]string{
+			"main": "{{.Invalid}}",
+		},
+		Header: "",
+		Footer: "",
 	}
-	navigations := map[string]string{
-		"main": "{{.Invalid}}",
-	}
-	_, err := r.RenderAll(page, navigations, "", "")
+	_, err := r.RenderPage(page)
 	assert.Error(t, err)
 }
 
@@ -144,8 +150,11 @@ func TestRenderAll_InvalidContentTemplate(t *testing.T) {
 				RawHTML: "{{.Invalid}}",
 			},
 		},
+		Navigations: nil,
+		Header:      "",
+		Footer:      "",
 	}
-	_, err := r.RenderAll(page, nil, "", "")
+	_, err := r.RenderPage(page)
 	assert.Error(t, err)
 }
 
@@ -154,7 +163,10 @@ func TestRenderAll_InvalidMainTemplate(t *testing.T) {
 	page := Page{
 		TemplateName:    "main",
 		TemplateContent: "{{.Invalid}}",
+		Navigations:     nil,
+		Header:          "",
+		Footer:          "",
 	}
-	_, err := r.RenderAll(page, nil, "", "")
+	_, err := r.RenderPage(page)
 	assert.Error(t, err)
 }
