@@ -224,7 +224,10 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 			Name:      pageBinding.Name,
 			Namespace: pageBinding.Namespace,
 		},
-		Spec: kdexv1alpha1.MicroFrontEndRenderPageSpec{
+	}
+
+	if _, err := ctrl.CreateOrUpdate(ctx, r.Client, renderPage, func() error {
+		renderPage.Spec = kdexv1alpha1.MicroFrontEndRenderPageSpec{
 			HostRef:         pageBinding.Spec.HostRef,
 			NavigationHints: pageBinding.Spec.NavigationHints,
 			PageComponents: kdexv1alpha1.PageComponents{
@@ -236,10 +239,7 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 				Title:           pageBinding.Spec.Label,
 			},
 			Path: pageBinding.Spec.Path,
-		},
-	}
-
-	if _, err := ctrl.CreateOrUpdate(ctx, r.Client, renderPage, func() error {
+		}
 		return ctrl.SetControllerReference(&pageBinding, renderPage, r.Scheme)
 	}); err != nil {
 		log.Error(err, "unable to create or update MicroFrontEndRenderPage")
