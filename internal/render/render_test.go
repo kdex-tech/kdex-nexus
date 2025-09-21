@@ -6,9 +6,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	corev1 "k8s.io/api/core/v1"
 	"kdex.dev/app-server/internal/menu"
-	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 )
 
 func TestRenderOne(t *testing.T) {
@@ -66,18 +64,9 @@ func TestRenderAll(t *testing.T) {
 		{{.Values.FootScript}}
 	</body>
 </html>`,
-		ContentEntries: []kdexv1alpha1.ContentEntry{
-			{
-				Slot:    "main",
-				RawHTML: "<h1>Welcome</h1>",
-			},
-			{
-				Slot: "sidebar",
-				AppRef: &corev1.LocalObjectReference{
-					Name: "my-app",
-				},
-				CustomElementName: "my-app-element",
-			},
+		Contents: map[string]string{
+			"main":    "<h1>Welcome</h1>",
+			"sidebar": `<my-app-element id="sidebar" data-date="{{.Values.Date.Format "2006-01-02"}}"></my-app-element>`,
 		},
 		Navigations: map[string]string{
 			"main": "main-nav",
@@ -96,7 +85,7 @@ func TestRenderAll(t *testing.T) {
 	assert.Contains(t, actual, "Page Header")
 	assert.Contains(t, actual, "main: main-nav")
 	assert.Contains(t, actual, "<h1>Welcome</h1>")
-	assert.Contains(t, actual, "<my-app-element")
+	assert.Contains(t, actual, "<my-app-element id=\"sidebar\"")
 	assert.Contains(t, actual, "2025-09-20")
 	assert.Contains(t, actual, "Page Footer")
 	assert.Contains(t, actual, r.FootScript)
@@ -144,11 +133,8 @@ func TestRenderAll_InvalidContentTemplate(t *testing.T) {
 	r := &Renderer{}
 	page := Page{
 		TemplateName: "main",
-		ContentEntries: []kdexv1alpha1.ContentEntry{
-			{
-				Slot:    "main",
-				RawHTML: "{{.Invalid}}",
-			},
+		Contents: map[string]string{
+			"main": "{{.Invalid}}",
 		},
 		Navigations: nil,
 		Header:      "",

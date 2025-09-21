@@ -28,6 +28,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"kdex.dev/app-server/internal/customelement"
 	"kdex.dev/app-server/internal/menu"
 	"kdex.dev/app-server/internal/render"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
@@ -112,7 +113,7 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 		return ctrl.Result{RequeueAfter: 15 * time.Second}, nil
 	}
 
-	apps, response, err := r.apps(ctx, log, &pageBinding)
+	contents, response, err := r.contents(ctx, log, &pageBinding)
 	if err != nil {
 		return response, err
 	}
@@ -215,7 +216,7 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 
 	html, err := renderer.RenderPage(
 		render.Page{
-			ContentEntries:  pageBinding.Spec.ContentEntries,
+			Contents:        contents,
 			Footer:          footer.Spec.Content,
 			Header:          header.Spec.Content,
 			Label:           pageBinding.Spec.Label,
@@ -241,7 +242,7 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 		return ctrl.Result{}, err
 	}
 
-	log.Info("reconciled MicroFrontEndPageBinding", "pageBinding", pageBinding, "pageArchetype", pageArchetype, "apps", apps, "navigations", navigations, "header", header, "footer", footer, "html", html)
+	log.Info("reconciled MicroFrontEndPageBinding", "pageBinding", pageBinding, "pageArchetype", pageArchetype, "contents", contents, "navigations", navigations, "header", header, "footer", footer, "html", html)
 
 	apimeta.SetStatusCondition(
 		&pageBinding.Status.Conditions,
@@ -333,16 +334,18 @@ func (r *MicroFrontEndPageBindingReconciler) SetupWithManager(mgr ctrl.Manager) 
 		Complete(r)
 }
 
-func (r *MicroFrontEndPageBindingReconciler) apps(
+func (r *MicroFrontEndPageBindingReconciler) contents(
 	ctx context.Context,
 	log logr.Logger,
 	pageBinding *kdexv1alpha1.MicroFrontEndPageBinding,
-) (map[string]kdexv1alpha1.MicroFrontEndApp, ctrl.Result, error) {
-	apps := make(map[string]kdexv1alpha1.MicroFrontEndApp)
+) (map[string]string, ctrl.Result, error) {
+	contents := make(map[string]string)
 
 	for _, contentEntry := range pageBinding.Spec.ContentEntries {
 		appRef := contentEntry.AppRef
 		if appRef == nil {
+			contents[contentEntry.Slot] = contentEntry.RawHTML
+
 			continue
 		}
 
@@ -392,10 +395,10 @@ func (r *MicroFrontEndPageBindingReconciler) apps(
 			return nil, ctrl.Result{RequeueAfter: 15 * time.Second}, nil
 		}
 
-		apps[appRef.Name] = app
+		contents[contentEntry.Slot] = customelement.ForApp(app, contentEntry, *pageBinding)
 	}
 
-	return apps, ctrl.Result{}, nil
+	return contents, ctrl.Result{}, nil
 }
 
 func (r *MicroFrontEndPageBindingReconciler) navigations(

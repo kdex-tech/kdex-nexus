@@ -56,39 +56,25 @@ func (r *Renderer) RenderPage(page Page) (string, error) {
 
 	templateData.Values.Footer = template.HTML(footerOutput)
 
-	navigationsOutput := make(map[string]template.HTML)
+	navigationOutputs := make(map[string]template.HTML)
 	for name, content := range page.Navigations {
-		currentNavigationOutput, err := r.RenderOne(fmt.Sprintf("%s-navigation-%s", page.TemplateName, name), content, templateData)
+		output, err := r.RenderOne(fmt.Sprintf("%s-navigation-%s", page.TemplateName, name), content, templateData)
 		if err != nil {
 			return "", err
 		}
-		navigationsOutput[name] = template.HTML(currentNavigationOutput)
+		navigationOutputs[name] = template.HTML(output)
 	}
 
-	templateData.Values.Navigation = navigationsOutput
+	templateData.Values.Navigation = navigationOutputs
 
 	contentOutputs := make(map[string]template.HTML)
-	for _, contentEntry := range page.ContentEntries {
-		var currentTemplate string
-		var currentOutput string
-
-		if contentEntry.AppRef == nil {
-			currentTemplate = contentEntry.RawHTML
-		} else {
-			currentTemplate = fmt.Sprintf(`
-				<%s
-					data-date="{{.Values.Date.Format "2006-01-02"}}"
-				>
-				</%s>
-			`, contentEntry.CustomElementName, contentEntry.CustomElementName)
-		}
-
-		currentOutput, err = r.RenderOne(fmt.Sprintf("%s-content-%s", page.TemplateName, contentEntry.Slot), currentTemplate, templateData)
+	for slot, content := range page.Contents {
+		output, err := r.RenderOne(fmt.Sprintf("%s-content-%s", page.TemplateName, slot), content, templateData)
 		if err != nil {
 			return "", err
 		}
 
-		contentOutputs[contentEntry.Slot] = template.HTML(currentOutput)
+		contentOutputs[slot] = template.HTML(output)
 	}
 
 	templateData.Values.Content = contentOutputs

@@ -5,11 +5,10 @@ import (
 	"time"
 
 	"kdex.dev/app-server/internal/menu"
-	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 )
 
 type Page struct {
-	ContentEntries  []kdexv1alpha1.ContentEntry
+	Contents        map[string]string
 	Footer          string
 	Header          string
 	Label           string
