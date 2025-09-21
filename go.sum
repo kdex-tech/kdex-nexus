@@ -96,6 +96,8 @@ github.com/kdex-tech/kdex-crds v0.3.0 h1:HiisEZFWYbrckJWa9I4M7H8IvbiEQDmZBMhPxT6
 github.com/kdex-tech/kdex-crds v0.3.0/go.mod h1:kZ43MtbDZH/62HZYfCcM/vnpcTX07l7f2rlv7wFjmc8=
 github.com/kdex-tech/kdex-crds v0.3.1 h1:qHdujPor6KbhtzW1m0Gw8ksdBmJar3H24wjR5qncb7M=
 github.com/kdex-tech/kdex-crds v0.3.1/go.mod h1:kZ43MtbDZH/62HZYfCcM/vnpcTX07l7f2rlv7wFjmc8=
+github.com/kdex-tech/kdex-crds v0.3.2 h1:ReEhomokfoJF2n3ibt7ZKEvszY/W21sFuoUZffEOpzI=
+github.com/kdex-tech/kdex-crds v0.3.2/go.mod h1:kZ43MtbDZH/62HZYfCcM/vnpcTX07l7f2rlv7wFjmc8=
 github.com/kisielk/errcheck v1.5.0/go.mod h1:pFxgyoBC7bSaBwPgfKdkLd5X25qrDl4LWUI2bnpBCr8=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
 github.com/klauspost/compress v1.18.0 h1:c/Cqfb0r+Yi+JtIEq73FWXVkRonBlf0CRNYc8Zttxdo=
