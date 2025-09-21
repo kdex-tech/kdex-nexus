@@ -65,6 +65,34 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	var host kdexv1alpha1.MicroFrontEndHost
+	hostName := types.NamespacedName{
+		Name:      pageBinding.Spec.HostRef.Name,
+		Namespace: pageBinding.Namespace,
+	}
+	if err := r.Get(ctx, hostName, &host); err != nil {
+		if errors.IsNotFound(err) {
+			log.Error(err, "referenced MicroFrontEndHost %s not found", pageBinding.Spec.HostRef.Name)
+			apimeta.SetStatusCondition(
+				&pageBinding.Status.Conditions,
+				*kdexv1alpha1.NewCondition(
+					kdexv1alpha1.ConditionTypeReady,
+					metav1.ConditionFalse,
+					kdexv1alpha1.ConditionReasonReconcileError,
+					fmt.Sprintf("referenced MicroFrontEndHost %s not found", pageBinding.Spec.HostRef.Name),
+				),
+			)
+			if err := r.Status().Update(ctx, &pageBinding); err != nil {
+				return ctrl.Result{}, err
+			}
+
+			return ctrl.Result{RequeueAfter: 15 * time.Second}, nil
+		}
+
+		log.Error(err, "unable to fetch MicroFrontEndHost %s", pageBinding.Spec.HostRef.Name)
+		return ctrl.Result{}, err
+	}
+
 	var pageArchetype kdexv1alpha1.MicroFrontEndPageArchetype
 	pageArchetypeName := types.NamespacedName{
 		Name:      pageBinding.Spec.PageArchetypeRef.Name,
@@ -243,6 +271,9 @@ func (r *MicroFrontEndPageBindingReconciler) SetupWithManager(mgr ctrl.Manager) 
 		Watches(
 			&kdexv1alpha1.MicroFrontEndApp{},
 			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForApp)).
+		Watches(
+			&kdexv1alpha1.MicroFrontEndHost{},
+			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForHost)).
 		Watches(
 			&kdexv1alpha1.MicroFrontEndPageArchetype{},
 			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForPageArchetype)).

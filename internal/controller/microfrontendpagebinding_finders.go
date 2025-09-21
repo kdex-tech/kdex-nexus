@@ -43,6 +43,34 @@ func (r *MicroFrontEndPageBindingReconciler) findPageBindingsForApp(
 	return requests
 }
 
+func (r *MicroFrontEndPageBindingReconciler) findPageBindingsForHost(
+	ctx context.Context,
+	host client.Object,
+) []reconcile.Request {
+	log := logf.FromContext(ctx)
+
+	var pageBindingsList kdexv1alpha1.MicroFrontEndPageBindingList
+	if err := r.List(ctx, &pageBindingsList, &client.ListOptions{
+		Namespace: host.GetNamespace(),
+	}); err != nil {
+		log.Error(err, "unable to list MicroFrontEndPageBindings for host %s", host.GetName())
+		return []reconcile.Request{}
+	}
+
+	requests := make([]reconcile.Request, 0, len(pageBindingsList.Items))
+	for _, pageBinding := range pageBindingsList.Items {
+		if pageBinding.Spec.HostRef.Name == host.GetName() {
+			requests = append(requests, reconcile.Request{
+				NamespacedName: types.NamespacedName{
+					Name:      pageBinding.Name,
+					Namespace: pageBinding.Namespace,
+				},
+			})
+		}
+	}
+	return requests
+}
+
 func (r *MicroFrontEndPageBindingReconciler) findPageBindingsForPageArchetype(
 	ctx context.Context,
 	pageArchetype client.Object,
