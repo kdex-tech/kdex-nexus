@@ -19,7 +19,6 @@ package controller
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -29,7 +28,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"kdex.dev/app-server/internal/customelement"
-	"kdex.dev/app-server/internal/menu"
 	"kdex.dev/app-server/internal/render"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -193,56 +191,56 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 		}
 	}
 
-	knownPageBindings := &kdexv1alpha1.MicroFrontEndPageBindingList{}
-	if err := r.List(ctx, knownPageBindings, &client.ListOptions{
-		Namespace: pageBinding.Namespace,
-	}); err != nil {
-		log.Error(err, "unable to list MicroFrontEndPageBindings in namespace %s", pageBinding.Namespace)
-		return ctrl.Result{}, err
+	// knownPageBindings := &kdexv1alpha1.MicroFrontEndPageBindingList{}
+	// if err := r.List(ctx, knownPageBindings, &client.ListOptions{
+	// 	Namespace: pageBinding.Namespace,
+	// }); err != nil {
+	// 	log.Error(err, "unable to list MicroFrontEndPageBindings in namespace %s", pageBinding.Namespace)
+	// 	return ctrl.Result{}, err
+	// }
+
+	// pageBindingItems := append(knownPageBindings.Items, pageBinding)
+
+	renderPage := render.Page{
+		Contents:        contents,
+		Footer:          footer.Spec.Content,
+		Header:          header.Spec.Content,
+		Label:           pageBinding.Spec.Label,
+		Navigations:     navigations,
+		TemplateContent: pageArchetype.Spec.Content,
+		TemplateName:    pageArchetype.Name,
 	}
 
-	pageBindingItems := append(knownPageBindings.Items, pageBinding)
+	// renderer := render.Renderer{
+	// 	Context:      ctx,
+	// 	FootScript:   "",
+	// 	HeadScript:   "",
+	// 	Lang:         "en",
+	// 	MenuEntries:  menu.ToMenuEntries(pageBindingItems),
+	// 	Meta:         "",
+	// 	Organization: "My Organization Inc.",
+	// 	Stylesheet:   "",
+	// }
 
-	renderer := render.Renderer{
-		Context:      ctx,
-		FootScript:   "",
-		HeadScript:   "",
-		Lang:         "en",
-		MenuEntries:  menu.ToMenuEntries(pageBindingItems),
-		Meta:         "",
-		Organization: "My Organization Inc.",
-		Stylesheet:   "",
-	}
+	// html, err := renderer.RenderPage(renderPage)
+	// if err != nil {
+	// 	log.Error(err, "failed to render HTML")
+	// 	apimeta.SetStatusCondition(
+	// 		&pageBinding.Status.Conditions,
+	// 		*kdexv1alpha1.NewCondition(
+	// 			kdexv1alpha1.ConditionTypeReady,
+	// 			metav1.ConditionFalse,
+	// 			"RenderFailed",
+	// 			err.Error(),
+	// 		),
+	// 	)
+	// 	if err := r.Status().Update(ctx, &pageBinding); err != nil {
+	// 		return ctrl.Result{}, err
+	// 	}
+	// 	return ctrl.Result{}, err
+	// }
 
-	html, err := renderer.RenderPage(
-		render.Page{
-			Contents:        contents,
-			Footer:          footer.Spec.Content,
-			Header:          header.Spec.Content,
-			Label:           pageBinding.Spec.Label,
-			Navigations:     navigations,
-			TemplateContent: pageArchetype.Spec.Content,
-			TemplateName:    pageArchetype.Name,
-		},
-	)
-	if err != nil {
-		log.Error(err, "failed to render HTML")
-		apimeta.SetStatusCondition(
-			&pageBinding.Status.Conditions,
-			*kdexv1alpha1.NewCondition(
-				kdexv1alpha1.ConditionTypeReady,
-				metav1.ConditionFalse,
-				"RenderFailed",
-				err.Error(),
-			),
-		)
-		if err := r.Status().Update(ctx, &pageBinding); err != nil {
-			return ctrl.Result{}, err
-		}
-		return ctrl.Result{}, err
-	}
-
-	log.Info("reconciled MicroFrontEndPageBinding", "pageBinding", pageBinding, "pageArchetype", pageArchetype, "contents", contents, "navigations", navigations, "header", header, "footer", footer, "html", html)
+	log.Info("reconciled MicroFrontEndPageBinding", "pageBinding", pageBinding, "renderPage", renderPage)
 
 	apimeta.SetStatusCondition(
 		&pageBinding.Status.Conditions,
@@ -258,57 +256,6 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 	}
 
 	return ctrl.Result{}, nil
-}
-
-func (r *MicroFrontEndPageBindingReconciler) toMenuEntries(
-	items []kdexv1alpha1.MicroFrontEndPageBinding,
-	binding *kdexv1alpha1.MicroFrontEndPageBinding,
-) map[string]menu.MenuEntry {
-	menuEntries := make(map[string]menu.MenuEntry)
-
-	items = append(items, *binding)
-
-	for _, item := range items {
-		if item.Spec.NavigationHints == nil {
-			continue
-		}
-
-		label := item.Spec.Label
-		menuEntry := menu.MenuEntry{
-			Icon:   item.Spec.NavigationHints.Icon,
-			Path:   item.Spec.Path,
-			Weight: item.Spec.NavigationHints.Weight,
-		}
-
-		if item.Spec.NavigationHints.Parent != "" {
-			currentMenuEntries := menuEntries
-			parents := strings.Split(item.Spec.NavigationHints.Parent, "/")
-			for _, parent := range parents {
-				parent = strings.Trim(parent, " 	")
-				if parent == "" {
-					continue
-				}
-				if currentMenuEntry, ok := currentMenuEntries[parent]; ok {
-					if currentMenuEntry.Children == nil {
-						children := make(map[string]menu.MenuEntry)
-						currentMenuEntry.Children = &children
-					}
-					currentMenuEntries = *currentMenuEntry.Children
-				} else {
-					children := make(map[string]menu.MenuEntry)
-					currentMenuEntries[parent] = menu.MenuEntry{
-						Children: &children,
-					}
-					currentMenuEntries = *currentMenuEntries[parent].Children
-				}
-			}
-			currentMenuEntries[label] = menuEntry
-		} else {
-			menuEntries[label] = menuEntry
-		}
-	}
-
-	return menuEntries
 }
 
 // SetupWithManager sets up the controller with the Manager.
