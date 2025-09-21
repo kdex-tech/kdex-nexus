@@ -39,7 +39,8 @@ import (
 type MicroFrontEndPageBindingReconciler struct {
 	MicroFrontEndCommonReconciler
 	client.Client
-	Scheme *runtime.Scheme
+	RequeueDelay time.Duration
+	Scheme       *runtime.Scheme
 }
 
 // +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendpagebindings,verbs=get;list;watch;create;update;patch;delete
@@ -86,7 +87,7 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 				return ctrl.Result{}, err
 			}
 
-			return ctrl.Result{RequeueAfter: 15 * time.Second}, nil
+			return ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
 		}
 
 		log.Error(err, "unable to fetch MicroFrontEndHost %s", pageBinding.Spec.HostRef.Name)
@@ -114,7 +115,7 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 				return ctrl.Result{}, err
 			}
 
-			return ctrl.Result{RequeueAfter: 15 * time.Second}, nil
+			return ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
 		}
 
 		log.Error(err, "unable to fetch MicroFrontEndPageArchetype %s", pageBinding.Spec.PageArchetypeRef.Name)
@@ -136,7 +137,7 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 			return ctrl.Result{}, err
 		}
 
-		return ctrl.Result{RequeueAfter: 15 * time.Second}, nil
+		return ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
 	}
 
 	contents, response, err := r.contents(ctx, log, &pageBinding)
@@ -176,7 +177,7 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 					return ctrl.Result{}, err
 				}
 
-				return ctrl.Result{RequeueAfter: 15 * time.Second}, nil
+				return ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
 			}
 
 			log.Error(err, "unable to fetch MicroFrontEndPageHeader %s", headerRef.Name)
@@ -211,7 +212,7 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 					return ctrl.Result{}, err
 				}
 
-				return ctrl.Result{RequeueAfter: 15 * time.Second}, nil
+				return ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
 			}
 
 			log.Error(err, "unable to fetch MicroFrontEndPageFooter %s", footerRef.Name)
@@ -327,7 +328,7 @@ func (r *MicroFrontEndPageBindingReconciler) contents(
 					return nil, ctrl.Result{}, err
 				}
 
-				return nil, ctrl.Result{RequeueAfter: 15 * time.Second}, nil
+				return nil, ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
 			}
 
 			log.Error(err, "unable to fetch MicroFrontEndApp %s", appRef.Name)
@@ -349,7 +350,7 @@ func (r *MicroFrontEndPageBindingReconciler) contents(
 				return nil, ctrl.Result{}, err
 			}
 
-			return nil, ctrl.Result{RequeueAfter: 15 * time.Second}, nil
+			return nil, ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
 		}
 
 		contents[contentEntry.Slot] = customelement.ForApp(app, contentEntry, *pageBinding)

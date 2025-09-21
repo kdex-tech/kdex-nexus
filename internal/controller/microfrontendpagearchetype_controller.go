@@ -37,7 +37,8 @@ import (
 type MicroFrontEndPageArchetypeReconciler struct {
 	MicroFrontEndCommonReconciler
 	client.Client
-	Scheme *runtime.Scheme
+	RequeueDelay time.Duration
+	Scheme       *runtime.Scheme
 }
 
 // +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendpagearchetypes,verbs=get;list;watch;create;update;patch;delete
@@ -85,7 +86,7 @@ func (r *MicroFrontEndPageArchetypeReconciler) Reconcile(ctx context.Context, re
 					return ctrl.Result{}, err
 				}
 
-				return ctrl.Result{RequeueAfter: 15 * time.Second}, nil
+				return ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
 			}
 
 			log.Error(err, "unable to fetch MicroFrontEndPageFooter %s", pageArchetype.Spec.DefaultFooterRef.Name)
@@ -116,7 +117,7 @@ func (r *MicroFrontEndPageArchetypeReconciler) Reconcile(ctx context.Context, re
 					return ctrl.Result{}, err
 				}
 
-				return ctrl.Result{RequeueAfter: 15 * time.Second}, nil
+				return ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
 			}
 
 			log.Error(err, "unable to fetch MicroFrontEndPageHeader %s", pageArchetype.Spec.DefaultHeaderRef.Name)

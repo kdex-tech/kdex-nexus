@@ -33,7 +33,8 @@ import (
 // MicroFrontEndAppReconciler reconciles a MicroFrontEndApp object
 type MicroFrontEndAppReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	RequeueDelay time.Duration
+	Scheme       *runtime.Scheme
 }
 
 // +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendapps,verbs=get;list;watch;create;update;patch;delete
@@ -88,7 +89,7 @@ func (r *MicroFrontEndAppReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		if err := r.Status().Update(ctx, &app); err != nil {
 			return ctrl.Result{}, err
 		}
-		return ctrl.Result{RequeueAfter: 30 * time.Second}, nil
+		return ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
 	}
 
 	log.Info("reconciled MicroFrontEndApp", "app", app)
