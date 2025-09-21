@@ -28,7 +28,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"kdex.dev/app-server/internal/customelement"
-	"kdex.dev/app-server/internal/render"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -46,6 +45,7 @@ type MicroFrontEndPageBindingReconciler struct {
 // +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendpagebindings,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendpagebindings/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendpagebindings/finalizers,verbs=update
+// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendrenderpages,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -191,54 +191,31 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 		}
 	}
 
-	// knownPageBindings := &kdexv1alpha1.MicroFrontEndPageBindingList{}
-	// if err := r.List(ctx, knownPageBindings, &client.ListOptions{
-	// 	Namespace: pageBinding.Namespace,
-	// }); err != nil {
-	// 	log.Error(err, "unable to list MicroFrontEndPageBindings in namespace %s", pageBinding.Namespace)
-	// 	return ctrl.Result{}, err
-	// }
-
-	// pageBindingItems := append(knownPageBindings.Items, pageBinding)
-
-	renderPage := render.Page{
-		Contents:        contents,
-		Footer:          footer.Spec.Content,
-		Header:          header.Spec.Content,
-		Label:           pageBinding.Spec.Label,
-		Navigations:     navigations,
-		TemplateContent: pageArchetype.Spec.Content,
-		TemplateName:    pageArchetype.Name,
+	renderPage := &kdexv1alpha1.MicroFrontEndRenderPage{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      pageBinding.Name,
+			Namespace: pageBinding.Namespace,
+		},
+		Spec: kdexv1alpha1.MicroFrontEndRenderPageSpec{
+			NavigationHints: pageBinding.Spec.NavigationHints,
+			Path:            pageBinding.Spec.Path,
+			PageComponents: kdexv1alpha1.PageComponents{
+				Contents:        contents,
+				Footer:          footer.Spec.Content,
+				Header:          header.Spec.Content,
+				Navigations:     navigations,
+				PrimaryTemplate: pageArchetype.Spec.Content,
+				Title:           pageBinding.Spec.Label,
+			},
+		},
 	}
 
-	// renderer := render.Renderer{
-	// 	Context:      ctx,
-	// 	FootScript:   "",
-	// 	HeadScript:   "",
-	// 	Lang:         "en",
-	// 	MenuEntries:  menu.ToMenuEntries(pageBindingItems),
-	// 	Meta:         "",
-	// 	Organization: "My Organization Inc.",
-	// 	Stylesheet:   "",
-	// }
-
-	// html, err := renderer.RenderPage(renderPage)
-	// if err != nil {
-	// 	log.Error(err, "failed to render HTML")
-	// 	apimeta.SetStatusCondition(
-	// 		&pageBinding.Status.Conditions,
-	// 		*kdexv1alpha1.NewCondition(
-	// 			kdexv1alpha1.ConditionTypeReady,
-	// 			metav1.ConditionFalse,
-	// 			"RenderFailed",
-	// 			err.Error(),
-	// 		),
-	// 	)
-	// 	if err := r.Status().Update(ctx, &pageBinding); err != nil {
-	// 		return ctrl.Result{}, err
-	// 	}
-	// 	return ctrl.Result{}, err
-	// }
+	if _, err := ctrl.CreateOrUpdate(ctx, r.Client, renderPage, func() error {
+		return ctrl.SetControllerReference(&pageBinding, renderPage, r.Scheme)
+	}); err != nil {
+		log.Error(err, "unable to create or update MicroFrontEndRenderPage")
+		return ctrl.Result{}, err
+	}
 
 	log.Info("reconciled MicroFrontEndPageBinding", "pageBinding", pageBinding, "renderPage", renderPage)
 
@@ -262,6 +239,7 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 func (r *MicroFrontEndPageBindingReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&kdexv1alpha1.MicroFrontEndPageBinding{}).
+		Owns(&kdexv1alpha1.MicroFrontEndRenderPage{}).
 		Watches(
 			&kdexv1alpha1.MicroFrontEndApp{},
 			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForApp)).
