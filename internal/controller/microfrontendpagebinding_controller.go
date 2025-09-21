@@ -225,8 +225,8 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 			Namespace: pageBinding.Namespace,
 		},
 		Spec: kdexv1alpha1.MicroFrontEndRenderPageSpec{
+			HostRef:         pageBinding.Spec.HostRef,
 			NavigationHints: pageBinding.Spec.NavigationHints,
-			Path:            pageBinding.Spec.Path,
 			PageComponents: kdexv1alpha1.PageComponents{
 				Contents:        contents,
 				Footer:          footer.Spec.Content,
@@ -235,6 +235,7 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 				PrimaryTemplate: pageArchetype.Spec.Content,
 				Title:           pageBinding.Spec.Label,
 			},
+			Path: pageBinding.Spec.Path,
 		},
 	}
 
