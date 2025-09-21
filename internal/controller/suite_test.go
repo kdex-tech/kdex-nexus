@@ -18,6 +18,9 @@ package controller
 
 import (
 	"context"
+	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
@@ -25,8 +28,9 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
 	"k8s.io/client-go/rest"
+	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -45,6 +49,46 @@ var (
 	k8sClient client.Client
 )
 
+func addRemoteCRD(paths *[]string, tempDir string, url string) {
+	crdPath, err := downloadCRD(url, tempDir)
+	if err != nil {
+		panic(err)
+	}
+
+	*paths = append(*paths, crdPath)
+}
+
+func downloadCRD(url, tempDir string) (string, error) {
+	httpClient := &http.Client{}
+	response, err := httpClient.Get(url)
+	if err != nil {
+		return "", fmt.Errorf("failed to download CRD from %s: %w", url, err)
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("failed to download CRD from %s: status code %d", url, response.StatusCode)
+	}
+
+	crdContent, err := io.ReadAll(response.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read CRD content from %s: %w", url, err)
+	}
+
+	fileName := filepath.Base(url)
+	filePath := filepath.Join(tempDir, fileName)
+	err = os.WriteFile(filePath, crdContent, 0600)
+	if err != nil {
+		return "", fmt.Errorf("failed to write CRD to file %s: %w", filePath, err)
+	}
+
+	return filePath, nil
+}
+
+func getCRDModuleVersion() string {
+	return "v0.3.2"
+}
+
 func TestControllers(t *testing.T) {
 	RegisterFailHandler(Fail)
 
@@ -61,14 +105,33 @@ var _ = BeforeSuite(func() {
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
-		CRDDirectoryPaths:     []string{filepath.Join("..", "..", "config", "crd", "bases")},
-		ErrorIfCRDPathMissing: false,
+		// CRDDirectoryPaths: []string{filepath.Join("/home", "rotty", "projects", "kdex", "kdex-crds", "config", "crd", "bases")},
+		CRDDirectoryPaths:     []string{}, // No local CRDs initially
+		ErrorIfCRDPathMissing: true,
 	}
+
+	tempDir, err := os.MkdirTemp("", "crd")
+	if err != nil {
+		panic(err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	addRemoteCRD(&testEnv.CRDDirectoryPaths, tempDir, fmt.Sprintf("https://raw.githubusercontent.com/kdex-tech/kdex-crds/refs/tags/%s/config/crd/bases/kdex.dev_microfrontendapps.yaml", getCRDModuleVersion()))
+	addRemoteCRD(&testEnv.CRDDirectoryPaths, tempDir, fmt.Sprintf("https://raw.githubusercontent.com/kdex-tech/kdex-crds/refs/tags/%s/config/crd/bases/kdex.dev_microfrontendhosts.yaml", getCRDModuleVersion()))
+	addRemoteCRD(&testEnv.CRDDirectoryPaths, tempDir, fmt.Sprintf("https://raw.githubusercontent.com/kdex-tech/kdex-crds/refs/tags/%s/config/crd/bases/kdex.dev_microfrontendpagearchetypes.yaml", getCRDModuleVersion()))
+	addRemoteCRD(&testEnv.CRDDirectoryPaths, tempDir, fmt.Sprintf("https://raw.githubusercontent.com/kdex-tech/kdex-crds/refs/tags/%s/config/crd/bases/kdex.dev_microfrontendpagebindings.yaml", getCRDModuleVersion()))
+	addRemoteCRD(&testEnv.CRDDirectoryPaths, tempDir, fmt.Sprintf("https://raw.githubusercontent.com/kdex-tech/kdex-crds/refs/tags/%s/config/crd/bases/kdex.dev_microfrontendpagefooters.yaml", getCRDModuleVersion()))
+	addRemoteCRD(&testEnv.CRDDirectoryPaths, tempDir, fmt.Sprintf("https://raw.githubusercontent.com/kdex-tech/kdex-crds/refs/tags/%s/config/crd/bases/kdex.dev_microfrontendpageheaders.yaml", getCRDModuleVersion()))
+	addRemoteCRD(&testEnv.CRDDirectoryPaths, tempDir, fmt.Sprintf("https://raw.githubusercontent.com/kdex-tech/kdex-crds/refs/tags/%s/config/crd/bases/kdex.dev_microfrontendpagenavigations.yaml", getCRDModuleVersion()))
+	addRemoteCRD(&testEnv.CRDDirectoryPaths, tempDir, fmt.Sprintf("https://raw.githubusercontent.com/kdex-tech/kdex-crds/refs/tags/%s/config/crd/bases/kdex.dev_microfrontendrenderpages.yaml", getCRDModuleVersion()))
 
 	// Retrieve the first found binary directory to allow running tests from IDEs
 	if getFirstFoundEnvTestBinaryDir() != "" {
 		testEnv.BinaryAssetsDirectory = getFirstFoundEnvTestBinaryDir()
 	}
+
+	err = kdexv1alpha1.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
 
 	// cfg is defined in this file globally.
 	cfg, err = testEnv.Start()

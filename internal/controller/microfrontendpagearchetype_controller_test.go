@@ -17,16 +17,75 @@ limitations under the License.
 package controller
 
 import (
+	"context"
+
 	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+	"k8s.io/apimachinery/pkg/api/errors"
+	apimeta "k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 var _ = Describe("MicroFrontEndPageArchetype Controller", func() {
 	Context("When reconciling a resource", func() {
+		const resourceName = "test-resource"
 
+		ctx := context.Background()
+
+		typeNamespacedName := types.NamespacedName{
+			Name:      resourceName,
+			Namespace: "default",
+		}
+		microfrontendpagearchetype := &kdexv1alpha1.MicroFrontEndPageArchetype{}
+
+		BeforeEach(func() {
+			By("creating the custom resource for the Kind MicroFrontendPageArchetype")
+			err := k8sClient.Get(ctx, typeNamespacedName, microfrontendpagearchetype)
+			if err != nil && errors.IsNotFound(err) {
+				resource := &kdexv1alpha1.MicroFrontEndPageArchetype{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      resourceName,
+						Namespace: "default",
+					},
+					Spec: kdexv1alpha1.MicroFrontEndPageArchetypeSpec{
+						Content: "<h1>Hello, World!</h1>",
+					},
+				}
+				Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+			}
+		})
+
+		AfterEach(func() {
+			resource := &kdexv1alpha1.MicroFrontEndPageArchetype{}
+			err := k8sClient.Get(ctx, typeNamespacedName, resource)
+			Expect(err).NotTo(HaveOccurred())
+
+			By("Cleanup the specific resource instance MicroFrontendPageArchetype")
+			Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
+		})
 		It("should successfully reconcile the resource", func() {
+			By("Reconciling the created resource")
+			controllerReconciler := &MicroFrontEndPageArchetypeReconciler{
+				Client: k8sClient,
+				Scheme: k8sClient.Scheme(),
+			}
 
-			// TODO(user): Add more specific assertions depending on your controller's reconciliation logic.
-			// Example: If you expect a certain status condition after reconciliation, verify it here.
+			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
+				NamespacedName: typeNamespacedName,
+			})
+			Expect(err).NotTo(HaveOccurred())
+
+			err = k8sClient.Get(ctx, typeNamespacedName, microfrontendpagearchetype)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(
+				apimeta.IsStatusConditionTrue(
+					microfrontendpagearchetype.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady),
+				),
+			).To(BeTrue())
 		})
 	})
 })
