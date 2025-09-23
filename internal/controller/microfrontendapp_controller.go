@@ -55,20 +55,7 @@ func (r *MicroFrontEndAppReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	}
 
 	// Validate the source of the app.
-	validated, err := r.validateSource(ctx, &app)
-	if err != nil {
-		log.Error(err, "source validation failed")
-		apimeta.SetStatusCondition(&app.Status.Conditions, *kdexv1alpha1.NewCondition(
-			kdexv1alpha1.ConditionTypeReady,
-			metav1.ConditionFalse,
-			"SourceValidationFailed",
-			err.Error(),
-		))
-		if err := r.Status().Update(ctx, &app); err != nil {
-			return ctrl.Result{}, err
-		}
-		return ctrl.Result{}, err
-	}
+	validated := r.validateSource(ctx, &app)
 
 	if !validated {
 		if apimeta.IsStatusConditionFalse(app.Status.Conditions, kdexv1alpha1.ConditionTypeReady.String()) {
@@ -101,11 +88,11 @@ func (r *MicroFrontEndAppReconciler) Reconcile(ctx context.Context, req ctrl.Req
 // This is a placeholder for the actual implementation.
 func (r *MicroFrontEndAppReconciler) validateSource(
 	ctx context.Context, app *kdexv1alpha1.MicroFrontEndApp,
-) (bool, error) {
+) bool {
 	log := logf.FromContext(ctx)
 
 	if apimeta.IsStatusConditionTrue(app.Status.Conditions, kdexv1alpha1.ConditionTypeReady.String()) {
-		return true, nil
+		return true
 	}
 
 	go func() {
@@ -165,7 +152,7 @@ func (r *MicroFrontEndAppReconciler) validateSource(
 		}
 	}()
 
-	return false, nil
+	return false
 }
 
 // SetupWithManager sets up the controller with the Manager.
