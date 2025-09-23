@@ -1,4 +1,4 @@
-module kdex.dev/app-server
+module kdex.dev/nexus
 
 go 1.24.5
 

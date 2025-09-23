@@ -36,7 +36,7 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	"kdex.dev/app-server/internal/controller"
+	"kdex.dev/nexus/internal/controller"
 	// +kubebuilder:scaffold:imports
 )
 

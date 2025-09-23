@@ -7,7 +7,7 @@ import (
 	"html/template"
 	"time"
 
-	"kdex.dev/app-server/internal/menu"
+	"kdex.dev/nexus/internal/menu"
 )
 
 type Renderer struct {

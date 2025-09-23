@@ -6,8 +6,8 @@ cliVersion: 4.8.0
 domain: kdex.dev
 layout:
 - go.kubebuilder.io/v4
-projectName: kdex-app-server
-repo: kdex.dev/app-server
+projectName: kdex-nexus
+repo: kdex.dev/nexus
 resources:
 - controller: true
   domain: kdex.dev

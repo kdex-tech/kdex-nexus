@@ -30,20 +30,20 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"kdex.dev/app-server/test/utils"
+	"kdex.dev/nexus/test/utils"
 )
 
 // namespace where the project is deployed in
-const namespace = "kdex-app-server-system"
+const namespace = "kdex-nexus-system"
 
 // serviceAccountName created for the project
-const serviceAccountName = "kdex-app-server-controller-manager"
+const serviceAccountName = "kdex-nexus-controller-manager"
 
 // metricsServiceName is the name of the metrics service of the project
-const metricsServiceName = "kdex-app-server-controller-manager-metrics-service"
+const metricsServiceName = "kdex-nexus-controller-manager-metrics-service"
 
 // metricsRoleBindingName is the name of the RBAC that will be created to allow get the metrics data
-const metricsRoleBindingName = "kdex-app-server-metrics-binding"
+const metricsRoleBindingName = "kdex-nexus-metrics-binding"
 
 var _ = Describe("Manager", Ordered, func() {
 	var controllerPodName string
@@ -176,7 +176,7 @@ var _ = Describe("Manager", Ordered, func() {
 		It("should ensure the metrics endpoint is serving metrics", func() {
 			By("creating a ClusterRoleBinding for the service account to allow access to metrics")
 			cmd := exec.Command("kubectl", "create", "clusterrolebinding", metricsRoleBindingName,
-				"--clusterrole=kdex-app-server-metrics-reader",
+				"--clusterrole=kdex-nexus-metrics-reader",
 				fmt.Sprintf("--serviceaccount=%s:%s", namespace, serviceAccountName),
 			)
 			_, err := utils.Run(cmd)

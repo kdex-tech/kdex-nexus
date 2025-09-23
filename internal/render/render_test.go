@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"kdex.dev/app-server/internal/menu"
+	"kdex.dev/nexus/internal/menu"
 )
 
 func TestRenderOne(t *testing.T) {
