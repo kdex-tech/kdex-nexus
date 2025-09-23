@@ -105,7 +105,6 @@ var _ = BeforeSuite(func() {
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
-		// CRDDirectoryPaths: []string{filepath.Join("/home", "rotty", "projects", "kdex", "kdex-crds", "config", "crd", "bases")},
 		CRDDirectoryPaths:     []string{}, // No local CRDs initially
 		ErrorIfCRDPathMissing: true,
 	}
