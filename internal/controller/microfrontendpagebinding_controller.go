@@ -79,7 +79,7 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 	}
 	if err := r.Get(ctx, hostName, &host); err != nil {
 		if errors.IsNotFound(err) {
-			log.Error(err, "referenced MicroFrontEndHost %s not found", pageBinding.Spec.HostRef.Name)
+			log.Error(err, "referenced MicroFrontEndHost not found", "name", pageBinding.Spec.HostRef.Name)
 			apimeta.SetStatusCondition(
 				&pageBinding.Status.Conditions,
 				*kdexv1alpha1.NewCondition(
@@ -96,7 +96,7 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 			return ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
 		}
 
-		log.Error(err, "unable to fetch MicroFrontEndHost %s", pageBinding.Spec.HostRef.Name)
+		log.Error(err, "unable to fetch MicroFrontEndHost", "name", pageBinding.Spec.HostRef.Name)
 		return ctrl.Result{}, err
 	}
 
@@ -107,7 +107,7 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 	}
 	if err := r.Get(ctx, pageArchetypeName, &pageArchetype); err != nil {
 		if errors.IsNotFound(err) {
-			log.Error(err, "referenced MicroFrontEndPageArchetype %s not found", pageBinding.Spec.PageArchetypeRef.Name)
+			log.Error(err, "referenced MicroFrontEndPageArchetype not found", "name", pageBinding.Spec.PageArchetypeRef.Name)
 			apimeta.SetStatusCondition(
 				&pageBinding.Status.Conditions,
 				*kdexv1alpha1.NewCondition(
@@ -124,7 +124,7 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 			return ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
 		}
 
-		log.Error(err, "unable to fetch MicroFrontEndPageArchetype %s", pageBinding.Spec.PageArchetypeRef.Name)
+		log.Error(err, "unable to fetch MicroFrontEndPageArchetype", "name", pageBinding.Spec.PageArchetypeRef.Name)
 		return ctrl.Result{}, err
 	}
 
@@ -169,7 +169,7 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 
 		if err := r.Get(ctx, headerName, &header); err != nil {
 			if errors.IsNotFound(err) {
-				log.Error(err, "referenced MicroFrontEndPageHeader %s not found", headerRef.Name)
+				log.Error(err, "referenced MicroFrontEndPageHeader not found", "name", headerRef.Name)
 				apimeta.SetStatusCondition(
 					&pageBinding.Status.Conditions,
 					*kdexv1alpha1.NewCondition(
@@ -186,7 +186,7 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 				return ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
 			}
 
-			log.Error(err, "unable to fetch MicroFrontEndPageHeader %s", headerRef.Name)
+			log.Error(err, "unable to fetch MicroFrontEndPageHeader", "name", headerRef.Name)
 			return ctrl.Result{}, err
 		}
 	}
@@ -204,7 +204,7 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 
 		if err := r.Get(ctx, footerName, &footer); err != nil {
 			if errors.IsNotFound(err) {
-				log.Error(err, "referenced MicroFrontEndPageFooter %s not found", footerRef.Name)
+				log.Error(err, "referenced MicroFrontEndPageFooter not found", "name", footerRef.Name)
 				apimeta.SetStatusCondition(
 					&pageBinding.Status.Conditions,
 					*kdexv1alpha1.NewCondition(
@@ -221,7 +221,7 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 				return ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
 			}
 
-			log.Error(err, "unable to fetch MicroFrontEndPageFooter %s", footerRef.Name)
+			log.Error(err, "unable to fetch MicroFrontEndPageFooter", "name", footerRef.Name)
 			return ctrl.Result{}, err
 		}
 	}
@@ -320,7 +320,7 @@ func (r *MicroFrontEndPageBindingReconciler) contents(
 		var app kdexv1alpha1.MicroFrontEndApp
 		if err := r.Get(ctx, appName, &app); err != nil {
 			if errors.IsNotFound(err) {
-				log.Error(err, "referenced MicroFrontEndApp %s not found", appRef.Name)
+				log.Error(err, "referenced MicroFrontEndApp not found", "name", appRef.Name)
 				apimeta.SetStatusCondition(
 					&pageBinding.Status.Conditions,
 					*kdexv1alpha1.NewCondition(
@@ -337,7 +337,7 @@ func (r *MicroFrontEndPageBindingReconciler) contents(
 				return nil, ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
 			}
 
-			log.Error(err, "unable to fetch MicroFrontEndApp %s", appRef.Name)
+			log.Error(err, "unable to fetch MicroFrontEndApp", "name", appRef.Name)
 			return nil, ctrl.Result{}, err
 		}
 

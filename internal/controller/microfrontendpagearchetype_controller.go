@@ -72,7 +72,7 @@ func (r *MicroFrontEndPageArchetypeReconciler) Reconcile(ctx context.Context, re
 
 		if err := r.Get(ctx, footerName, &footer); err != nil {
 			if errors.IsNotFound(err) {
-				log.Error(err, "referenced MicroFrontEndPageFooter %s not found", pageArchetype.Spec.DefaultFooterRef.Name)
+				log.Error(err, "referenced MicroFrontEndPageFooter not found", "name", pageArchetype.Spec.DefaultFooterRef.Name)
 				apimeta.SetStatusCondition(
 					&pageArchetype.Status.Conditions,
 					*kdexv1alpha1.NewCondition(
@@ -89,7 +89,7 @@ func (r *MicroFrontEndPageArchetypeReconciler) Reconcile(ctx context.Context, re
 				return ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
 			}
 
-			log.Error(err, "unable to fetch MicroFrontEndPageFooter %s", pageArchetype.Spec.DefaultFooterRef.Name)
+			log.Error(err, "unable to fetch MicroFrontEndPageFooter", "name", pageArchetype.Spec.DefaultFooterRef.Name)
 			return ctrl.Result{}, err
 		}
 	}
@@ -103,7 +103,7 @@ func (r *MicroFrontEndPageArchetypeReconciler) Reconcile(ctx context.Context, re
 
 		if err := r.Get(ctx, headerName, &header); err != nil {
 			if errors.IsNotFound(err) {
-				log.Error(err, "referenced MicroFrontEndPageHeader %s not found", pageArchetype.Spec.DefaultHeaderRef.Name)
+				log.Error(err, "referenced MicroFrontEndPageHeader not found", "name", pageArchetype.Spec.DefaultHeaderRef.Name)
 				apimeta.SetStatusCondition(
 					&pageArchetype.Status.Conditions,
 					*kdexv1alpha1.NewCondition(
@@ -120,7 +120,7 @@ func (r *MicroFrontEndPageArchetypeReconciler) Reconcile(ctx context.Context, re
 				return ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
 			}
 
-			log.Error(err, "unable to fetch MicroFrontEndPageHeader %s", pageArchetype.Spec.DefaultHeaderRef.Name)
+			log.Error(err, "unable to fetch MicroFrontEndPageHeader", "name", pageArchetype.Spec.DefaultHeaderRef.Name)
 			return ctrl.Result{}, err
 		}
 	}

@@ -20,7 +20,7 @@ func (r *MicroFrontEndPageArchetypeReconciler) findPageArchetypesForPageFooter(
 	if err := r.List(ctx, &pageArchetypesList, &client.ListOptions{
 		Namespace: pageFooter.GetNamespace(),
 	}); err != nil {
-		log.Error(err, "unable to list MicroFrontEndPageArchetypes for page footer %s", pageFooter.GetName())
+		log.Error(err, "unable to list MicroFrontEndPageArchetypes for page footer", "name", pageFooter.GetName())
 		return []reconcile.Request{}
 	}
 
@@ -51,7 +51,7 @@ func (r *MicroFrontEndPageArchetypeReconciler) findPageArchetypesForPageHeader(
 	if err := r.List(ctx, &pageArchetypesList, &client.ListOptions{
 		Namespace: pageHeader.GetNamespace(),
 	}); err != nil {
-		log.Error(err, "unable to list MicroFrontEndPageArchetypes for page header %s", pageHeader.GetName())
+		log.Error(err, "unable to list MicroFrontEndPageArchetypes for page header", "name", pageHeader.GetName())
 		return []reconcile.Request{}
 	}
 
@@ -82,7 +82,7 @@ func (r *MicroFrontEndPageArchetypeReconciler) findPageArchetypesForPageNavigati
 	if err := r.List(ctx, &pageArchetypesList, &client.ListOptions{
 		Namespace: pageNavigation.GetNamespace(),
 	}); err != nil {
-		log.Error(err, "unable to list MicroFrontEndPageArchetypes for page navigation %s", pageNavigation.GetName())
+		log.Error(err, "unable to list MicroFrontEndPageArchetypes for page navigation", "name", pageNavigation.GetName())
 		return []reconcile.Request{}
 	}
 
