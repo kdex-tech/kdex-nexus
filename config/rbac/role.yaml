@@ -7,6 +7,19 @@ rules:
 - apiGroups:
   - kdex.dev
   resources:
+  - microfrontendapp
+  - microfrontendhost
+  - microfrontendpagearchetype
+  - microfrontendpagefooter
+  - microfrontendpageheader
+  - microfrontendpagenavigation
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - kdex.dev
+  resources:
   - microfrontendapps
   - microfrontendpagearchetypes
   - microfrontendpagebindings
