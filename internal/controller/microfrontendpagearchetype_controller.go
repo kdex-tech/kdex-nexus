@@ -24,7 +24,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -36,9 +35,7 @@ import (
 // MicroFrontEndPageArchetypeReconciler reconciles a MicroFrontEndPageArchetype object
 type MicroFrontEndPageArchetypeReconciler struct {
 	MicroFrontEndCommonReconciler
-	client.Client
 	RequeueDelay time.Duration
-	Scheme       *runtime.Scheme
 }
 
 // +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendpagearchetypes,verbs=get;list;watch;create;update;patch;delete
@@ -127,9 +124,9 @@ func (r *MicroFrontEndPageArchetypeReconciler) Reconcile(ctx context.Context, re
 
 	if pageArchetype.Spec.DefaultMainNavigationRef != nil {
 		navigation, response, err := r.GetNavigation(
-			ctx, log, *pageArchetype.Spec.DefaultMainNavigationRef, ClientObjectWithConditions{
+			ctx, log, *pageArchetype.Spec.DefaultMainNavigationRef, &ClientObjectWithConditions{
+				Conditions: &pageArchetype.Status.Conditions,
 				Object:     &pageArchetype,
-				Conditions: pageArchetype.Status.Conditions,
 			})
 
 		if navigation == nil {
@@ -140,9 +137,9 @@ func (r *MicroFrontEndPageArchetypeReconciler) Reconcile(ctx context.Context, re
 	if pageArchetype.Spec.ExtraNavigations != nil {
 		for _, navigationRef := range *pageArchetype.Spec.ExtraNavigations {
 			navigation, response, err := r.GetNavigation(
-				ctx, log, navigationRef, ClientObjectWithConditions{
+				ctx, log, navigationRef, &ClientObjectWithConditions{
+					Conditions: &pageArchetype.Status.Conditions,
 					Object:     &pageArchetype,
-					Conditions: pageArchetype.Status.Conditions,
 				})
 
 			if navigation == nil {

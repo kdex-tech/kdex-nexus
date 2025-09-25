@@ -7,5 +7,5 @@ import (
 
 type ClientObjectWithConditions struct {
 	client.Object
-	Conditions []metav1.Condition
+	Conditions *[]metav1.Condition
 }

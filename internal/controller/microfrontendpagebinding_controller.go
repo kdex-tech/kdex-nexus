@@ -25,7 +25,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	"kdex.dev/nexus/internal/customelement"
@@ -38,9 +37,7 @@ import (
 // MicroFrontEndPageBindingReconciler reconciles a MicroFrontEndPageBinding object
 type MicroFrontEndPageBindingReconciler struct {
 	MicroFrontEndCommonReconciler
-	client.Client
 	RequeueDelay time.Duration
-	Scheme       *runtime.Scheme
 }
 
 // +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendapp,verbs=get;list;watch
@@ -379,9 +376,9 @@ func (r *MicroFrontEndPageBindingReconciler) navigations(
 	}
 	if navigationRef != nil {
 		navigation, response, err := r.GetNavigation(
-			ctx, log, *navigationRef, ClientObjectWithConditions{
+			ctx, log, *navigationRef, &ClientObjectWithConditions{
 				Object:     pageBinding,
-				Conditions: pageBinding.Status.Conditions,
+				Conditions: &pageBinding.Status.Conditions,
 			})
 
 		if navigation == nil {
@@ -397,9 +394,9 @@ func (r *MicroFrontEndPageBindingReconciler) navigations(
 
 	for navigationName, navigationRef := range *pageArchetype.Spec.ExtraNavigations {
 		navigation, response, err := r.GetNavigation(
-			ctx, log, navigationRef, ClientObjectWithConditions{
+			ctx, log, navigationRef, &ClientObjectWithConditions{
 				Object:     pageBinding,
-				Conditions: pageBinding.Status.Conditions,
+				Conditions: &pageBinding.Status.Conditions,
 			})
 
 		if navigation == nil {

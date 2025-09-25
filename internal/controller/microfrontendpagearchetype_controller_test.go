@@ -31,6 +31,206 @@ import (
 )
 
 var _ = Describe("MicroFrontEndPageArchetype Controller", func() {
+	Context("When reconciling a resource with missing extra navigation reference", func() {
+		const resourceName = "test-resource"
+
+		ctx := context.Background()
+
+		typeNamespacedName := types.NamespacedName{
+			Name:      resourceName,
+			Namespace: "default",
+		}
+		microfrontendpagearchetype := &kdexv1alpha1.MicroFrontEndPageArchetype{}
+
+		BeforeEach(func() {
+			By("creating the custom resource for the Kind MicroFrontendPageArchetype")
+			err := k8sClient.Get(ctx, typeNamespacedName, microfrontendpagearchetype)
+			if err != nil && errors.IsNotFound(err) {
+				resource := &kdexv1alpha1.MicroFrontEndPageArchetype{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      resourceName,
+						Namespace: "default",
+					},
+					Spec: kdexv1alpha1.MicroFrontEndPageArchetypeSpec{
+						Content: "<h1>Hello, World!</h1>",
+						ExtraNavigations: &map[string]corev1.LocalObjectReference{
+							"non-existent-navigation": {
+								Name: "non-existent-navigation",
+							},
+						},
+					},
+				}
+				Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+			}
+		})
+
+		AfterEach(func() {
+			resource := &kdexv1alpha1.MicroFrontEndPageArchetype{}
+			err := k8sClient.Get(ctx, typeNamespacedName, resource)
+			Expect(err).NotTo(HaveOccurred())
+
+			By("Cleanup the specific resource instance MicroFrontendPageArchetype")
+			Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
+		})
+
+		It("should not successfully reconcile the resource", func() {
+			By("Reconciling the created resource")
+			controllerReconciler := &MicroFrontEndPageArchetypeReconciler{
+				MicroFrontEndCommonReconciler: MicroFrontEndCommonReconciler{
+					Client: k8sClient,
+					Scheme: k8sClient.Scheme(),
+				},
+				RequeueDelay: 0,
+			}
+
+			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
+				NamespacedName: typeNamespacedName,
+			})
+			Expect(err).NotTo(HaveOccurred())
+
+			err = k8sClient.Get(ctx, typeNamespacedName, microfrontendpagearchetype)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(
+				apimeta.IsStatusConditionFalse(
+					microfrontendpagearchetype.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady),
+				),
+			).To(BeTrue())
+		})
+	})
+
+	Context("When reconciling a resource with missing default main navigation reference", func() {
+		const resourceName = "test-resource"
+
+		ctx := context.Background()
+
+		typeNamespacedName := types.NamespacedName{
+			Name:      resourceName,
+			Namespace: "default",
+		}
+		microfrontendpagearchetype := &kdexv1alpha1.MicroFrontEndPageArchetype{}
+
+		BeforeEach(func() {
+			By("creating the custom resource for the Kind MicroFrontendPageArchetype")
+			err := k8sClient.Get(ctx, typeNamespacedName, microfrontendpagearchetype)
+			if err != nil && errors.IsNotFound(err) {
+				resource := &kdexv1alpha1.MicroFrontEndPageArchetype{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      resourceName,
+						Namespace: "default",
+					},
+					Spec: kdexv1alpha1.MicroFrontEndPageArchetypeSpec{
+						Content: "<h1>Hello, World!</h1>",
+						DefaultMainNavigationRef: &corev1.LocalObjectReference{
+							Name: "non-existent-main-navigation",
+						},
+					},
+				}
+				Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+			}
+		})
+
+		AfterEach(func() {
+			resource := &kdexv1alpha1.MicroFrontEndPageArchetype{}
+			err := k8sClient.Get(ctx, typeNamespacedName, resource)
+			Expect(err).NotTo(HaveOccurred())
+
+			By("Cleanup the specific resource instance MicroFrontendPageArchetype")
+			Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
+		})
+
+		It("should not successfully reconcile the resource", func() {
+			By("Reconciling the created resource")
+			controllerReconciler := &MicroFrontEndPageArchetypeReconciler{
+				MicroFrontEndCommonReconciler: MicroFrontEndCommonReconciler{
+					Client: k8sClient,
+					Scheme: k8sClient.Scheme(),
+				},
+				RequeueDelay: 0,
+			}
+
+			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
+				NamespacedName: typeNamespacedName,
+			})
+			Expect(err).NotTo(HaveOccurred())
+
+			err = k8sClient.Get(ctx, typeNamespacedName, microfrontendpagearchetype)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(
+				apimeta.IsStatusConditionFalse(
+					microfrontendpagearchetype.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady),
+				),
+			).To(BeTrue())
+		})
+	})
+
+	Context("When reconciling a resource with missing default footer reference", func() {
+		const resourceName = "test-resource"
+
+		ctx := context.Background()
+
+		typeNamespacedName := types.NamespacedName{
+			Name:      resourceName,
+			Namespace: "default",
+		}
+		microfrontendpagearchetype := &kdexv1alpha1.MicroFrontEndPageArchetype{}
+
+		BeforeEach(func() {
+			By("creating the custom resource for the Kind MicroFrontendPageArchetype")
+			err := k8sClient.Get(ctx, typeNamespacedName, microfrontendpagearchetype)
+			if err != nil && errors.IsNotFound(err) {
+				resource := &kdexv1alpha1.MicroFrontEndPageArchetype{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      resourceName,
+						Namespace: "default",
+					},
+					Spec: kdexv1alpha1.MicroFrontEndPageArchetypeSpec{
+						Content: "<h1>Hello, World!</h1>",
+						DefaultFooterRef: &corev1.LocalObjectReference{
+							Name: "non-existent-footer",
+						},
+					},
+				}
+				Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+			}
+		})
+
+		AfterEach(func() {
+			resource := &kdexv1alpha1.MicroFrontEndPageArchetype{}
+			err := k8sClient.Get(ctx, typeNamespacedName, resource)
+			Expect(err).NotTo(HaveOccurred())
+
+			By("Cleanup the specific resource instance MicroFrontendPageArchetype")
+			Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
+		})
+
+		It("should not successfully reconcile the resource", func() {
+			By("Reconciling the created resource")
+			controllerReconciler := &MicroFrontEndPageArchetypeReconciler{
+				MicroFrontEndCommonReconciler: MicroFrontEndCommonReconciler{
+					Client: k8sClient,
+					Scheme: k8sClient.Scheme(),
+				},
+				RequeueDelay: 0,
+			}
+
+			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
+				NamespacedName: typeNamespacedName,
+			})
+			Expect(err).NotTo(HaveOccurred())
+
+			err = k8sClient.Get(ctx, typeNamespacedName, microfrontendpagearchetype)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(
+				apimeta.IsStatusConditionFalse(
+					microfrontendpagearchetype.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady),
+				),
+			).To(BeTrue())
+		})
+	})
+
 	Context("When reconciling a resource with missing default header reference", func() {
 		const resourceName = "test-resource"
 
@@ -74,8 +274,11 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", func() {
 		It("should not successfully reconcile the resource", func() {
 			By("Reconciling the created resource")
 			controllerReconciler := &MicroFrontEndPageArchetypeReconciler{
-				Client: k8sClient,
-				Scheme: k8sClient.Scheme(),
+				MicroFrontEndCommonReconciler: MicroFrontEndCommonReconciler{
+					Client: k8sClient,
+					Scheme: k8sClient.Scheme(),
+				},
+				RequeueDelay: 0,
 			}
 
 			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
@@ -134,8 +337,11 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", func() {
 		It("should successfully reconcile the resource", func() {
 			By("Reconciling the created resource")
 			controllerReconciler := &MicroFrontEndPageArchetypeReconciler{
-				Client: k8sClient,
-				Scheme: k8sClient.Scheme(),
+				MicroFrontEndCommonReconciler: MicroFrontEndCommonReconciler{
+					Client: k8sClient,
+					Scheme: k8sClient.Scheme(),
+				},
+				RequeueDelay: 0,
 			}
 
 			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
