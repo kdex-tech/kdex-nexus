@@ -18,7 +18,11 @@ package controller
 
 import (
 	"context"
-	"errors"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"strings"
 	"time"
 
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
@@ -54,24 +58,24 @@ func (r *MicroFrontEndAppReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	// Validate the source of the app.
-	validated := r.validateSource(ctx, &app)
+	// Validate the package reference
+	validated := r.validatePackageReference(ctx, &app)
 
 	if !validated {
 		if apimeta.IsStatusConditionFalse(app.Status.Conditions, kdexv1alpha1.ConditionTypeReady.String()) {
 			condition := apimeta.FindStatusCondition(app.Status.Conditions, kdexv1alpha1.ConditionTypeReady.String())
-			if condition.Reason == "SourceValidationFailed" {
+			if condition.Reason == "PackageValidationFailed" {
 				log.Info("reconcile failed due to failed validation", "app", app)
 				return ctrl.Result{}, nil
 			}
 		}
 
-		log.Info("source validation not complete")
+		log.Info("package validation not complete")
 		apimeta.SetStatusCondition(&app.Status.Conditions, *kdexv1alpha1.NewCondition(
 			kdexv1alpha1.ConditionTypeReady,
 			metav1.ConditionFalse,
-			"SourceValidationInProgress",
-			"Source validation is in progress",
+			"PackageValidationInProgress",
+			"Package validation is in progress",
 		))
 		if err := r.Status().Update(ctx, &app); err != nil {
 			return ctrl.Result{}, err
@@ -84,9 +88,9 @@ func (r *MicroFrontEndAppReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	return ctrl.Result{}, nil
 }
 
-// validateSource fetches, extracts, and validates the source of the app.
+// validatePackageReference fetches, extracts, and validates the NPM package reference that contains the App.
 // This is a placeholder for the actual implementation.
-func (r *MicroFrontEndAppReconciler) validateSource(
+func (r *MicroFrontEndAppReconciler) validatePackageReference(
 	ctx context.Context, app *kdexv1alpha1.MicroFrontEndApp,
 ) bool {
 	log := logf.FromContext(ctx)
@@ -96,34 +100,62 @@ func (r *MicroFrontEndAppReconciler) validateSource(
 	}
 
 	go func() {
-		log.Info("validating source for MicroFrontEndApp", "app", app.Name)
+		log.Info("validating package reference for MicroFrontEndApp", "app", app.Name)
 
-		// The MicroFrontEndApp spec is expected to have a `source` field.
-		// For example:
-		// spec:
-		//   source:
-		//     git:
-		//       url: "https://github.com/example/repo.git"
-		//       revision: "main"
+		nrc := &NPMRegistryConfiguration{
+			AuthData: AuthData{
+				Password: "test",
+				Username: "rotty3000",
+			},
+			Host:   "npm.docker.localhost",
+			Secure: false,
+		}
 
-		// Create a Kubernetes job to:
-		// 1. Fetch the source
-		// This would involve either fetching the source archive or cloning the git repository specified in app.Spec.Source.URL
-		// using native command line tools
-		log.Info("fetching source from git repository")
+		packageURL := fmt.Sprintf("%s/%s", nrc.GetAddress(), app.Spec.PackageReference.Name)
 
-		// 2. Extract and validate the contents
-		// This would involve inspecting the fetched source code for required files,
-		// configuration, etc.
-		// For example, check for package.json, Dockerfile, etc.
-		log.Info("validating source contents")
+		req, err := http.NewRequest("GET", packageURL, nil)
+		if err != nil {
+			fmt.Println("Error creating request:", err)
+			return
+		}
 
-		// 3. Potentially build and deploy
-		// This could involve building a container image and creating a Deployment.
-		log.Info("building and deploying source")
-		// For example, run docker build and create a Kubernetes Deployment.
+		authorization := nrc.EncodeAuthorization()
+		if authorization != "" {
+			req.Header.Set("Authorization", authorization)
+		}
 
-		err := errors.New("source validation failed")
+		req.Header.Set("Accept", "application/vnd.npm.formats+json")
+
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			fmt.Println("Error sending request:", err)
+			return
+		}
+		defer resp.Body.Close()
+
+		fmt.Println("Response Status:", resp.Status)
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("Error reading response body:", err)
+			return
+		}
+
+		packageInfo := &PackageInfo{}
+		err = json.Unmarshal(body, &packageInfo)
+
+		if err == nil {
+			latestVersion := packageInfo.DistTags.Latest
+
+			if latestVersion != "" {
+				latestVersionContent, ok := packageInfo.Versions[latestVersion]
+
+				if ok {
+					err = isPackageAnESModule(&latestVersionContent)
+				}
+			}
+		}
 
 		if err != nil {
 			apimeta.SetStatusCondition(
@@ -131,7 +163,7 @@ func (r *MicroFrontEndAppReconciler) validateSource(
 				*kdexv1alpha1.NewCondition(
 					kdexv1alpha1.ConditionTypeReady,
 					metav1.ConditionFalse,
-					"SourceValidationFailed",
+					"PackageValidationFailed",
 					err.Error(),
 				),
 			)
@@ -161,4 +193,34 @@ func (r *MicroFrontEndAppReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&kdexv1alpha1.MicroFrontEndApp{}).
 		Named("microfrontendapp").
 		Complete(r)
+}
+
+func isPackageAnESModule(packageJSON *PackageJSON) error {
+	if packageJSON.Browser != "" {
+		return nil
+	}
+
+	if packageJSON.Type == "module" {
+		return nil
+	}
+
+	if packageJSON.Exports != nil {
+		browser, ok := packageJSON.Exports["browser"]
+
+		if ok && browser != "" {
+			return nil
+		}
+
+		imp, ok := packageJSON.Exports["import"]
+
+		if ok && imp != "" {
+			return nil
+		}
+	}
+
+	if strings.HasSuffix(packageJSON.Main, ".mjs") {
+		return nil
+	}
+
+	return fmt.Errorf("package does not contain an ES module")
 }
