@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -22,7 +23,31 @@ type ClientObjectWithConditions struct {
 type NPMRegistryConfiguration struct {
 	AuthData AuthData `json:"authData"`
 	Host     string   `json:"host"`
-	Secure   bool     `json:"secure"`
+	InSecure bool     `json:"insecure"`
+}
+
+func NPMRegistryConfigurationNew(secret *corev1.Secret) *NPMRegistryConfiguration {
+	if secret == nil {
+		return &NPMRegistryConfiguration{
+			AuthData: AuthData{
+				Password: "",
+				Token:    "",
+				Username: "",
+			},
+			Host:     "registry.npmjs.org",
+			InSecure: false,
+		}
+	}
+
+	return &NPMRegistryConfiguration{
+		AuthData: AuthData{
+			Password: string(secret.Data["password"]),
+			Token:    string(secret.Data["token"]),
+			Username: string(secret.Data["username"]),
+		},
+		Host:     string(secret.Labels["kdex.dev/npm-server-address"]),
+		InSecure: string(secret.Labels["kdex.dev/npm-server-insecure"]) == "true",
+	}
 }
 
 func (c *NPMRegistryConfiguration) EncodeAuthorization() string {
@@ -41,10 +66,10 @@ func (c *NPMRegistryConfiguration) EncodeAuthorization() string {
 }
 
 func (c *NPMRegistryConfiguration) GetAddress() string {
-	if c.Secure {
-		return "https://" + c.Host
-	} else {
+	if c.InSecure {
 		return "http://" + c.Host
+	} else {
+		return "https://" + c.Host
 	}
 }
 
