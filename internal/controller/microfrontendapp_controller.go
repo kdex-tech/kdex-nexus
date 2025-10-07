@@ -222,7 +222,7 @@ func (r *MicroFrontEndAppReconciler) validatePackageReference(
 				latestVersionContent, ok := packageInfo.Versions[latestVersion]
 
 				if ok {
-					err = isPackageAnESModule(&latestVersionContent)
+					err = ensurePackageContainsAnESModule(&latestVersionContent)
 				}
 			}
 		}
@@ -257,7 +257,7 @@ func (r *MicroFrontEndAppReconciler) validatePackageReference(
 	return false
 }
 
-func isPackageAnESModule(packageJSON *PackageJSON) error {
+func ensurePackageContainsAnESModule(packageJSON *PackageJSON) error {
 	if packageJSON.Browser != "" {
 		return nil
 	}
