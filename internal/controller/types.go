@@ -27,7 +27,10 @@ type NPMRegistryConfiguration struct {
 }
 
 func NPMRegistryConfigurationNew(secret *corev1.Secret) *NPMRegistryConfiguration {
-	if secret == nil {
+	if secret == nil ||
+		secret.Labels == nil ||
+		secret.Labels["kdex.dev/npm-server-address"] == "" {
+
 		return &NPMRegistryConfiguration{
 			AuthData: AuthData{
 				Password: "",
