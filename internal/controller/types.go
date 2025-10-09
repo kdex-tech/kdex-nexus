@@ -45,8 +45,8 @@ func NPMRegistryConfigurationNew(secret *corev1.Secret) *NPMRegistryConfiguratio
 			Token:    string(secret.Data["token"]),
 			Username: string(secret.Data["username"]),
 		},
-		Host:     string(secret.Labels["kdex.dev/npm-server-address"]),
-		InSecure: string(secret.Labels["kdex.dev/npm-server-insecure"]) == "true",
+		Host:     secret.Labels["kdex.dev/npm-server-address"],
+		InSecure: secret.Labels["kdex.dev/npm-server-insecure"] == "true",
 	}
 }
 
