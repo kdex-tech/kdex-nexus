@@ -206,14 +206,18 @@ func (r *MicroFrontEndAppReconciler) validatePackageReference(
 
 		fmt.Println("Response Status:", resp.Status)
 
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			fmt.Println("Error reading response body:", err)
-			return
+		if resp.StatusCode != http.StatusOK {
+			err = fmt.Errorf("package not found: %s", packageURL)
 		}
 
 		packageInfo := &PackageInfo{}
-		err = json.Unmarshal(body, &packageInfo)
+
+		if err == nil {
+			var body []byte
+			if body, err = io.ReadAll(resp.Body); err == nil {
+				err = json.Unmarshal(body, &packageInfo)
+			}
+		}
 
 		if err == nil {
 			latestVersion := packageInfo.DistTags.Latest
