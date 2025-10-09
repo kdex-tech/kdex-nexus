@@ -27,6 +27,8 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"go.yaml.in/yaml/v3"
+	"golang.org/x/mod/modfile"
 
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
 	"k8s.io/client-go/rest"
@@ -86,7 +88,30 @@ func downloadCRD(url, tempDir string) (string, error) {
 }
 
 func getCRDModuleVersion() string {
-	return "v0.3.2"
+	cwd, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Fprintf(GinkgoWriter, "Current working directory: %s\n", cwd)
+
+	modBytes, err := os.ReadFile("../../go.mod")
+	if err != nil {
+		panic(err)
+	}
+
+	modFile, err := modfile.Parse("go.mod", modBytes, nil)
+	if err != nil {
+		panic(err)
+	}
+
+	for _, r := range modFile.Replace {
+		fmt.Printf("  Old: %s => New: %s %s\n", r.Old.Path, r.New.Path, r.New.Version)
+		if r.Old.Path == "kdex.dev/crds" {
+			return r.New.Version
+		}
+	}
+
+	panic("Couldn't find kdex-crds in go.mod")
 }
 
 func TestControllers(t *testing.T) {
@@ -115,14 +140,13 @@ var _ = BeforeSuite(func() {
 	}
 	defer os.RemoveAll(tempDir)
 
-	addRemoteCRD(&testEnv.CRDDirectoryPaths, tempDir, fmt.Sprintf("https://raw.githubusercontent.com/kdex-tech/kdex-crds/refs/tags/%s/config/crd/bases/kdex.dev_microfrontendapps.yaml", getCRDModuleVersion()))
-	addRemoteCRD(&testEnv.CRDDirectoryPaths, tempDir, fmt.Sprintf("https://raw.githubusercontent.com/kdex-tech/kdex-crds/refs/tags/%s/config/crd/bases/kdex.dev_microfrontendhosts.yaml", getCRDModuleVersion()))
-	addRemoteCRD(&testEnv.CRDDirectoryPaths, tempDir, fmt.Sprintf("https://raw.githubusercontent.com/kdex-tech/kdex-crds/refs/tags/%s/config/crd/bases/kdex.dev_microfrontendpagearchetypes.yaml", getCRDModuleVersion()))
-	addRemoteCRD(&testEnv.CRDDirectoryPaths, tempDir, fmt.Sprintf("https://raw.githubusercontent.com/kdex-tech/kdex-crds/refs/tags/%s/config/crd/bases/kdex.dev_microfrontendpagebindings.yaml", getCRDModuleVersion()))
-	addRemoteCRD(&testEnv.CRDDirectoryPaths, tempDir, fmt.Sprintf("https://raw.githubusercontent.com/kdex-tech/kdex-crds/refs/tags/%s/config/crd/bases/kdex.dev_microfrontendpagefooters.yaml", getCRDModuleVersion()))
-	addRemoteCRD(&testEnv.CRDDirectoryPaths, tempDir, fmt.Sprintf("https://raw.githubusercontent.com/kdex-tech/kdex-crds/refs/tags/%s/config/crd/bases/kdex.dev_microfrontendpageheaders.yaml", getCRDModuleVersion()))
-	addRemoteCRD(&testEnv.CRDDirectoryPaths, tempDir, fmt.Sprintf("https://raw.githubusercontent.com/kdex-tech/kdex-crds/refs/tags/%s/config/crd/bases/kdex.dev_microfrontendpagenavigations.yaml", getCRDModuleVersion()))
-	addRemoteCRD(&testEnv.CRDDirectoryPaths, tempDir, fmt.Sprintf("https://raw.githubusercontent.com/kdex-tech/kdex-crds/refs/tags/%s/config/crd/bases/kdex.dev_microfrontendrenderpages.yaml", getCRDModuleVersion()))
+	kdexCrdVersion := getCRDModuleVersion()
+	array := fetchSetofCRDs(kdexCrdVersion, tempDir)
+
+	for _, path := range array {
+		fullPath := fmt.Sprintf("https://raw.githubusercontent.com/kdex-tech/kdex-crds/refs/tags/%s/config/crd/%s", kdexCrdVersion, path)
+		addRemoteCRD(&testEnv.CRDDirectoryPaths, tempDir, fullPath)
+	}
 
 	// Retrieve the first found binary directory to allow running tests from IDEs
 	if getFirstFoundEnvTestBinaryDir() != "" {
@@ -148,6 +172,36 @@ var _ = AfterSuite(func() {
 	err := testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
 })
+
+func fetchSetofCRDs(kdexCrdVersion string, tempDir string) []string {
+	yamlURL := fmt.Sprintf("https://raw.githubusercontent.com/kdex-tech/kdex-crds/refs/tags/%s/config/crd/kustomization.yaml", kdexCrdVersion)
+	req, err := http.NewRequest("GET", yamlURL, nil)
+	if err != nil {
+		panic(err)
+	}
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		panic(err)
+	}
+
+	yamlObject := struct {
+		Resources []string `yaml:"resources"`
+	}{}
+
+	err = yaml.Unmarshal(body, &yamlObject)
+	if err != nil {
+		panic(err)
+	}
+
+	return yamlObject.Resources
+}
 
 // getFirstFoundEnvTestBinaryDir locates the first binary in the specified path.
 // ENVTEST-based tests depend on specific binaries, usually located in paths set by
