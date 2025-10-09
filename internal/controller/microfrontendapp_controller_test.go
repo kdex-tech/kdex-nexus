@@ -85,14 +85,21 @@ var _ = Describe("MicroFrontEndApp Controller", func() {
 			})
 			Expect(err).NotTo(HaveOccurred())
 
-			err = k8sClient.Get(ctx, typeNamespacedName, microfrontendapp)
-			Expect(err).NotTo(HaveOccurred())
+			check := func(g Gomega) {
+				err = k8sClient.Get(ctx, typeNamespacedName, microfrontendapp)
+				g.Expect(err).NotTo(HaveOccurred())
 
-			Expect(
-				apimeta.IsStatusConditionTrue(
-					microfrontendapp.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady),
-				),
-			).To(BeFalse())
+				g.Expect(
+					apimeta.IsStatusConditionTrue(
+						microfrontendapp.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady),
+					),
+				).To(BeFalse())
+
+				condition := apimeta.FindStatusCondition(microfrontendapp.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady))
+				g.Expect(condition.Reason).To(Equal("PackageValidationFailed"))
+				g.Expect(condition.Message).To(ContainSubstring("package not found:"))
+			}
+			Eventually(check).Should(Succeed())
 		})
 	})
 })
