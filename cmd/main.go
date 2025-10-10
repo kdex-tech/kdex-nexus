@@ -38,6 +38,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	"kdex.dev/nexus/internal/controller"
+	"kdex.dev/nexus/internal/npm"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -201,9 +202,10 @@ func main() {
 		os.Exit(1)
 	}
 	if err := (&controller.MicroFrontEndAppReconciler{
-		Client:       mgr.GetClient(),
-		RequeueDelay: time.Duration(requeueDelaySeconds) * time.Second,
-		Scheme:       mgr.GetScheme(),
+		Client:          mgr.GetClient(),
+		RegistryFactory: npm.NewRegistry,
+		RequeueDelay:    time.Duration(requeueDelaySeconds) * time.Second,
+		Scheme:          mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "MicroFrontEndApp")
 		os.Exit(1)

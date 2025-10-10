@@ -18,11 +18,7 @@ package controller
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
-	"strings"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -31,7 +27,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/util/retry"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
+	"kdex.dev/nexus/internal/npm"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -42,8 +40,9 @@ import (
 // MicroFrontEndAppReconciler reconciles a MicroFrontEndApp object
 type MicroFrontEndAppReconciler struct {
 	client.Client
-	RequeueDelay time.Duration
-	Scheme       *runtime.Scheme
+	RegistryFactory func(secret *corev1.Secret, error func(err error, msg string, keysAndValues ...any)) npm.Registry
+	RequeueDelay    time.Duration
+	Scheme          *runtime.Scheme
 }
 
 // +kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch
@@ -175,118 +174,47 @@ func (r *MicroFrontEndAppReconciler) validatePackageReference(
 	go func() {
 		log.Info("validating package reference for MicroFrontEndApp", "app", app.Name)
 
-		nrc := NPMRegistryConfigurationNew(secret)
+		registry := r.RegistryFactory(secret, log.Error)
 
-		packageURL := fmt.Sprintf("%s/%s", nrc.GetAddress(), app.Spec.PackageReference.Name)
+		var condition metav1.Condition
 
-		req, err := http.NewRequest("GET", packageURL, nil)
-		if err != nil {
-			fmt.Println("Error creating request:", err)
-			return
-		}
-
-		authorization := nrc.EncodeAuthorization()
-		if authorization != "" {
-			req.Header.Set("Authorization", authorization)
-		}
-
-		req.Header.Set("Accept", "application/vnd.npm.formats+json")
-
-		client := &http.Client{}
-		resp, err := client.Do(req)
-		if err != nil {
-			fmt.Println("Error sending request:", err)
-			return
-		}
-		defer func() {
-			if err := resp.Body.Close(); err != nil {
-				log.Error(err, "failed to close response body")
-			}
-		}()
-
-		fmt.Println("Response Status:", resp.Status)
-
-		if resp.StatusCode != http.StatusOK {
-			err = fmt.Errorf("package not found: %s", packageURL)
-		}
-
-		packageInfo := &PackageInfo{}
-
-		if err == nil {
-			var body []byte
-			if body, err = io.ReadAll(resp.Body); err == nil {
-				err = json.Unmarshal(body, &packageInfo)
-			}
-		}
-
-		if err == nil {
-			latestVersion := packageInfo.DistTags.Latest
-
-			if latestVersion != "" {
-				latestVersionContent, ok := packageInfo.Versions[latestVersion]
-
-				if ok {
-					err = ensurePackageContainsAnESModule(&latestVersionContent)
-				}
-			}
-		}
-
-		if err != nil {
-			apimeta.SetStatusCondition(
-				&app.Status.Conditions,
-				*kdexv1alpha1.NewCondition(
-					kdexv1alpha1.ConditionTypeReady,
-					metav1.ConditionFalse,
-					"PackageValidationFailed",
-					err.Error(),
-				),
+		if err := registry.ValidatePackage(
+			app.Spec.PackageReference.Name,
+			app.Spec.PackageReference.Version,
+		); err != nil {
+			condition = *kdexv1alpha1.NewCondition(
+				kdexv1alpha1.ConditionTypeReady,
+				metav1.ConditionFalse,
+				"PackageValidationFailed",
+				err.Error(),
 			)
 		} else {
-			apimeta.SetStatusCondition(
-				&app.Status.Conditions,
-				*kdexv1alpha1.NewCondition(
-					kdexv1alpha1.ConditionTypeReady,
-					metav1.ConditionTrue,
-					kdexv1alpha1.ConditionReasonReconcileSuccess,
-					"all references resolved successfully",
-				),
+			condition = *kdexv1alpha1.NewCondition(
+				kdexv1alpha1.ConditionTypeReady,
+				metav1.ConditionTrue,
+				kdexv1alpha1.ConditionReasonReconcileSuccess,
+				"all references resolved successfully",
 			)
 		}
 
-		if err := r.Status().Update(ctx, app); err != nil {
+		appName := types.NamespacedName{
+			Name:      app.Name,
+			Namespace: app.Namespace,
+		}
+
+		if err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+			if err := r.Get(ctx, appName, app); err != nil {
+				return err
+			}
+			apimeta.SetStatusCondition(
+				&app.Status.Conditions,
+				condition,
+			)
+			return r.Status().Update(ctx, app)
+		}); err != nil {
 			log.Error(err, "failed to update app status")
 		}
 	}()
 
 	return false
-}
-
-func ensurePackageContainsAnESModule(packageJSON *PackageJSON) error {
-	if packageJSON.Browser != "" {
-		return nil
-	}
-
-	if packageJSON.Type == "module" {
-		return nil
-	}
-
-	if packageJSON.Exports != nil {
-		browser, ok := packageJSON.Exports["browser"]
-
-		if ok && browser != "" {
-			return nil
-		}
-
-		imp, ok := packageJSON.Exports["import"]
-
-		if ok && imp != "" {
-			return nil
-		}
-	}
-
-	if strings.HasSuffix(packageJSON.Main, ".mjs") {
-		return nil
-	}
-
-	return fmt.Errorf("package does not contain an ES module")
 }

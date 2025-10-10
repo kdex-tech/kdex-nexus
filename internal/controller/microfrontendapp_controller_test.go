@@ -21,12 +21,20 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
+	"kdex.dev/nexus/internal/npm"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
+
+type MockRegistry struct{}
+
+func (m *MockRegistry) ValidatePackage(packageName string, packageVersion string) error {
+	return nil
+}
 
 var _ = Describe("MicroFrontEndApp Controller", func() {
 	Context("When reconciling a resource", func() {
@@ -52,10 +60,14 @@ var _ = Describe("MicroFrontEndApp Controller", func() {
 
 		It("should successfully reconcile a valid resource", func() {
 			By("Creating the reconciler")
+
 			controllerReconciler := &MicroFrontEndAppReconciler{
-				Client:       k8sClient,
-				Scheme:       k8sClient.Scheme(),
+				Client: k8sClient,
+				RegistryFactory: func(secret *corev1.Secret, error func(err error, msg string, keysAndValues ...any)) npm.Registry {
+					return &MockRegistry{}
+				},
 				RequeueDelay: 0,
+				Scheme:       k8sClient.Scheme(),
 			}
 
 			By("Creating the resource")
@@ -93,11 +105,11 @@ var _ = Describe("MicroFrontEndApp Controller", func() {
 					apimeta.IsStatusConditionTrue(
 						microfrontendapp.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady),
 					),
-				).To(BeFalse())
+				).To(BeTrue())
 
 				condition := apimeta.FindStatusCondition(microfrontendapp.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady))
-				g.Expect(condition.Reason).To(Equal("PackageValidationFailed"))
-				g.Expect(condition.Message).To(ContainSubstring("package not found:"))
+				g.Expect(condition.Reason).To(Equal(string(kdexv1alpha1.ConditionReasonReconcileSuccess)))
+				g.Expect(condition.Message).To(Equal("all references resolved successfully"))
 			}
 			Eventually(check).Should(Succeed())
 		})
