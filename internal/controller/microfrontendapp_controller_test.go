@@ -47,6 +47,7 @@ var _ = Describe("MicroFrontEndApp Controller", func() {
 			Name:      resourceName,
 			Namespace: namespace,
 		}
+
 		microfrontendapp := &kdexv1alpha1.MicroFrontEndApp{}
 
 		AfterEach(func() {
@@ -63,7 +64,10 @@ var _ = Describe("MicroFrontEndApp Controller", func() {
 
 			controllerReconciler := &MicroFrontEndAppReconciler{
 				Client: k8sClient,
-				RegistryFactory: func(secret *corev1.Secret, error func(err error, msg string, keysAndValues ...any)) npm.Registry {
+				RegistryFactory: func(
+					secret *corev1.Secret,
+					error func(err error, msg string, keysAndValues ...any),
+				) npm.Registry {
 					return &MockRegistry{}
 				},
 				RequeueDelay: 0,
@@ -71,6 +75,7 @@ var _ = Describe("MicroFrontEndApp Controller", func() {
 			}
 
 			By("Creating the resource")
+
 			resource := &kdexv1alpha1.MicroFrontEndApp{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
@@ -89,28 +94,46 @@ var _ = Describe("MicroFrontEndApp Controller", func() {
 					},
 				},
 			}
+
 			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 
 			By("Reconciling the created resource")
+
 			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
 				NamespacedName: typeNamespacedName,
 			})
+
 			Expect(err).NotTo(HaveOccurred())
 
 			check := func(g Gomega) {
 				err = k8sClient.Get(ctx, typeNamespacedName, microfrontendapp)
+
 				g.Expect(err).NotTo(HaveOccurred())
 
 				g.Expect(
 					apimeta.IsStatusConditionTrue(
-						microfrontendapp.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady),
+						microfrontendapp.Status.Conditions,
+						string(kdexv1alpha1.ConditionTypeReady),
 					),
 				).To(BeTrue())
 
-				condition := apimeta.FindStatusCondition(microfrontendapp.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady))
-				g.Expect(condition.Reason).To(Equal(string(kdexv1alpha1.ConditionReasonReconcileSuccess)))
-				g.Expect(condition.Message).To(Equal("all references resolved successfully"))
+				condition := apimeta.FindStatusCondition(
+					microfrontendapp.Status.Conditions,
+					string(kdexv1alpha1.ConditionTypeReady),
+				)
+
+				g.Expect(
+					condition.Reason,
+				).To(
+					Equal(string(kdexv1alpha1.ConditionReasonReconcileSuccess)),
+				)
+				g.Expect(
+					condition.Message,
+				).To(
+					Equal("all references resolved successfully"),
+				)
 			}
+
 			Eventually(check).Should(Succeed())
 		})
 	})
