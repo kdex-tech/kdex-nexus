@@ -26,7 +26,8 @@ func (r *MicroFrontEndCommonReconciler) GetNavigation(
 	ctx context.Context,
 	log logr.Logger,
 	navigationRef corev1.LocalObjectReference,
-	object *ClientObjectWithConditions,
+	conditions *[]metav1.Condition,
+	object client.Object,
 ) (*kdexv1alpha1.MicroFrontEndPageNavigation, ctrl.Result, error) {
 	var navigation kdexv1alpha1.MicroFrontEndPageNavigation
 	navigationName := types.NamespacedName{
@@ -37,7 +38,7 @@ func (r *MicroFrontEndCommonReconciler) GetNavigation(
 		if errors.IsNotFound(err) {
 			log.Error(err, "referenced MicroFrontEndPageNavigation not found", "name", navigationRef.Name)
 			apimeta.SetStatusCondition(
-				object.Conditions,
+				conditions,
 				*kdexv1alpha1.NewCondition(
 					kdexv1alpha1.ConditionTypeReady,
 					metav1.ConditionFalse,
@@ -45,7 +46,7 @@ func (r *MicroFrontEndCommonReconciler) GetNavigation(
 					fmt.Sprintf("referenced MicroFrontEndPageNavigation %s not found", navigationRef.Name),
 				),
 			)
-			if err := r.Status().Update(ctx, object.Object); err != nil {
+			if err := r.Status().Update(ctx, object); err != nil {
 				return nil, ctrl.Result{}, err
 			}
 

@@ -367,10 +367,7 @@ func (r *MicroFrontEndPageBindingReconciler) navigations(
 	}
 	if navigationRef != nil {
 		navigation, response, err := r.GetNavigation(
-			ctx, log, *navigationRef, &ClientObjectWithConditions{
-				Object:     pageBinding,
-				Conditions: &pageBinding.Status.Conditions,
-			})
+			ctx, log, *navigationRef, &pageBinding.Status.Conditions, pageBinding)
 
 		if navigation == nil {
 			return nil, response, err
@@ -385,10 +382,7 @@ func (r *MicroFrontEndPageBindingReconciler) navigations(
 
 	for navigationName, navigationRef := range *pageArchetype.Spec.ExtraNavigations {
 		navigation, response, err := r.GetNavigation(
-			ctx, log, navigationRef, &ClientObjectWithConditions{
-				Object:     pageBinding,
-				Conditions: &pageBinding.Status.Conditions,
-			})
+			ctx, log, navigationRef, &pageBinding.Status.Conditions, pageBinding)
 
 		if navigation == nil {
 			return nil, response, err

@@ -115,10 +115,7 @@ func (r *MicroFrontEndPageArchetypeReconciler) Reconcile(ctx context.Context, re
 
 	if pageArchetype.Spec.DefaultMainNavigationRef != nil {
 		navigation, response, err := r.GetNavigation(
-			ctx, log, *pageArchetype.Spec.DefaultMainNavigationRef, &ClientObjectWithConditions{
-				Conditions: &pageArchetype.Status.Conditions,
-				Object:     &pageArchetype,
-			})
+			ctx, log, *pageArchetype.Spec.DefaultMainNavigationRef, &pageArchetype.Status.Conditions, &pageArchetype)
 
 		if navigation == nil {
 			return response, err
@@ -128,10 +125,7 @@ func (r *MicroFrontEndPageArchetypeReconciler) Reconcile(ctx context.Context, re
 	if pageArchetype.Spec.ExtraNavigations != nil {
 		for _, navigationRef := range *pageArchetype.Spec.ExtraNavigations {
 			navigation, response, err := r.GetNavigation(
-				ctx, log, navigationRef, &ClientObjectWithConditions{
-					Conditions: &pageArchetype.Status.Conditions,
-					Object:     &pageArchetype,
-				})
+				ctx, log, navigationRef, &pageArchetype.Status.Conditions, &pageArchetype)
 
 			if navigation == nil {
 				return response, err
