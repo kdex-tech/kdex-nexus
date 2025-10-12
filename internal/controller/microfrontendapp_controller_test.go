@@ -91,7 +91,7 @@ var _ = Describe("MicroFrontEndApp Controller", Ordered, func() {
 			}
 		})
 
-		It("should not successfully reconcile an invalid resource", func() {
+		It("it must not become ready if it has missing package reference", func() {
 			app := &kdexv1alpha1.MicroFrontEndApp{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
@@ -146,7 +146,7 @@ var _ = Describe("MicroFrontEndApp Controller", Ordered, func() {
 			Eventually(check).Should(Succeed())
 		})
 
-		It("should successfully reconcile a valid resource", func() {
+		It("it should become ready if it has a valid package reference", func() {
 			app := &kdexv1alpha1.MicroFrontEndApp{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
@@ -205,7 +205,7 @@ var _ = Describe("MicroFrontEndApp Controller", Ordered, func() {
 			Eventually(check).Should(Succeed())
 		})
 
-		It("a resource with a invalid package reference should become failed", func() {
+		It("should not become ready if it has a unscoped package reference", func() {
 			typeNamespacedName := types.NamespacedName{
 				Name:      resourceName,
 				Namespace: namespace,
@@ -257,6 +257,67 @@ var _ = Describe("MicroFrontEndApp Controller", Ordered, func() {
 					condition.Message,
 				).To(
 					ContainSubstring("invalid package name, must be scoped with @scope/name:"),
+				)
+			}
+
+			Eventually(check).Should(Succeed())
+		})
+
+		It("should not become ready when referenced secret is not found", func() {
+			typeNamespacedName := types.NamespacedName{
+				Name:      resourceName,
+				Namespace: namespace,
+			}
+
+			app := &kdexv1alpha1.MicroFrontEndApp{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.MicroFrontEndAppSpec{
+					CustomElements: []kdexv1alpha1.CustomElement{
+						{
+							Description: "",
+							Name:        "foo",
+						},
+					},
+					PackageReference: kdexv1alpha1.PackageReference{
+						Name: "my-scope/my-package",
+						SecretRef: &corev1.LocalObjectReference{
+							Name: "non-existent-secret",
+						},
+						Version: "1.0.0",
+					},
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, app)).To(Succeed())
+
+			check := func(g Gomega) {
+				microfrontendapp := &kdexv1alpha1.MicroFrontEndApp{}
+				err := k8sClient.Get(ctx, typeNamespacedName, microfrontendapp)
+				g.Expect(err).NotTo(HaveOccurred())
+
+				condition := apimeta.FindStatusCondition(
+					microfrontendapp.Status.Conditions,
+					string(kdexv1alpha1.ConditionTypeReady),
+				)
+
+				g.Expect(condition).ToNot(BeNil())
+				g.Expect(
+					condition.Status,
+				).To(
+					Equal(metav1.ConditionFalse),
+				)
+				g.Expect(
+					condition.Reason,
+				).To(
+					Equal("ReconcileError"),
+				)
+				g.Expect(
+					condition.Message,
+				).To(
+					Equal("referenced Secret non-existent-secret not found"),
 				)
 			}
 
