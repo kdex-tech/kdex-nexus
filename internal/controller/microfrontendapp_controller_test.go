@@ -80,16 +80,16 @@ var _ = Describe("MicroFrontEndApp Controller", Ordered, func() {
 
 		ctx := context.Background()
 
-		resources := map[types.NamespacedName]client.Object{}
+		resourcesToDelete := map[types.NamespacedName]client.Object{}
 
-		resources[types.NamespacedName{
+		resourcesToDelete[types.NamespacedName{
 			Name:      resourceName,
 			Namespace: namespace,
 		}] = &kdexv1alpha1.MicroFrontEndApp{}
 
 		AfterEach(func() {
 			By("Cleanup all the test resource instances")
-			for name, resource := range resources {
+			for name, resource := range resourcesToDelete {
 				err := k8sClient.Get(ctx, name, resource)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
@@ -461,6 +461,11 @@ var _ = Describe("MicroFrontEndApp Controller", Ordered, func() {
 					"password": []byte("password"),
 				},
 			}
+
+			resourcesToDelete[types.NamespacedName{
+				Name:      secret.Name,
+				Namespace: namespace,
+			}] = secret
 
 			Expect(k8sClient.Create(ctx, secret)).To(Succeed())
 
