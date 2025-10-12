@@ -179,6 +179,36 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 			}
 
 			Eventually(check).Should(Succeed())
+
+			By("but when added should become ready")
+			navigation := &kdexv1alpha1.MicroFrontEndPageNavigation{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "non-existent-main-navigation",
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.MicroFrontEndPageNavigationSpec{
+					Content: "<h1>Hello, World!</h1>",
+				},
+			}
+			Expect(k8sClient.Create(ctx, navigation)).To(Succeed())
+
+			resourcesToDelete[types.NamespacedName{
+				Name:      navigation.Name,
+				Namespace: namespace,
+			}] = &kdexv1alpha1.MicroFrontEndPageNavigation{}
+
+			check = func(g Gomega) {
+				err := k8sClient.Get(ctx, typeNamespacedName, resource)
+				g.Expect(err).NotTo(HaveOccurred())
+
+				g.Expect(
+					apimeta.IsStatusConditionTrue(
+						resource.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady),
+					),
+				).To(BeTrue())
+			}
+
+			Eventually(check).Should(Succeed())
 		})
 
 		It("with missing default footer reference should not successfully reconcile the resource", func() {
@@ -212,6 +242,36 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 			}
 
 			Eventually(check).Should(Succeed())
+
+			By("but when added should become ready")
+			footer := &kdexv1alpha1.MicroFrontEndPageFooter{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "non-existent-footer",
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.MicroFrontEndPageFooterSpec{
+					Content: "<h1>Hello, World!</h1>",
+				},
+			}
+			Expect(k8sClient.Create(ctx, footer)).To(Succeed())
+
+			resourcesToDelete[types.NamespacedName{
+				Name:      footer.Name,
+				Namespace: namespace,
+			}] = &kdexv1alpha1.MicroFrontEndPageFooter{}
+
+			check = func(g Gomega) {
+				err := k8sClient.Get(ctx, typeNamespacedName, resource)
+				g.Expect(err).NotTo(HaveOccurred())
+
+				g.Expect(
+					apimeta.IsStatusConditionTrue(
+						resource.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady),
+					),
+				).To(BeTrue())
+			}
+
+			Eventually(check).Should(Succeed())
 		})
 
 		It("with missing default header reference should not successfully reconcile the resource", func() {
@@ -239,6 +299,36 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 
 				g.Expect(
 					apimeta.IsStatusConditionFalse(
+						resource.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady),
+					),
+				).To(BeTrue())
+			}
+
+			Eventually(check).Should(Succeed())
+
+			By("but when added should become ready")
+			header := &kdexv1alpha1.MicroFrontEndPageHeader{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "non-existent-header",
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.MicroFrontEndPageHeaderSpec{
+					Content: "<h1>Hello, World!</h1>",
+				},
+			}
+			Expect(k8sClient.Create(ctx, header)).To(Succeed())
+
+			resourcesToDelete[types.NamespacedName{
+				Name:      header.Name,
+				Namespace: namespace,
+			}] = &kdexv1alpha1.MicroFrontEndPageFooter{}
+
+			check = func(g Gomega) {
+				err := k8sClient.Get(ctx, typeNamespacedName, resource)
+				g.Expect(err).NotTo(HaveOccurred())
+
+				g.Expect(
+					apimeta.IsStatusConditionTrue(
 						resource.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady),
 					),
 				).To(BeTrue())
