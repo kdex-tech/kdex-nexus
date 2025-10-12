@@ -95,7 +95,7 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 			resource := &kdexv1alpha1.MicroFrontEndPageArchetype{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
-					Namespace: "default",
+					Namespace: namespace,
 				},
 				Spec: kdexv1alpha1.MicroFrontEndPageArchetypeSpec{
 					Content: "<h1>Hello, World!</h1>",
@@ -160,7 +160,7 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 			resource := &kdexv1alpha1.MicroFrontEndPageArchetype{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
-					Namespace: "default",
+					Namespace: namespace,
 				},
 				Spec: kdexv1alpha1.MicroFrontEndPageArchetypeSpec{
 					Content: "<h1>Hello, World!</h1>",
@@ -223,7 +223,7 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 			resource := &kdexv1alpha1.MicroFrontEndPageArchetype{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
-					Namespace: "default",
+					Namespace: namespace,
 				},
 				Spec: kdexv1alpha1.MicroFrontEndPageArchetypeSpec{
 					Content: "<h1>Hello, World!</h1>",
@@ -286,7 +286,7 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 			resource := &kdexv1alpha1.MicroFrontEndPageArchetype{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
-					Namespace: "default",
+					Namespace: namespace,
 				},
 				Spec: kdexv1alpha1.MicroFrontEndPageArchetypeSpec{
 					Content: "<h1>Hello, World!</h1>",
@@ -349,7 +349,7 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 			resource := &kdexv1alpha1.MicroFrontEndPageArchetype{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
-					Namespace: "default",
+					Namespace: namespace,
 				},
 				Spec: kdexv1alpha1.MicroFrontEndPageArchetypeSpec{
 					Content: "<h1>Hello, World!</h1>",
