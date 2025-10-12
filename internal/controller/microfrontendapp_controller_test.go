@@ -22,13 +22,14 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	"kdex.dev/nexus/internal/npm"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
 type MockRegistry struct{}
@@ -37,7 +38,37 @@ func (m *MockRegistry) ValidatePackage(packageName string, packageVersion string
 	return nil
 }
 
-var _ = Describe("MicroFrontEndApp Controller", func() {
+var _ = Describe("MicroFrontEndApp Controller", Ordered, func() {
+	BeforeAll(func() {
+		By("Creating the reconciler")
+
+		k8sManager, err := manager.New(cfg, manager.Options{
+			Scheme: scheme.Scheme,
+		})
+		Expect(err).ToNot(HaveOccurred())
+
+		controllerReconciler := &MicroFrontEndAppReconciler{
+			Client: k8sManager.GetClient(),
+			RegistryFactory: func(
+				secret *corev1.Secret,
+				error func(err error, msg string, keysAndValues ...any),
+			) npm.Registry {
+				return &MockRegistry{}
+			},
+			RequeueDelay: 0,
+			Scheme:       k8sManager.GetScheme(),
+		}
+
+		err = controllerReconciler.SetupWithManager(k8sManager)
+		Expect(err).ToNot(HaveOccurred())
+
+		go func() {
+			defer GinkgoRecover()
+			err := k8sManager.Start(ctx)
+			Expect(err).ToNot(HaveOccurred(), "failed to run manager")
+		}()
+	})
+
 	Context("When reconciling a resource", func() {
 		const namespace = "default"
 		const resourceName = "test-resource"
@@ -61,61 +92,86 @@ var _ = Describe("MicroFrontEndApp Controller", func() {
 		})
 
 		It("should not successfully reconcile an invalid resource", func() {
+			app := &kdexv1alpha1.MicroFrontEndApp{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.MicroFrontEndAppSpec{
+					CustomElements: []kdexv1alpha1.CustomElement{
+						{
+							Description: "",
+							Name:        "foo",
+						},
+					},
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, app)).To(Succeed())
+
 			typeNamespacedName := types.NamespacedName{
 				Name:      resourceName,
 				Namespace: namespace,
 			}
 
-			assertCreateReconcilerForApp(
-				typeNamespacedName,
-				&kdexv1alpha1.MicroFrontEndApp{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      resourceName,
-						Namespace: namespace,
-					},
-					Spec: kdexv1alpha1.MicroFrontEndAppSpec{
-						CustomElements: []kdexv1alpha1.CustomElement{
-							{
-								Description: "",
-								Name:        "foo",
-							},
-						},
-					},
-				},
-				&MockRegistry{},
-				true,
-			)
+			check := func(g Gomega) {
+				microfrontendapp := &kdexv1alpha1.MicroFrontEndApp{}
+				err := k8sClient.Get(ctx, typeNamespacedName, microfrontendapp)
+
+				g.Expect(err).NotTo(HaveOccurred())
+
+				condition := apimeta.FindStatusCondition(
+					microfrontendapp.Status.Conditions,
+					string(kdexv1alpha1.ConditionTypeReady),
+				)
+
+				g.Expect(condition).ToNot(BeNil())
+				g.Expect(
+					condition.Status,
+				).To(
+					Equal(metav1.ConditionFalse),
+				)
+				g.Expect(
+					condition.Reason,
+				).To(
+					Equal("PackageValidationFailed"),
+				)
+				g.Expect(
+					condition.Message,
+				).To(
+					ContainSubstring("invalid package name, must be scoped with @scope/name:"),
+				)
+			}
+
+			Eventually(check).Should(Succeed())
 		})
 
 		It("should successfully reconcile a valid resource", func() {
+			app := &kdexv1alpha1.MicroFrontEndApp{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.MicroFrontEndAppSpec{
+					CustomElements: []kdexv1alpha1.CustomElement{
+						{
+							Description: "",
+							Name:        "foo",
+						},
+					},
+					PackageReference: kdexv1alpha1.PackageReference{
+						Name:    "@my-scope/my-package",
+						Version: "1.0.0",
+					},
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, app)).To(Succeed())
+
 			typeNamespacedName := types.NamespacedName{
 				Name:      resourceName,
 				Namespace: namespace,
 			}
-
-			assertCreateReconcilerForApp(
-				typeNamespacedName,
-				&kdexv1alpha1.MicroFrontEndApp{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      resourceName,
-						Namespace: namespace,
-					},
-					Spec: kdexv1alpha1.MicroFrontEndAppSpec{
-						CustomElements: []kdexv1alpha1.CustomElement{
-							{
-								Description: "",
-								Name:        "foo",
-							},
-						},
-						PackageReference: kdexv1alpha1.PackageReference{
-							Name:    "@my-scope/my-package",
-							Version: "1.0.0",
-						},
-					},
-				},
-				&MockRegistry{},
-				false,
-			)
 
 			check := func(g Gomega) {
 				microfrontendapp := &kdexv1alpha1.MicroFrontEndApp{}
@@ -155,29 +211,26 @@ var _ = Describe("MicroFrontEndApp Controller", func() {
 				Namespace: namespace,
 			}
 
-			assertCreateReconcilerForApp(
-				typeNamespacedName,
-				&kdexv1alpha1.MicroFrontEndApp{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      resourceName,
-						Namespace: namespace,
+			app := &kdexv1alpha1.MicroFrontEndApp{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.MicroFrontEndAppSpec{
+					CustomElements: []kdexv1alpha1.CustomElement{
+						{
+							Description: "",
+							Name:        "foo",
+						},
 					},
-					Spec: kdexv1alpha1.MicroFrontEndAppSpec{
-						CustomElements: []kdexv1alpha1.CustomElement{
-							{
-								Description: "",
-								Name:        "foo",
-							},
-						},
-						PackageReference: kdexv1alpha1.PackageReference{
-							Name:    "my-scope/my-package",
-							Version: "1.0.0",
-						},
+					PackageReference: kdexv1alpha1.PackageReference{
+						Name:    "my-scope/my-package",
+						Version: "1.0.0",
 					},
 				},
-				&MockRegistry{},
-				true,
-			)
+			}
+
+			Expect(k8sClient.Create(ctx, app)).To(Succeed())
 
 			check := func(g Gomega) {
 				microfrontendapp := &kdexv1alpha1.MicroFrontEndApp{}
@@ -211,42 +264,3 @@ var _ = Describe("MicroFrontEndApp Controller", func() {
 		})
 	})
 })
-
-func assertCreateReconcilerForApp(
-	typeNamespacedName types.NamespacedName,
-	app *kdexv1alpha1.MicroFrontEndApp,
-	registry npm.Registry,
-	resultsInError bool,
-) *MicroFrontEndAppReconciler {
-	By("Creating the reconciler")
-
-	controllerReconciler := &MicroFrontEndAppReconciler{
-		Client: k8sClient,
-		RegistryFactory: func(
-			secret *corev1.Secret,
-			error func(err error, msg string, keysAndValues ...any),
-		) npm.Registry {
-			return registry
-		},
-		RequeueDelay: 0,
-		Scheme:       k8sClient.Scheme(),
-	}
-
-	By("Creating the resource")
-
-	Expect(k8sClient.Create(ctx, app)).To(Succeed())
-
-	By("Reconciling the created resource")
-
-	_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
-		NamespacedName: typeNamespacedName,
-	})
-
-	if resultsInError {
-		Expect(err).To(HaveOccurred())
-	} else {
-		Expect(err).NotTo(HaveOccurred())
-	}
-
-	return controllerReconciler
-}
