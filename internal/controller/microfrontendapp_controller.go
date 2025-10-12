@@ -119,7 +119,7 @@ func (r *MicroFrontEndAppReconciler) findAppsForSecret(
 ) []reconcile.Request {
 	log := logf.FromContext(ctx)
 
-	if _, ok := secret.GetLabels()["kdex.dev/npm-server-address"]; !ok {
+	if _, ok := secret.GetAnnotations()["kdex.dev/npm-server-address"]; !ok {
 		return []reconcile.Request{}
 	}
 

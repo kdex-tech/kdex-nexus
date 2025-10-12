@@ -22,8 +22,8 @@ type RegistryConfiguration struct {
 
 func RegistryConfigurationNew(secret *corev1.Secret) *RegistryConfiguration {
 	if secret == nil ||
-		secret.Labels == nil ||
-		secret.Labels["kdex.dev/npm-server-address"] == "" {
+		secret.Annotations == nil ||
+		secret.Annotations["kdex.dev/npm-server-address"] == "" {
 
 		return &RegistryConfiguration{
 			AuthData: AuthData{
@@ -42,8 +42,8 @@ func RegistryConfigurationNew(secret *corev1.Secret) *RegistryConfiguration {
 			Token:    string(secret.Data["token"]),
 			Username: string(secret.Data["username"]),
 		},
-		Host:     secret.Labels["kdex.dev/npm-server-address"],
-		InSecure: secret.Labels["kdex.dev/npm-server-insecure"] == "true",
+		Host:     secret.Annotations["kdex.dev/npm-server-address"],
+		InSecure: secret.Annotations["kdex.dev/npm-server-insecure"] == "true",
 	}
 }
 

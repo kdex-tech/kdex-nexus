@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -35,6 +36,10 @@ import (
 type MockRegistry struct{}
 
 func (m *MockRegistry) ValidatePackage(packageName string, packageVersion string) error {
+	if packageName == "@my-scope/missing" {
+		return fmt.Errorf("package not found: %s", packageName)
+	}
+
 	return nil
 }
 
@@ -263,6 +268,65 @@ var _ = Describe("MicroFrontEndApp Controller", Ordered, func() {
 			Eventually(check).Should(Succeed())
 		})
 
+		It("it must not become ready if it has a valid package reference but the package is missing", func() {
+			app := &kdexv1alpha1.MicroFrontEndApp{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.MicroFrontEndAppSpec{
+					CustomElements: []kdexv1alpha1.CustomElement{
+						{
+							Description: "",
+							Name:        "foo",
+						},
+					},
+					PackageReference: kdexv1alpha1.PackageReference{
+						Name:    "@my-scope/missing",
+						Version: "1.0.0",
+					},
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, app)).To(Succeed())
+
+			typeNamespacedName := types.NamespacedName{
+				Name:      resourceName,
+				Namespace: namespace,
+			}
+
+			check := func(g Gomega) {
+				microfrontendapp := &kdexv1alpha1.MicroFrontEndApp{}
+				err := k8sClient.Get(ctx, typeNamespacedName, microfrontendapp)
+
+				g.Expect(err).NotTo(HaveOccurred())
+
+				condition := apimeta.FindStatusCondition(
+					microfrontendapp.Status.Conditions,
+					string(kdexv1alpha1.ConditionTypeReady),
+				)
+
+				g.Expect(condition).ToNot(BeNil())
+				g.Expect(
+					condition.Status,
+				).To(
+					Equal(metav1.ConditionFalse),
+				)
+				g.Expect(
+					condition.Reason,
+				).To(
+					Equal("PackageValidationFailed"),
+				)
+				g.Expect(
+					condition.Message,
+				).To(
+					Equal("package not found: @my-scope/missing"),
+				)
+			}
+
+			Eventually(check).Should(Succeed())
+		})
+
 		It("should not become ready when referenced secret is not found", func() {
 			typeNamespacedName := types.NamespacedName{
 				Name:      resourceName,
@@ -318,6 +382,113 @@ var _ = Describe("MicroFrontEndApp Controller", Ordered, func() {
 					condition.Message,
 				).To(
 					Equal("referenced Secret non-existent-secret not found"),
+				)
+			}
+
+			Eventually(check).Should(Succeed())
+		})
+
+		It("should become ready when referenced secret is found", func() {
+			typeNamespacedName := types.NamespacedName{
+				Name:      resourceName,
+				Namespace: namespace,
+			}
+
+			app := &kdexv1alpha1.MicroFrontEndApp{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.MicroFrontEndAppSpec{
+					CustomElements: []kdexv1alpha1.CustomElement{
+						{
+							Description: "",
+							Name:        "foo",
+						},
+					},
+					PackageReference: kdexv1alpha1.PackageReference{
+						Name: "@my-scope/my-package",
+						SecretRef: &corev1.LocalObjectReference{
+							Name: "existent-secret",
+						},
+						Version: "1.0.0",
+					},
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, app)).To(Succeed())
+
+			check := func(g Gomega) {
+				microfrontendapp := &kdexv1alpha1.MicroFrontEndApp{}
+				err := k8sClient.Get(ctx, typeNamespacedName, microfrontendapp)
+				g.Expect(err).NotTo(HaveOccurred())
+
+				condition := apimeta.FindStatusCondition(
+					microfrontendapp.Status.Conditions,
+					string(kdexv1alpha1.ConditionTypeReady),
+				)
+
+				g.Expect(condition).ToNot(BeNil())
+				g.Expect(
+					condition.Status,
+				).To(
+					Equal(metav1.ConditionFalse),
+				)
+				g.Expect(
+					condition.Reason,
+				).To(
+					Equal("ReconcileError"),
+				)
+				g.Expect(
+					condition.Message,
+				).To(
+					Equal("referenced Secret existent-secret not found"),
+				)
+			}
+
+			Eventually(check).Should(Succeed())
+
+			secret := &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						"kdex.dev/npm-server-address": "https://registry.npmjs.org",
+					},
+					Name:      "existent-secret",
+					Namespace: namespace,
+				},
+				Data: map[string][]byte{
+					"username": []byte("username"),
+					"password": []byte("password"),
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, secret)).To(Succeed())
+
+			check = func(g Gomega) {
+				microfrontendapp := &kdexv1alpha1.MicroFrontEndApp{}
+				err := k8sClient.Get(ctx, typeNamespacedName, microfrontendapp)
+				g.Expect(err).NotTo(HaveOccurred())
+
+				condition := apimeta.FindStatusCondition(
+					microfrontendapp.Status.Conditions,
+					string(kdexv1alpha1.ConditionTypeReady),
+				)
+
+				g.Expect(condition).ToNot(BeNil())
+				g.Expect(
+					condition.Status,
+				).To(
+					Equal(metav1.ConditionTrue),
+				)
+				g.Expect(
+					condition.Reason,
+				).To(
+					Equal(string(kdexv1alpha1.ConditionReasonReconcileSuccess)),
+				)
+				g.Expect(
+					condition.Message,
+				).To(
+					Equal("all references resolved successfully"),
 				)
 			}
 
