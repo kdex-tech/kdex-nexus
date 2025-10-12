@@ -28,7 +28,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/util/retry"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	"kdex.dev/nexus/internal/npm"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -87,10 +86,7 @@ func (r *MicroFrontEndAppReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		}
 	}
 
-	// Validate the package reference
-	err := r.validatePackageReference(ctx, &app, &secret)
-
-	if err != nil {
+	if err := r.validatePackageReference(ctx, &app, &secret); err != nil {
 		if apimeta.IsStatusConditionFalse(app.Status.Conditions, kdexv1alpha1.ConditionTypeReady.String()) {
 			condition := apimeta.FindStatusCondition(app.Status.Conditions, kdexv1alpha1.ConditionTypeReady.String())
 			if condition.Reason == "PackageValidationFailed" {
@@ -98,18 +94,6 @@ func (r *MicroFrontEndAppReconciler) Reconcile(ctx context.Context, req ctrl.Req
 				return ctrl.Result{}, err
 			}
 		}
-
-		log.Info("package validation not complete")
-		apimeta.SetStatusCondition(&app.Status.Conditions, *kdexv1alpha1.NewCondition(
-			kdexv1alpha1.ConditionTypeReady,
-			metav1.ConditionFalse,
-			"PackageValidationInProgress",
-			"Package validation is in progress",
-		))
-		if err := r.Status().Update(ctx, &app); err != nil {
-			return ctrl.Result{}, err
-		}
-		return ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
 	}
 
 	log.Info("reconciled MicroFrontEndApp", "app", app)
@@ -187,58 +171,40 @@ func (r *MicroFrontEndAppReconciler) validatePackageReference(
 		return fmt.Errorf("invalid package name, must be scoped with @scope/name: %s", app.Spec.PackageReference.Name)
 	}
 
-	go func() {
-		registry := r.RegistryFactory(secret, log.Error)
+	registry := r.RegistryFactory(secret, log.Error)
 
-		var condition metav1.Condition
+	var condition metav1.Condition
 
-		if err := registry.ValidatePackage(
-			app.Spec.PackageReference.Name,
-			app.Spec.PackageReference.Version,
-		); err != nil {
-			condition = *kdexv1alpha1.NewCondition(
-				kdexv1alpha1.ConditionTypeReady,
-				metav1.ConditionFalse,
-				"PackageValidationFailed",
-				err.Error(),
-			)
-		} else {
-			condition = *kdexv1alpha1.NewCondition(
-				kdexv1alpha1.ConditionTypeReady,
-				metav1.ConditionTrue,
-				kdexv1alpha1.ConditionReasonReconcileSuccess,
-				"all references resolved successfully",
-			)
-		}
-
-		r.retryOnConflict(ctx, app, condition)
-	}()
-
-	return nil
-}
-
-func (r *MicroFrontEndAppReconciler) retryOnConflict(
-	ctx context.Context,
-	app *kdexv1alpha1.MicroFrontEndApp,
-	condition metav1.Condition,
-) {
-	log := logf.FromContext(ctx)
-
-	if err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		appName := types.NamespacedName{
-			Name:      app.Name,
-			Namespace: app.Namespace,
-		}
-
-		if err := r.Get(ctx, appName, app); err != nil {
-			return err
-		}
-		apimeta.SetStatusCondition(
-			&app.Status.Conditions,
-			condition,
+	if err := registry.ValidatePackage(
+		app.Spec.PackageReference.Name,
+		app.Spec.PackageReference.Version,
+	); err != nil {
+		condition = *kdexv1alpha1.NewCondition(
+			kdexv1alpha1.ConditionTypeReady,
+			metav1.ConditionFalse,
+			"PackageValidationFailed",
+			err.Error(),
 		)
-		return r.Status().Update(ctx, app)
-	}); err != nil {
-		log.Error(err, "failed to update app status")
+	} else {
+		condition = *kdexv1alpha1.NewCondition(
+			kdexv1alpha1.ConditionTypeReady,
+			metav1.ConditionTrue,
+			kdexv1alpha1.ConditionReasonReconcileSuccess,
+			"all references resolved successfully",
+		)
 	}
+
+	appName := types.NamespacedName{
+		Name:      app.Name,
+		Namespace: app.Namespace,
+	}
+
+	if err := r.Get(ctx, appName, app); err != nil {
+		return err
+	}
+	apimeta.SetStatusCondition(
+		&app.Status.Conditions,
+		condition,
+	)
+	return r.Status().Update(ctx, app)
 }
