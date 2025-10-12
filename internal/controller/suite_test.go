@@ -30,6 +30,7 @@ import (
 	"go.yaml.in/yaml/v3"
 	"golang.org/x/mod/modfile"
 
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
 	"k8s.io/client-go/rest"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
@@ -50,6 +51,68 @@ var (
 	cfg       *rest.Config
 	k8sClient client.Client
 )
+
+func TestControllers(t *testing.T) {
+	RegisterFailHandler(Fail)
+
+	RunSpecs(t, "Controller Suite")
+}
+
+var _ = BeforeSuite(func() {
+	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
+
+	ctx, cancel = context.WithCancel(context.TODO())
+
+	var err error
+	// +kubebuilder:scaffold:scheme
+
+	By("bootstrapping test environment")
+	testEnv = &envtest.Environment{
+		CRDDirectoryPaths:     []string{}, // No local CRDs initially
+		ErrorIfCRDPathMissing: true,
+	}
+
+	tempDir, err := os.MkdirTemp("", "crd")
+	if err != nil {
+		panic(err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	kdexCrdVersion := getCRDModuleVersion()
+	array := fetchSetofCRDs(kdexCrdVersion, tempDir)
+
+	for _, path := range array {
+		fullPath := fmt.Sprintf("https://raw.githubusercontent.com/kdex-tech/kdex-crds/refs/tags/%s/config/crd/%s", kdexCrdVersion, path)
+		addRemoteCRD(&testEnv.CRDDirectoryPaths, tempDir, fullPath)
+	}
+
+	// Retrieve the first found binary directory to allow running tests from IDEs
+	if getFirstFoundEnvTestBinaryDir() != "" {
+		testEnv.BinaryAssetsDirectory = getFirstFoundEnvTestBinaryDir()
+	}
+
+	err = corev1.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = kdexv1alpha1.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	// cfg is defined in this file globally.
+	cfg, err = testEnv.Start()
+	Expect(err).NotTo(HaveOccurred())
+	Expect(cfg).NotTo(BeNil())
+
+	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
+	Expect(err).NotTo(HaveOccurred())
+	Expect(k8sClient).NotTo(BeNil())
+})
+
+var _ = AfterSuite(func() {
+	By("tearing down the test environment")
+	cancel()
+	err := testEnv.Stop()
+	Expect(err).NotTo(HaveOccurred())
+})
 
 func addRemoteCRD(paths *[]string, tempDir string, url string) {
 	crdPath, err := downloadCRD(url, tempDir)
@@ -113,65 +176,6 @@ func getCRDModuleVersion() string {
 
 	panic("Couldn't find kdex-crds in go.mod")
 }
-
-func TestControllers(t *testing.T) {
-	RegisterFailHandler(Fail)
-
-	RunSpecs(t, "Controller Suite")
-}
-
-var _ = BeforeSuite(func() {
-	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
-
-	ctx, cancel = context.WithCancel(context.TODO())
-
-	var err error
-	// +kubebuilder:scaffold:scheme
-
-	By("bootstrapping test environment")
-	testEnv = &envtest.Environment{
-		CRDDirectoryPaths:     []string{}, // No local CRDs initially
-		ErrorIfCRDPathMissing: true,
-	}
-
-	tempDir, err := os.MkdirTemp("", "crd")
-	if err != nil {
-		panic(err)
-	}
-	defer os.RemoveAll(tempDir)
-
-	kdexCrdVersion := getCRDModuleVersion()
-	array := fetchSetofCRDs(kdexCrdVersion, tempDir)
-
-	for _, path := range array {
-		fullPath := fmt.Sprintf("https://raw.githubusercontent.com/kdex-tech/kdex-crds/refs/tags/%s/config/crd/%s", kdexCrdVersion, path)
-		addRemoteCRD(&testEnv.CRDDirectoryPaths, tempDir, fullPath)
-	}
-
-	// Retrieve the first found binary directory to allow running tests from IDEs
-	if getFirstFoundEnvTestBinaryDir() != "" {
-		testEnv.BinaryAssetsDirectory = getFirstFoundEnvTestBinaryDir()
-	}
-
-	err = kdexv1alpha1.AddToScheme(scheme.Scheme)
-	Expect(err).NotTo(HaveOccurred())
-
-	// cfg is defined in this file globally.
-	cfg, err = testEnv.Start()
-	Expect(err).NotTo(HaveOccurred())
-	Expect(cfg).NotTo(BeNil())
-
-	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
-	Expect(err).NotTo(HaveOccurred())
-	Expect(k8sClient).NotTo(BeNil())
-})
-
-var _ = AfterSuite(func() {
-	By("tearing down the test environment")
-	cancel()
-	err := testEnv.Stop()
-	Expect(err).NotTo(HaveOccurred())
-})
 
 func fetchSetofCRDs(kdexCrdVersion string, tempDir string) []string {
 	yamlURL := fmt.Sprintf("https://raw.githubusercontent.com/kdex-tech/kdex-crds/refs/tags/%s/config/crd/kustomization.yaml", kdexCrdVersion)
