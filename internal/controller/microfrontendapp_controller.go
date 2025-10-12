@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -87,14 +88,14 @@ func (r *MicroFrontEndAppReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	}
 
 	// Validate the package reference
-	validated := r.validatePackageReference(ctx, &app, &secret)
+	err := r.validatePackageReference(ctx, &app, &secret)
 
-	if !validated {
+	if err != nil {
 		if apimeta.IsStatusConditionFalse(app.Status.Conditions, kdexv1alpha1.ConditionTypeReady.String()) {
 			condition := apimeta.FindStatusCondition(app.Status.Conditions, kdexv1alpha1.ConditionTypeReady.String())
 			if condition.Reason == "PackageValidationFailed" {
 				log.Info("reconcile failed due to failed validation", "app", app)
-				return ctrl.Result{}, nil
+				return ctrl.Result{}, err
 			}
 		}
 
@@ -164,16 +165,29 @@ func (r *MicroFrontEndAppReconciler) findAppsForSecret(
 // This is a placeholder for the actual implementation.
 func (r *MicroFrontEndAppReconciler) validatePackageReference(
 	ctx context.Context, app *kdexv1alpha1.MicroFrontEndApp, secret *corev1.Secret,
-) bool {
+) error {
 	log := logf.FromContext(ctx)
 
 	if apimeta.IsStatusConditionTrue(app.Status.Conditions, kdexv1alpha1.ConditionTypeReady.String()) {
-		return true
+		return nil
+	}
+
+	log.Info("validating package reference for MicroFrontEndApp", "app", app.Name)
+
+	if !strings.HasPrefix(app.Spec.PackageReference.Name, "@") || !strings.Contains(app.Spec.PackageReference.Name, "/") {
+		apimeta.SetStatusCondition(&app.Status.Conditions, *kdexv1alpha1.NewCondition(
+			kdexv1alpha1.ConditionTypeReady,
+			metav1.ConditionFalse,
+			"PackageValidationFailed",
+			fmt.Sprintf("invalid package name, must be scoped with @scope/name: %s", app.Spec.PackageReference.Name),
+		))
+		if err := r.Status().Update(ctx, app); err != nil {
+			return err
+		}
+		return fmt.Errorf("invalid package name, must be scoped with @scope/name: %s", app.Spec.PackageReference.Name)
 	}
 
 	go func() {
-		log.Info("validating package reference for MicroFrontEndApp", "app", app.Name)
-
 		registry := r.RegistryFactory(secret, log.Error)
 
 		var condition metav1.Condition
@@ -197,24 +211,34 @@ func (r *MicroFrontEndAppReconciler) validatePackageReference(
 			)
 		}
 
+		r.retryOnConflict(ctx, app, condition)
+	}()
+
+	return nil
+}
+
+func (r *MicroFrontEndAppReconciler) retryOnConflict(
+	ctx context.Context,
+	app *kdexv1alpha1.MicroFrontEndApp,
+	condition metav1.Condition,
+) {
+	log := logf.FromContext(ctx)
+
+	if err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		appName := types.NamespacedName{
 			Name:      app.Name,
 			Namespace: app.Namespace,
 		}
 
-		if err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
-			if err := r.Get(ctx, appName, app); err != nil {
-				return err
-			}
-			apimeta.SetStatusCondition(
-				&app.Status.Conditions,
-				condition,
-			)
-			return r.Status().Update(ctx, app)
-		}); err != nil {
-			log.Error(err, "failed to update app status")
+		if err := r.Get(ctx, appName, app); err != nil {
+			return err
 		}
-	}()
-
-	return false
+		apimeta.SetStatusCondition(
+			&app.Status.Conditions,
+			condition,
+		)
+		return r.Status().Update(ctx, app)
+	}); err != nil {
+		log.Error(err, "failed to update app status")
+	}
 }
