@@ -30,6 +30,7 @@ import (
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 )
 
 var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
@@ -37,6 +38,9 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 		By("Creating the reconciler")
 
 		k8sManager, err := manager.New(cfg, manager.Options{
+			Metrics: server.Options{
+				BindAddress: "0",
+			},
 			Scheme: scheme.Scheme,
 		})
 		Expect(err).ToNot(HaveOccurred())

@@ -31,6 +31,7 @@ import (
 	"kdex.dev/nexus/internal/npm"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 )
 
 type MockRegistry struct{}
@@ -48,6 +49,9 @@ var _ = Describe("MicroFrontEndApp Controller", Ordered, func() {
 		By("Creating the reconciler")
 
 		k8sManager, err := manager.New(cfg, manager.Options{
+			Metrics: server.Options{
+				BindAddress: "0",
+			},
 			Scheme: scheme.Scheme,
 		})
 		Expect(err).ToNot(HaveOccurred())
