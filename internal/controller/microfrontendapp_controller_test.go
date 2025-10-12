@@ -465,7 +465,7 @@ var _ = Describe("MicroFrontEndApp Controller", Ordered, func() {
 			resourcesToDelete[types.NamespacedName{
 				Name:      secret.Name,
 				Namespace: namespace,
-			}] = secret
+			}] = &corev1.Secret{}
 
 			Expect(k8sClient.Create(ctx, secret)).To(Succeed())
 
