@@ -18,66 +18,18 @@ package controller
 
 import (
 	"context"
-	"fmt"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
-	"kdex.dev/nexus/internal/npm"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 )
 
-type MockRegistry struct{}
-
-func (m *MockRegistry) ValidatePackage(packageName string, packageVersion string) error {
-	if packageName == "@my-scope/missing" {
-		return fmt.Errorf("package not found: %s", packageName)
-	}
-
-	return nil
-}
-
 var _ = Describe("MicroFrontEndApp Controller", Ordered, func() {
-	BeforeAll(func() {
-		By("Creating the reconciler")
-
-		k8sManager, err := manager.New(cfg, manager.Options{
-			Metrics: server.Options{
-				BindAddress: "0",
-			},
-			Scheme: scheme.Scheme,
-		})
-		Expect(err).ToNot(HaveOccurred())
-
-		controllerReconciler := &MicroFrontEndAppReconciler{
-			Client: k8sManager.GetClient(),
-			RegistryFactory: func(
-				secret *corev1.Secret,
-				error func(err error, msg string, keysAndValues ...any),
-			) npm.Registry {
-				return &MockRegistry{}
-			},
-			RequeueDelay: 0,
-			Scheme:       k8sManager.GetScheme(),
-		}
-
-		err = controllerReconciler.SetupWithManager(k8sManager)
-		Expect(err).ToNot(HaveOccurred())
-
-		go func() {
-			defer GinkgoRecover()
-			err := k8sManager.Start(ctx)
-			Expect(err).ToNot(HaveOccurred(), "failed to run manager")
-		}()
-	})
-
 	Context("When reconciling a resource", func() {
 		const namespace = "default"
 		const resourceName = "test-resource"

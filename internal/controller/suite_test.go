@@ -34,10 +34,13 @@ import (
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
 	"k8s.io/client-go/rest"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
+	"kdex.dev/nexus/internal/npm"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -51,6 +54,16 @@ var (
 	cfg       *rest.Config
 	k8sClient client.Client
 )
+
+type MockRegistry struct{}
+
+func (m *MockRegistry) ValidatePackage(packageName string, packageVersion string) error {
+	if packageName == "@my-scope/missing" {
+		return fmt.Errorf("package not found: %s", packageName)
+	}
+
+	return nil
+}
 
 func TestControllers(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -105,6 +118,57 @@ var _ = BeforeSuite(func() {
 	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
+
+	k8sManager, err := manager.New(cfg, manager.Options{
+		Metrics: server.Options{
+			BindAddress: "0",
+		},
+		Scheme: scheme.Scheme,
+	})
+	Expect(err).NotTo(HaveOccurred())
+
+	pageReconciler := &MicroFrontEndAppReconciler{
+		Client: k8sManager.GetClient(),
+		RegistryFactory: func(
+			secret *corev1.Secret,
+			error func(err error, msg string, keysAndValues ...any),
+		) npm.Registry {
+			return &MockRegistry{}
+		},
+		RequeueDelay: 0,
+		Scheme:       k8sManager.GetScheme(),
+	}
+
+	err = pageReconciler.SetupWithManager(k8sManager)
+	Expect(err).NotTo(HaveOccurred())
+
+	pageArchetypeReconciler := &MicroFrontEndPageArchetypeReconciler{
+		MicroFrontEndCommonReconciler: MicroFrontEndCommonReconciler{
+			Client: k8sClient,
+			Scheme: k8sClient.Scheme(),
+		},
+		RequeueDelay: 0,
+	}
+
+	err = pageArchetypeReconciler.SetupWithManager(k8sManager)
+	Expect(err).NotTo(HaveOccurred())
+
+	pageBindingReconciler := &MicroFrontEndPageBindingReconciler{
+		MicroFrontEndCommonReconciler: MicroFrontEndCommonReconciler{
+			Client: k8sClient,
+			Scheme: k8sClient.Scheme(),
+		},
+		RequeueDelay: 0,
+	}
+
+	err = pageBindingReconciler.SetupWithManager(k8sManager)
+	Expect(err).ToNot(HaveOccurred())
+
+	go func() {
+		defer GinkgoRecover()
+		err := k8sManager.Start(ctx)
+		Expect(err).ToNot(HaveOccurred(), "failed to run manager")
+	}()
 })
 
 var _ = AfterSuite(func() {

@@ -20,11 +20,11 @@ func (r *MicroFrontEndPageBindingReconciler) findPageBindingsForApp(
 	if err := r.List(ctx, &pageBindingsList, &client.ListOptions{
 		Namespace: app.GetNamespace(),
 	}); err != nil {
-		log.Error(err, "unable to list MicroFrontEndPageBindings for app %s", app.GetName())
+		log.Error(err, "unable to list MicroFrontEndPageBindings for app", "name", app.GetName())
 		return []reconcile.Request{}
 	}
 
-	requests := make([]reconcile.Request, 0, len(pageBindingsList.Items))
+	requests := []reconcile.Request{}
 	for _, pageBinding := range pageBindingsList.Items {
 		for _, contentEntry := range pageBinding.Spec.ContentEntries {
 			if contentEntry.AppRef == nil {
@@ -53,11 +53,11 @@ func (r *MicroFrontEndPageBindingReconciler) findPageBindingsForHost(
 	if err := r.List(ctx, &pageBindingsList, &client.ListOptions{
 		Namespace: host.GetNamespace(),
 	}); err != nil {
-		log.Error(err, "unable to list MicroFrontEndPageBindings for host %s", host.GetName())
+		log.Error(err, "unable to list MicroFrontEndPageBindings for host", "name", host.GetName())
 		return []reconcile.Request{}
 	}
 
-	requests := make([]reconcile.Request, 0, len(pageBindingsList.Items))
+	requests := []reconcile.Request{}
 	for _, pageBinding := range pageBindingsList.Items {
 		if pageBinding.Spec.HostRef.Name == host.GetName() {
 			requests = append(requests, reconcile.Request{
@@ -81,11 +81,11 @@ func (r *MicroFrontEndPageBindingReconciler) findPageBindingsForPageArchetype(
 	if err := r.List(ctx, &pageBindingsList, &client.ListOptions{
 		Namespace: pageArchetype.GetNamespace(),
 	}); err != nil {
-		log.Error(err, "unable to list MicroFrontEndPageBindings for page archetype %s", pageArchetype.GetName())
+		log.Error(err, "unable to list MicroFrontEndPageBindings for page archetype", "name", pageArchetype.GetName())
 		return []reconcile.Request{}
 	}
 
-	requests := make([]reconcile.Request, 0, len(pageBindingsList.Items))
+	requests := []reconcile.Request{}
 	for _, pageBinding := range pageBindingsList.Items {
 		if pageBinding.Spec.PageArchetypeRef.Name == pageArchetype.GetName() {
 			requests = append(requests, reconcile.Request{
@@ -109,11 +109,11 @@ func (r *MicroFrontEndPageBindingReconciler) findPageBindingsForPageFooter(
 	if err := r.List(ctx, &pageBindingsList, &client.ListOptions{
 		Namespace: pageFooter.GetNamespace(),
 	}); err != nil {
-		log.Error(err, "unable to list MicroFrontEndPageBindings for page footer %s", pageFooter.GetName())
+		log.Error(err, "unable to list MicroFrontEndPageBindings for page footer", "name", pageFooter.GetName())
 		return []reconcile.Request{}
 	}
 
-	requests := make([]reconcile.Request, 0, len(pageBindingsList.Items))
+	requests := []reconcile.Request{}
 	for _, pageBinding := range pageBindingsList.Items {
 		if pageBinding.Spec.OverrideFooterRef == nil {
 			continue
@@ -140,11 +140,11 @@ func (r *MicroFrontEndPageBindingReconciler) findPageBindingsForPageHeader(
 	if err := r.List(ctx, &pageBindingsList, &client.ListOptions{
 		Namespace: pageHeader.GetNamespace(),
 	}); err != nil {
-		log.Error(err, "unable to list MicroFrontEndPageBindings for page header %s", pageHeader.GetName())
+		log.Error(err, "unable to list MicroFrontEndPageBindings for page header", "name", pageHeader.GetName())
 		return []reconcile.Request{}
 	}
 
-	requests := make([]reconcile.Request, 0, len(pageBindingsList.Items))
+	requests := []reconcile.Request{}
 	for _, pageBinding := range pageBindingsList.Items {
 		if pageBinding.Spec.OverrideHeaderRef == nil {
 			continue
@@ -171,11 +171,11 @@ func (r *MicroFrontEndPageBindingReconciler) findPageBindingsForPageNavigations(
 	if err := r.List(ctx, &pageBindingsList, &client.ListOptions{
 		Namespace: pageNavigation.GetNamespace(),
 	}); err != nil {
-		log.Error(err, "unable to list MicroFrontEndPageBindings for page navigation %s", pageNavigation.GetName())
+		log.Error(err, "unable to list MicroFrontEndPageBindings for page navigation", "name", pageNavigation.GetName())
 		return []reconcile.Request{}
 	}
 
-	requests := make([]reconcile.Request, 0, len(pageBindingsList.Items))
+	requests := []reconcile.Request{}
 	for _, pageBinding := range pageBindingsList.Items {
 		if pageBinding.Spec.OverrideMainNavigationRef == nil {
 			continue

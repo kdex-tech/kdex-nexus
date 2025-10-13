@@ -22,47 +22,15 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
 	"k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 )
 
 var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
-	BeforeAll(func() {
-		By("Creating the reconciler")
-
-		k8sManager, err := manager.New(cfg, manager.Options{
-			Metrics: server.Options{
-				BindAddress: "0",
-			},
-			Scheme: scheme.Scheme,
-		})
-		Expect(err).ToNot(HaveOccurred())
-
-		controllerReconciler := &MicroFrontEndPageArchetypeReconciler{
-			MicroFrontEndCommonReconciler: MicroFrontEndCommonReconciler{
-				Client: k8sClient,
-				Scheme: k8sClient.Scheme(),
-			},
-			RequeueDelay: 0,
-		}
-
-		err = controllerReconciler.SetupWithManager(k8sManager)
-		Expect(err).ToNot(HaveOccurred())
-
-		go func() {
-			defer GinkgoRecover()
-			err := k8sManager.Start(ctx)
-			Expect(err).ToNot(HaveOccurred(), "failed to run manager")
-		}()
-	})
-
 	Context("When reconciling a resource", func() {
 		const namespace = "default"
 		const resourceName = "test-resource"
