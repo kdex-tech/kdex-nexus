@@ -23,6 +23,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -32,6 +33,9 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
+	apimeta "k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	"kdex.dev/nexus/internal/npm"
@@ -185,6 +189,40 @@ func addRemoteCRD(paths *[]string, tempDir string, url string) {
 	}
 
 	*paths = append(*paths, crdPath)
+}
+
+func assertResourceReady(ctx context.Context, k8sClient client.Client, name string, namespace string, checkResource client.Object, ready bool) {
+	typeNamespacedName := types.NamespacedName{
+		Name:      name,
+		Namespace: namespace,
+	}
+
+	check := func(g Gomega) {
+		err := k8sClient.Get(ctx, typeNamespacedName, checkResource)
+		g.Expect(err).NotTo(HaveOccurred())
+		it := reflect.ValueOf(checkResource).Elem()
+		statusField := it.FieldByName("Status")
+		g.Expect(statusField.IsValid()).To(BeTrue())
+		conditionsField := statusField.FieldByName("Conditions")
+		g.Expect(conditionsField.IsValid()).To(BeTrue())
+		conditions, ok := conditionsField.Interface().([]metav1.Condition)
+		g.Expect(ok).To(BeTrue())
+		if ready {
+			g.Expect(
+				apimeta.IsStatusConditionTrue(
+					conditions, string(kdexv1alpha1.ConditionTypeReady),
+				),
+			).To(BeTrue())
+		} else {
+			g.Expect(
+				apimeta.IsStatusConditionFalse(
+					conditions, string(kdexv1alpha1.ConditionTypeReady),
+				),
+			).To(BeTrue())
+		}
+	}
+
+	Eventually(check).Should(Succeed())
 }
 
 func downloadCRD(url, tempDir string) (string, error) {

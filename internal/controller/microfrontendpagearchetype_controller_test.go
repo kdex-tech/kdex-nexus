@@ -23,7 +23,6 @@ import (
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
@@ -39,11 +38,6 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 
 		resourcesToDelete := map[types.NamespacedName]client.Object{}
 
-		resourcesToDelete[types.NamespacedName{
-			Name:      resourceName,
-			Namespace: namespace,
-		}] = &kdexv1alpha1.MicroFrontEndPageArchetype{}
-
 		AfterEach(func() {
 			By("Cleanup all the test resource instances")
 			for name, resource := range resourcesToDelete {
@@ -52,14 +46,11 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 					continue
 				}
 				Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
+				delete(resourcesToDelete, name)
 			}
 		})
 
 		It("with missing extra navigation reference should not successfully reconcile the resource", func() {
-			typeNamespacedName := types.NamespacedName{
-				Name:      resourceName,
-				Namespace: namespace,
-			}
 			resource := &kdexv1alpha1.MicroFrontEndPageArchetype{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
@@ -74,20 +65,19 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 					},
 				},
 			}
+
 			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 
-			check := func(g Gomega) {
-				err := k8sClient.Get(ctx, typeNamespacedName, resource)
-				g.Expect(err).NotTo(HaveOccurred())
-
-				g.Expect(
-					apimeta.IsStatusConditionFalse(
-						resource.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady),
-					),
-				).To(BeTrue())
+			typeNamespacedName := types.NamespacedName{
+				Name:      resourceName,
+				Namespace: namespace,
 			}
 
-			Eventually(check).Should(Succeed())
+			resourcesToDelete[typeNamespacedName] = &kdexv1alpha1.MicroFrontEndPageArchetype{}
+
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.MicroFrontEndPageArchetype{}, false)
 
 			By("but when added should become ready")
 			navigation := &kdexv1alpha1.MicroFrontEndPageNavigation{
@@ -106,25 +96,12 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 				Namespace: namespace,
 			}] = &kdexv1alpha1.MicroFrontEndPageNavigation{}
 
-			check = func(g Gomega) {
-				err := k8sClient.Get(ctx, typeNamespacedName, resource)
-				g.Expect(err).NotTo(HaveOccurred())
-
-				g.Expect(
-					apimeta.IsStatusConditionTrue(
-						resource.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady),
-					),
-				).To(BeTrue())
-			}
-
-			Eventually(check).Should(Succeed())
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.MicroFrontEndPageArchetype{}, true)
 		})
 
 		It("with missing default main navigation reference should not successfully reconcile the resource", func() {
-			typeNamespacedName := types.NamespacedName{
-				Name:      resourceName,
-				Namespace: namespace,
-			}
 			resource := &kdexv1alpha1.MicroFrontEndPageArchetype{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
@@ -137,20 +114,19 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 					},
 				},
 			}
+
 			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 
-			check := func(g Gomega) {
-				err := k8sClient.Get(ctx, typeNamespacedName, resource)
-				g.Expect(err).NotTo(HaveOccurred())
-
-				g.Expect(
-					apimeta.IsStatusConditionFalse(
-						resource.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady),
-					),
-				).To(BeTrue())
+			typeNamespacedName := types.NamespacedName{
+				Name:      resourceName,
+				Namespace: namespace,
 			}
 
-			Eventually(check).Should(Succeed())
+			resourcesToDelete[typeNamespacedName] = &kdexv1alpha1.MicroFrontEndPageArchetype{}
+
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.MicroFrontEndPageArchetype{}, false)
 
 			By("but when added should become ready")
 			navigation := &kdexv1alpha1.MicroFrontEndPageNavigation{
@@ -169,25 +145,12 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 				Namespace: namespace,
 			}] = &kdexv1alpha1.MicroFrontEndPageNavigation{}
 
-			check = func(g Gomega) {
-				err := k8sClient.Get(ctx, typeNamespacedName, resource)
-				g.Expect(err).NotTo(HaveOccurred())
-
-				g.Expect(
-					apimeta.IsStatusConditionTrue(
-						resource.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady),
-					),
-				).To(BeTrue())
-			}
-
-			Eventually(check).Should(Succeed())
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.MicroFrontEndPageArchetype{}, true)
 		})
 
 		It("with missing default footer reference should not successfully reconcile the resource", func() {
-			typeNamespacedName := types.NamespacedName{
-				Name:      resourceName,
-				Namespace: namespace,
-			}
 			resource := &kdexv1alpha1.MicroFrontEndPageArchetype{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
@@ -200,20 +163,19 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 					},
 				},
 			}
+
 			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 
-			check := func(g Gomega) {
-				err := k8sClient.Get(ctx, typeNamespacedName, resource)
-				g.Expect(err).NotTo(HaveOccurred())
-
-				g.Expect(
-					apimeta.IsStatusConditionFalse(
-						resource.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady),
-					),
-				).To(BeTrue())
+			typeNamespacedName := types.NamespacedName{
+				Name:      resourceName,
+				Namespace: namespace,
 			}
 
-			Eventually(check).Should(Succeed())
+			resourcesToDelete[typeNamespacedName] = &kdexv1alpha1.MicroFrontEndPageArchetype{}
+
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.MicroFrontEndPageArchetype{}, false)
 
 			By("but when added should become ready")
 			footer := &kdexv1alpha1.MicroFrontEndPageFooter{
@@ -232,25 +194,12 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 				Namespace: namespace,
 			}] = &kdexv1alpha1.MicroFrontEndPageFooter{}
 
-			check = func(g Gomega) {
-				err := k8sClient.Get(ctx, typeNamespacedName, resource)
-				g.Expect(err).NotTo(HaveOccurred())
-
-				g.Expect(
-					apimeta.IsStatusConditionTrue(
-						resource.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady),
-					),
-				).To(BeTrue())
-			}
-
-			Eventually(check).Should(Succeed())
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.MicroFrontEndPageArchetype{}, true)
 		})
 
 		It("with missing default header reference should not successfully reconcile the resource", func() {
-			typeNamespacedName := types.NamespacedName{
-				Name:      resourceName,
-				Namespace: namespace,
-			}
 			resource := &kdexv1alpha1.MicroFrontEndPageArchetype{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
@@ -263,20 +212,19 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 					},
 				},
 			}
+
 			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 
-			check := func(g Gomega) {
-				err := k8sClient.Get(ctx, typeNamespacedName, resource)
-				g.Expect(err).NotTo(HaveOccurred())
-
-				g.Expect(
-					apimeta.IsStatusConditionFalse(
-						resource.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady),
-					),
-				).To(BeTrue())
+			typeNamespacedName := types.NamespacedName{
+				Name:      resourceName,
+				Namespace: namespace,
 			}
 
-			Eventually(check).Should(Succeed())
+			resourcesToDelete[typeNamespacedName] = &kdexv1alpha1.MicroFrontEndPageArchetype{}
+
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.MicroFrontEndPageArchetype{}, false)
 
 			By("but when added should become ready")
 			header := &kdexv1alpha1.MicroFrontEndPageHeader{
@@ -295,25 +243,12 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 				Namespace: namespace,
 			}] = &kdexv1alpha1.MicroFrontEndPageFooter{}
 
-			check = func(g Gomega) {
-				err := k8sClient.Get(ctx, typeNamespacedName, resource)
-				g.Expect(err).NotTo(HaveOccurred())
-
-				g.Expect(
-					apimeta.IsStatusConditionTrue(
-						resource.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady),
-					),
-				).To(BeTrue())
-			}
-
-			Eventually(check).Should(Succeed())
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.MicroFrontEndPageArchetype{}, true)
 		})
 
 		It("with only content should successfully reconcile the resource", func() {
-			typeNamespacedName := types.NamespacedName{
-				Name:      resourceName,
-				Namespace: namespace,
-			}
 			resource := &kdexv1alpha1.MicroFrontEndPageArchetype{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
@@ -323,20 +258,19 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 					Content: "<h1>Hello, World!</h1>",
 				},
 			}
+
 			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 
-			check := func(g Gomega) {
-				err := k8sClient.Get(ctx, typeNamespacedName, resource)
-				g.Expect(err).NotTo(HaveOccurred())
-
-				g.Expect(
-					apimeta.IsStatusConditionTrue(
-						resource.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady),
-					),
-				).To(BeTrue())
+			typeNamespacedName := types.NamespacedName{
+				Name:      resourceName,
+				Namespace: namespace,
 			}
 
-			Eventually(check).Should(Succeed())
+			resourcesToDelete[typeNamespacedName] = &kdexv1alpha1.MicroFrontEndPageArchetype{}
+
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.MicroFrontEndPageArchetype{}, true)
 		})
 	})
 })

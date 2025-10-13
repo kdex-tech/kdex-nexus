@@ -38,22 +38,18 @@ var _ = Describe("MicroFrontEndApp Controller", Ordered, func() {
 
 		resourcesToDelete := map[types.NamespacedName]client.Object{}
 
-		resourcesToDelete[types.NamespacedName{
-			Name:      resourceName,
-			Namespace: namespace,
-		}] = &kdexv1alpha1.MicroFrontEndApp{}
-
 		AfterEach(func() {
 			By("Cleanup all the test resource instances")
 			for name, resource := range resourcesToDelete {
 				err := k8sClient.Get(ctx, name, resource)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
+				delete(resourcesToDelete, name)
 			}
 		})
 
 		It("it must not become ready if it has missing package reference", func() {
-			app := &kdexv1alpha1.MicroFrontEndApp{
+			resource := &kdexv1alpha1.MicroFrontEndApp{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
 					Namespace: namespace,
@@ -68,21 +64,23 @@ var _ = Describe("MicroFrontEndApp Controller", Ordered, func() {
 				},
 			}
 
-			Expect(k8sClient.Create(ctx, app)).To(Succeed())
+			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 
 			typeNamespacedName := types.NamespacedName{
 				Name:      resourceName,
 				Namespace: namespace,
 			}
 
+			resourcesToDelete[typeNamespacedName] = &kdexv1alpha1.MicroFrontEndApp{}
+
 			check := func(g Gomega) {
-				microfrontendapp := &kdexv1alpha1.MicroFrontEndApp{}
-				err := k8sClient.Get(ctx, typeNamespacedName, microfrontendapp)
+				checkResource := &kdexv1alpha1.MicroFrontEndApp{}
+				err := k8sClient.Get(ctx, typeNamespacedName, checkResource)
 
 				g.Expect(err).NotTo(HaveOccurred())
 
 				condition := apimeta.FindStatusCondition(
-					microfrontendapp.Status.Conditions,
+					checkResource.Status.Conditions,
 					string(kdexv1alpha1.ConditionTypeReady),
 				)
 
@@ -108,7 +106,7 @@ var _ = Describe("MicroFrontEndApp Controller", Ordered, func() {
 		})
 
 		It("it should become ready if it has a valid package reference", func() {
-			app := &kdexv1alpha1.MicroFrontEndApp{
+			resource := &kdexv1alpha1.MicroFrontEndApp{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
 					Namespace: namespace,
@@ -127,21 +125,23 @@ var _ = Describe("MicroFrontEndApp Controller", Ordered, func() {
 				},
 			}
 
-			Expect(k8sClient.Create(ctx, app)).To(Succeed())
+			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 
 			typeNamespacedName := types.NamespacedName{
 				Name:      resourceName,
 				Namespace: namespace,
 			}
 
+			resourcesToDelete[typeNamespacedName] = &kdexv1alpha1.MicroFrontEndApp{}
+
 			check := func(g Gomega) {
-				microfrontendapp := &kdexv1alpha1.MicroFrontEndApp{}
-				err := k8sClient.Get(ctx, typeNamespacedName, microfrontendapp)
+				checkResource := &kdexv1alpha1.MicroFrontEndApp{}
+				err := k8sClient.Get(ctx, typeNamespacedName, checkResource)
 
 				g.Expect(err).NotTo(HaveOccurred())
 
 				condition := apimeta.FindStatusCondition(
-					microfrontendapp.Status.Conditions,
+					checkResource.Status.Conditions,
 					string(kdexv1alpha1.ConditionTypeReady),
 				)
 
@@ -167,12 +167,7 @@ var _ = Describe("MicroFrontEndApp Controller", Ordered, func() {
 		})
 
 		It("should not become ready if it has a unscoped package reference", func() {
-			typeNamespacedName := types.NamespacedName{
-				Name:      resourceName,
-				Namespace: namespace,
-			}
-
-			app := &kdexv1alpha1.MicroFrontEndApp{
+			resource := &kdexv1alpha1.MicroFrontEndApp{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
 					Namespace: namespace,
@@ -191,15 +186,22 @@ var _ = Describe("MicroFrontEndApp Controller", Ordered, func() {
 				},
 			}
 
-			Expect(k8sClient.Create(ctx, app)).To(Succeed())
+			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+
+			typeNamespacedName := types.NamespacedName{
+				Name:      resourceName,
+				Namespace: namespace,
+			}
+
+			resourcesToDelete[typeNamespacedName] = &kdexv1alpha1.MicroFrontEndApp{}
 
 			check := func(g Gomega) {
-				microfrontendapp := &kdexv1alpha1.MicroFrontEndApp{}
-				err := k8sClient.Get(ctx, typeNamespacedName, microfrontendapp)
+				checkResource := &kdexv1alpha1.MicroFrontEndApp{}
+				err := k8sClient.Get(ctx, typeNamespacedName, checkResource)
 				g.Expect(err).NotTo(HaveOccurred())
 
 				condition := apimeta.FindStatusCondition(
-					microfrontendapp.Status.Conditions,
+					checkResource.Status.Conditions,
 					string(kdexv1alpha1.ConditionTypeReady),
 				)
 
@@ -225,7 +227,7 @@ var _ = Describe("MicroFrontEndApp Controller", Ordered, func() {
 		})
 
 		It("it must not become ready if it has a valid package reference but the package is missing", func() {
-			app := &kdexv1alpha1.MicroFrontEndApp{
+			resource := &kdexv1alpha1.MicroFrontEndApp{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
 					Namespace: namespace,
@@ -244,21 +246,23 @@ var _ = Describe("MicroFrontEndApp Controller", Ordered, func() {
 				},
 			}
 
-			Expect(k8sClient.Create(ctx, app)).To(Succeed())
+			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 
 			typeNamespacedName := types.NamespacedName{
 				Name:      resourceName,
 				Namespace: namespace,
 			}
 
+			resourcesToDelete[typeNamespacedName] = &kdexv1alpha1.MicroFrontEndApp{}
+
 			check := func(g Gomega) {
-				microfrontendapp := &kdexv1alpha1.MicroFrontEndApp{}
-				err := k8sClient.Get(ctx, typeNamespacedName, microfrontendapp)
+				checkResource := &kdexv1alpha1.MicroFrontEndApp{}
+				err := k8sClient.Get(ctx, typeNamespacedName, checkResource)
 
 				g.Expect(err).NotTo(HaveOccurred())
 
 				condition := apimeta.FindStatusCondition(
-					microfrontendapp.Status.Conditions,
+					checkResource.Status.Conditions,
 					string(kdexv1alpha1.ConditionTypeReady),
 				)
 
@@ -284,12 +288,7 @@ var _ = Describe("MicroFrontEndApp Controller", Ordered, func() {
 		})
 
 		It("should not become ready when referenced secret is not found", func() {
-			typeNamespacedName := types.NamespacedName{
-				Name:      resourceName,
-				Namespace: namespace,
-			}
-
-			app := &kdexv1alpha1.MicroFrontEndApp{
+			resource := &kdexv1alpha1.MicroFrontEndApp{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
 					Namespace: namespace,
@@ -311,15 +310,22 @@ var _ = Describe("MicroFrontEndApp Controller", Ordered, func() {
 				},
 			}
 
-			Expect(k8sClient.Create(ctx, app)).To(Succeed())
+			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+
+			typeNamespacedName := types.NamespacedName{
+				Name:      resourceName,
+				Namespace: namespace,
+			}
+
+			resourcesToDelete[typeNamespacedName] = &kdexv1alpha1.MicroFrontEndApp{}
 
 			check := func(g Gomega) {
-				microfrontendapp := &kdexv1alpha1.MicroFrontEndApp{}
-				err := k8sClient.Get(ctx, typeNamespacedName, microfrontendapp)
+				checkResource := &kdexv1alpha1.MicroFrontEndApp{}
+				err := k8sClient.Get(ctx, typeNamespacedName, checkResource)
 				g.Expect(err).NotTo(HaveOccurred())
 
 				condition := apimeta.FindStatusCondition(
-					microfrontendapp.Status.Conditions,
+					checkResource.Status.Conditions,
 					string(kdexv1alpha1.ConditionTypeReady),
 				)
 
@@ -345,12 +351,7 @@ var _ = Describe("MicroFrontEndApp Controller", Ordered, func() {
 		})
 
 		It("should become ready when referenced secret is found", func() {
-			typeNamespacedName := types.NamespacedName{
-				Name:      resourceName,
-				Namespace: namespace,
-			}
-
-			app := &kdexv1alpha1.MicroFrontEndApp{
+			resource := &kdexv1alpha1.MicroFrontEndApp{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
 					Namespace: namespace,
@@ -372,15 +373,22 @@ var _ = Describe("MicroFrontEndApp Controller", Ordered, func() {
 				},
 			}
 
-			Expect(k8sClient.Create(ctx, app)).To(Succeed())
+			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+
+			typeNamespacedName := types.NamespacedName{
+				Name:      resourceName,
+				Namespace: namespace,
+			}
+
+			resourcesToDelete[typeNamespacedName] = &kdexv1alpha1.MicroFrontEndApp{}
 
 			check := func(g Gomega) {
-				microfrontendapp := &kdexv1alpha1.MicroFrontEndApp{}
-				err := k8sClient.Get(ctx, typeNamespacedName, microfrontendapp)
+				checkResource := &kdexv1alpha1.MicroFrontEndApp{}
+				err := k8sClient.Get(ctx, typeNamespacedName, checkResource)
 				g.Expect(err).NotTo(HaveOccurred())
 
 				condition := apimeta.FindStatusCondition(
-					microfrontendapp.Status.Conditions,
+					checkResource.Status.Conditions,
 					string(kdexv1alpha1.ConditionTypeReady),
 				)
 
@@ -426,12 +434,12 @@ var _ = Describe("MicroFrontEndApp Controller", Ordered, func() {
 			Expect(k8sClient.Create(ctx, secret)).To(Succeed())
 
 			check = func(g Gomega) {
-				microfrontendapp := &kdexv1alpha1.MicroFrontEndApp{}
-				err := k8sClient.Get(ctx, typeNamespacedName, microfrontendapp)
+				checkResource := &kdexv1alpha1.MicroFrontEndApp{}
+				err := k8sClient.Get(ctx, typeNamespacedName, checkResource)
 				g.Expect(err).NotTo(HaveOccurred())
 
 				condition := apimeta.FindStatusCondition(
-					microfrontendapp.Status.Conditions,
+					checkResource.Status.Conditions,
 					string(kdexv1alpha1.ConditionTypeReady),
 				)
 

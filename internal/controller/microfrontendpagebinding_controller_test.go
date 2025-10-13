@@ -18,13 +18,10 @@ package controller
 
 import (
 	"context"
-	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
@@ -40,19 +37,13 @@ var _ = Describe("MicroFrontEndPageBinding Controller", Ordered, func() {
 
 		resourcesToDelete := map[types.NamespacedName]client.Object{}
 
-		resourcesToDelete[types.NamespacedName{
-			Name:      resourceName,
-			Namespace: namespace,
-		}] = &kdexv1alpha1.MicroFrontEndPageBinding{}
-
 		AfterEach(func() {
 			By("Cleanup all the test resource instances")
 			for name, resource := range resourcesToDelete {
 				err := k8sClient.Get(ctx, name, resource)
-				if errors.IsNotFound(err) {
-					continue
-				}
+				Expect(err).NotTo(HaveOccurred())
 				Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
+				delete(resourcesToDelete, name)
 			}
 		})
 
@@ -74,6 +65,7 @@ var _ = Describe("MicroFrontEndPageBinding Controller", Ordered, func() {
 					Path: "/foo",
 				},
 			}
+
 			Expect(k8sClient.Create(ctx, resource)).NotTo(Succeed())
 		})
 
@@ -100,14 +92,16 @@ var _ = Describe("MicroFrontEndPageBinding Controller", Ordered, func() {
 					Path: "/foo",
 				},
 			}
-			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
-		})
 
-		It("with missing references should not succeed", NodeTimeout(time.Second*90), func(ctx SpecContext) {
-			typeNamespacedName := types.NamespacedName{
+			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+
+			resourcesToDelete[types.NamespacedName{
 				Name:      resourceName,
 				Namespace: namespace,
-			}
+			}] = &kdexv1alpha1.MicroFrontEndPageBinding{}
+		})
+
+		It("with missing references should not succeed", func(ctx SpecContext) {
 			resource := &kdexv1alpha1.MicroFrontEndPageBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
@@ -130,22 +124,21 @@ var _ = Describe("MicroFrontEndPageBinding Controller", Ordered, func() {
 					Path: "/foo",
 				},
 			}
+
 			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 
-			check := func(g Gomega) {
-				err := k8sClient.Get(ctx, typeNamespacedName, resource)
-				g.Expect(err).NotTo(HaveOccurred())
-
-				g.Expect(
-					apimeta.IsStatusConditionFalse(
-						resource.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady),
-					),
-				).To(BeTrue())
+			typeNamespacedName := types.NamespacedName{
+				Name:      resourceName,
+				Namespace: namespace,
 			}
 
-			Eventually(check).Should(Succeed())
+			resourcesToDelete[typeNamespacedName] = &kdexv1alpha1.MicroFrontEndPageBinding{}
 
-			By("but when added should become ready")
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.MicroFrontEndPageBinding{}, false)
+
+			By("and when Host added should still not become ready")
 			host := &kdexv1alpha1.MicroFrontEndHost{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "non-existent-host",
@@ -167,6 +160,12 @@ var _ = Describe("MicroFrontEndPageBinding Controller", Ordered, func() {
 				Namespace: namespace,
 			}] = &kdexv1alpha1.MicroFrontEndHost{}
 
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.MicroFrontEndPageBinding{}, false)
+
+			By("lastly when PageArchetype added should become ready")
+
 			pageArchetype := &kdexv1alpha1.MicroFrontEndPageArchetype{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "non-existent-page-archetype",
@@ -183,18 +182,9 @@ var _ = Describe("MicroFrontEndPageBinding Controller", Ordered, func() {
 				Namespace: namespace,
 			}] = &kdexv1alpha1.MicroFrontEndPageArchetype{}
 
-			check = func(g Gomega) {
-				err := k8sClient.Get(ctx, typeNamespacedName, resource)
-				g.Expect(err).NotTo(HaveOccurred())
-
-				g.Expect(
-					apimeta.IsStatusConditionTrue(
-						resource.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady),
-					),
-				).To(BeTrue())
-			}
-
-			Eventually(check).WithTimeout(30 * time.Second).Should(Succeed())
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.MicroFrontEndPageBinding{}, true)
 		})
 	})
 })
