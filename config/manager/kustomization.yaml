@@ -5,4 +5,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: kdex-tech/kdex-nexus
-  newTag: v0.0.1
+  newTag: latest
