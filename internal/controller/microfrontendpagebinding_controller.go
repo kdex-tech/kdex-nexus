@@ -40,15 +40,15 @@ type MicroFrontEndPageBindingReconciler struct {
 	RequeueDelay time.Duration
 }
 
-// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendapp,verbs=get;list;watch
-// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendhost,verbs=get;list;watch
-// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendpagearchetype,verbs=get;list;watch
+// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendapps,verbs=get;list;watch
+// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendhosts,verbs=get;list;watch
+// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendpagearchetypes,verbs=get;list;watch
 // +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendpagebindings,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendpagebindings/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendpagebindings/finalizers,verbs=update
-// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendpagefooter,verbs=get;list;watch
-// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendpageheader,verbs=get;list;watch
-// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendpagenavigation,verbs=get;list;watch
+// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendpagefooters,verbs=get;list;watch
+// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendpageheaders,verbs=get;list;watch
+// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendpagenavigations,verbs=get;list;watch
 // +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendrenderpages,verbs=get;list;watch;create;update;patch;delete
 
 func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {

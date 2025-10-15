@@ -15,19 +15,6 @@ rules:
 - apiGroups:
   - kdex.dev
   resources:
-  - microfrontendapp
-  - microfrontendhost
-  - microfrontendpagearchetype
-  - microfrontendpagefooter
-  - microfrontendpageheader
-  - microfrontendpagenavigation
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - kdex.dev
-  resources:
   - microfrontendapps
   - microfrontendpagearchetypes
   - microfrontendpagebindings
@@ -58,3 +45,14 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - kdex.dev
+  resources:
+  - microfrontendhosts
+  - microfrontendpagefooters
+  - microfrontendpageheaders
+  - microfrontendpagenavigations
+  verbs:
+  - get
+  - list
+  - watch
