@@ -117,14 +117,14 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 	}
 
 	if !apimeta.IsStatusConditionTrue(pageArchetype.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady)) {
-		log.Error(fmt.Errorf("referenced MicroFrontEndPageArchetype %s is not ready", pageBinding.Spec.PageArchetypeRef.Name), "")
+		log.Error(fmt.Errorf("referenced MicroFrontEndPageArchetype %s is not ready", pageArchetype.Name), "")
 		apimeta.SetStatusCondition(
 			&pageBinding.Status.Conditions,
 			*kdexv1alpha1.NewCondition(
 				kdexv1alpha1.ConditionTypeReady,
 				metav1.ConditionFalse,
 				kdexv1alpha1.ConditionReasonReconcileError,
-				fmt.Sprintf("referenced MicroFrontEndPageArchetype %s is not ready", pageBinding.Spec.PageArchetypeRef.Name),
+				fmt.Sprintf("referenced MicroFrontEndPageArchetype %s is not ready", pageArchetype.Name),
 			),
 		)
 		if err := r.Status().Update(ctx, &pageBinding); err != nil {
@@ -142,6 +142,56 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 	navigations, response, err := r.navigations(ctx, log, &pageBinding, &pageArchetype)
 	if err != nil {
 		return response, err
+	}
+
+	var parentPage kdexv1alpha1.MicroFrontEndPageBinding
+	parentPageRef := pageBinding.Spec.ParentPageRef
+	if parentPageRef != nil {
+		parentPageName := types.NamespacedName{
+			Name:      parentPageRef.Name,
+			Namespace: pageBinding.Namespace,
+		}
+
+		if err := r.Get(ctx, parentPageName, &parentPage); err != nil {
+			if errors.IsNotFound(err) {
+				log.Error(err, "referenced MicroFrontEndPageBinding not found", "name", parentPageRef.Name)
+				apimeta.SetStatusCondition(
+					&pageBinding.Status.Conditions,
+					*kdexv1alpha1.NewCondition(
+						kdexv1alpha1.ConditionTypeReady,
+						metav1.ConditionFalse,
+						kdexv1alpha1.ConditionReasonReconcileError,
+						fmt.Sprintf("referenced MicroFrontEndPageBinding %s not found", parentPageRef.Name),
+					),
+				)
+				if err := r.Status().Update(ctx, &pageBinding); err != nil {
+					return ctrl.Result{}, err
+				}
+
+				return ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
+			}
+
+			log.Error(err, "unable to fetch MicroFrontEndPageBinding", "name", parentPageRef.Name)
+			return ctrl.Result{}, err
+		}
+
+		if !apimeta.IsStatusConditionTrue(parentPage.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady)) {
+			log.Error(fmt.Errorf("referenced MicroFrontEndPageBinding %s is not ready", parentPage.Name), "")
+			apimeta.SetStatusCondition(
+				&pageBinding.Status.Conditions,
+				*kdexv1alpha1.NewCondition(
+					kdexv1alpha1.ConditionTypeReady,
+					metav1.ConditionFalse,
+					kdexv1alpha1.ConditionReasonReconcileError,
+					fmt.Sprintf("referenced MicroFrontEndPageBinding %s is not ready", parentPage.Name),
+				),
+			)
+			if err := r.Status().Update(ctx, &pageBinding); err != nil {
+				return ctrl.Result{}, err
+			}
+
+			return ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
+		}
 	}
 
 	var header kdexv1alpha1.MicroFrontEndPageHeader

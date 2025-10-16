@@ -29,7 +29,7 @@ import (
 )
 
 var _ = Describe("MicroFrontEndPageBinding Controller", Ordered, func() {
-	Context("When reconciling a resource", func() {
+	Context("When reconciling a resource", Ordered, func() {
 		const namespace = "default"
 		const resourceName = "test-resource"
 
@@ -43,8 +43,8 @@ var _ = Describe("MicroFrontEndPageBinding Controller", Ordered, func() {
 				err := k8sClient.Get(ctx, name, resource)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
-				delete(resourcesToDelete, name)
 			}
+			resourcesToDelete = map[types.NamespacedName]client.Object{}
 		})
 
 		It("with empty content entries should not succeed", func() {
@@ -151,7 +151,7 @@ var _ = Describe("MicroFrontEndPageBinding Controller", Ordered, func() {
 				&kdexv1alpha1.MicroFrontEndPageBinding{}, true)
 		})
 
-		It("with override footer reference", func() {
+		It("with override references", func() {
 			resource := &kdexv1alpha1.MicroFrontEndPageBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
@@ -203,6 +203,87 @@ var _ = Describe("MicroFrontEndPageBinding Controller", Ordered, func() {
 			addPageFooter(ctx, k8sClient, resourcesToDelete, namespace, "non-existent-footer")
 			addPageHeader(ctx, k8sClient, resourcesToDelete, namespace, "non-existent-header")
 			addPageNavigation(ctx, k8sClient, resourcesToDelete, namespace, "non-existent-navigation")
+
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.MicroFrontEndPageBinding{}, true)
+		})
+
+		It("with parent page reference", func() {
+			resource := &kdexv1alpha1.MicroFrontEndPageBinding{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.MicroFrontEndPageBindingSpec{
+					ContentEntries: []kdexv1alpha1.ContentEntry{
+						{
+							RawHTML: "<h1>Hello, World!</h1>",
+							Slot:    "main",
+						},
+					},
+					HostRef: corev1.LocalObjectReference{
+						Name: "non-existent-host",
+					},
+					Label: "foo",
+					PageArchetypeRef: corev1.LocalObjectReference{
+						Name: "non-existent-page-archetype",
+					},
+					ParentPageRef: &corev1.LocalObjectReference{
+						Name: "non-existent-page-binding",
+					},
+					Path: "/foo",
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+
+			typeNamespacedName := types.NamespacedName{
+				Name:      resourceName,
+				Namespace: namespace,
+			}
+
+			resourcesToDelete[typeNamespacedName] = &kdexv1alpha1.MicroFrontEndPageBinding{}
+
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.MicroFrontEndPageBinding{}, false)
+
+			By("adding all the missing references")
+			addHost(ctx, k8sClient, resourcesToDelete, namespace, "non-existent-host")
+			addPageArchetype(ctx, k8sClient, resourcesToDelete, namespace, "non-existent-page-archetype")
+
+			referencedPage := &kdexv1alpha1.MicroFrontEndPageBinding{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "non-existent-page-binding",
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.MicroFrontEndPageBindingSpec{
+					ContentEntries: []kdexv1alpha1.ContentEntry{
+						{
+							RawHTML: "<h1>Hello, World!</h1>",
+							Slot:    "main",
+						},
+					},
+					HostRef: corev1.LocalObjectReference{
+						Name: "non-existent-host",
+					},
+					Label: "foo",
+					PageArchetypeRef: corev1.LocalObjectReference{
+						Name: "non-existent-page-archetype",
+					},
+					Path: "/parent",
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, referencedPage)).To(Succeed())
+
+			referencedPageName := types.NamespacedName{
+				Name:      referencedPage.Name,
+				Namespace: namespace,
+			}
+
+			resourcesToDelete[referencedPageName] = &kdexv1alpha1.MicroFrontEndPageBinding{}
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
