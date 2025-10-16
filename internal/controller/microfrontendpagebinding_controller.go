@@ -283,7 +283,8 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 				PrimaryTemplate: pageArchetype.Spec.Content,
 				Title:           pageBinding.Spec.Label,
 			},
-			Path: pageBinding.Spec.Path,
+			ParentPageRef: parentPageRef,
+			Path:          pageBinding.Spec.Path,
 		}
 		return ctrl.SetControllerReference(&pageBinding, renderPage, r.Scheme)
 	}); err != nil {
