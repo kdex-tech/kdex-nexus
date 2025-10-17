@@ -22,33 +22,26 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var _ = Describe("MicroFrontEndPageBinding Controller", Ordered, func() {
-	Context("When reconciling a resource", Ordered, func() {
+var _ = Describe("MicroFrontEndPageBinding Controller", func() {
+	Context("When reconciling a resource", func() {
 		const namespace = "default"
 		const resourceName = "test-resource"
 
 		ctx := context.Background()
 
-		resourcesToDelete := map[types.NamespacedName]client.Object{}
-
 		AfterEach(func() {
 			By("Cleanup all the test resource instances")
-			for name, resource := range resourcesToDelete {
-				err := k8sClient.Get(ctx, name, resource)
-				if apierrors.IsNotFound(err) {
-					continue
-				}
-				Expect(err).NotTo(HaveOccurred())
-				Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
-			}
-			resourcesToDelete = map[types.NamespacedName]client.Object{}
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndPageBinding{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndHost{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndPageArchetype{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndPageFooter{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndPageHeader{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndPageNavigation{}, client.InNamespace(namespace))).To(Succeed())
 		})
 
 		It("with empty content entries should not succeed", func() {
@@ -98,11 +91,6 @@ var _ = Describe("MicroFrontEndPageBinding Controller", Ordered, func() {
 			}
 
 			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
-
-			resourcesToDelete[types.NamespacedName{
-				Name:      resourceName,
-				Namespace: namespace,
-			}] = &kdexv1alpha1.MicroFrontEndPageBinding{}
 		})
 
 		It("with missing references should not succeed", func() {
@@ -131,25 +119,18 @@ var _ = Describe("MicroFrontEndPageBinding Controller", Ordered, func() {
 
 			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 
-			typeNamespacedName := types.NamespacedName{
-				Name:      resourceName,
-				Namespace: namespace,
-			}
-
-			resourcesToDelete[typeNamespacedName] = &kdexv1alpha1.MicroFrontEndPageBinding{}
-
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
 				&kdexv1alpha1.MicroFrontEndPageBinding{}, false)
 
 			By("and when Host added should still not become ready")
-			addHost(ctx, k8sClient, resourcesToDelete, namespace, "non-existent-host")
+			addHost(ctx, k8sClient, namespace, "non-existent-host")
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
 				&kdexv1alpha1.MicroFrontEndPageBinding{}, false)
 
 			By("lastly when PageArchetype added should become ready")
-			addPageArchetype(ctx, k8sClient, resourcesToDelete, namespace, "non-existent-page-archetype")
+			addPageArchetype(ctx, k8sClient, namespace, "non-existent-page-archetype")
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
 				&kdexv1alpha1.MicroFrontEndPageBinding{}, true)
@@ -190,23 +171,16 @@ var _ = Describe("MicroFrontEndPageBinding Controller", Ordered, func() {
 
 			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 
-			typeNamespacedName := types.NamespacedName{
-				Name:      resourceName,
-				Namespace: namespace,
-			}
-
-			resourcesToDelete[typeNamespacedName] = &kdexv1alpha1.MicroFrontEndPageBinding{}
-
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
 				&kdexv1alpha1.MicroFrontEndPageBinding{}, false)
 
 			By("adding all the missing references")
-			addHost(ctx, k8sClient, resourcesToDelete, namespace, "non-existent-host")
-			addPageArchetype(ctx, k8sClient, resourcesToDelete, namespace, "non-existent-page-archetype")
-			addPageFooter(ctx, k8sClient, resourcesToDelete, namespace, "non-existent-footer")
-			addPageHeader(ctx, k8sClient, resourcesToDelete, namespace, "non-existent-header")
-			addPageNavigation(ctx, k8sClient, resourcesToDelete, namespace, "non-existent-navigation")
+			addHost(ctx, k8sClient, namespace, "non-existent-host")
+			addPageArchetype(ctx, k8sClient, namespace, "non-existent-page-archetype")
+			addPageFooter(ctx, k8sClient, namespace, "non-existent-footer")
+			addPageHeader(ctx, k8sClient, namespace, "non-existent-header")
+			addPageNavigation(ctx, k8sClient, namespace, "non-existent-navigation")
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
@@ -242,20 +216,13 @@ var _ = Describe("MicroFrontEndPageBinding Controller", Ordered, func() {
 
 			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 
-			typeNamespacedName := types.NamespacedName{
-				Name:      resourceName,
-				Namespace: namespace,
-			}
-
-			resourcesToDelete[typeNamespacedName] = &kdexv1alpha1.MicroFrontEndPageBinding{}
-
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
 				&kdexv1alpha1.MicroFrontEndPageBinding{}, false)
 
 			By("adding all the missing references")
-			addHost(ctx, k8sClient, resourcesToDelete, namespace, "non-existent-host")
-			addPageArchetype(ctx, k8sClient, resourcesToDelete, namespace, "non-existent-page-archetype")
+			addHost(ctx, k8sClient, namespace, "non-existent-host")
+			addPageArchetype(ctx, k8sClient, namespace, "non-existent-page-archetype")
 
 			referencedPage := &kdexv1alpha1.MicroFrontEndPageBinding{
 				ObjectMeta: metav1.ObjectMeta{
@@ -282,13 +249,6 @@ var _ = Describe("MicroFrontEndPageBinding Controller", Ordered, func() {
 
 			Expect(k8sClient.Create(ctx, referencedPage)).To(Succeed())
 
-			referencedPageName := types.NamespacedName{
-				Name:      referencedPage.Name,
-				Namespace: namespace,
-			}
-
-			resourcesToDelete[referencedPageName] = &kdexv1alpha1.MicroFrontEndPageBinding{}
-
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
 				&kdexv1alpha1.MicroFrontEndPageBinding{}, true)
@@ -299,7 +259,6 @@ var _ = Describe("MicroFrontEndPageBinding Controller", Ordered, func() {
 func addHost(
 	ctx context.Context,
 	k8sClient client.Client,
-	resourcesToDelete map[types.NamespacedName]client.Object,
 	namespace string,
 	name string,
 ) {
@@ -318,17 +277,11 @@ func addHost(
 		},
 	}
 	Expect(k8sClient.Create(ctx, host)).To(Succeed())
-
-	resourcesToDelete[types.NamespacedName{
-		Name:      host.Name,
-		Namespace: namespace,
-	}] = &kdexv1alpha1.MicroFrontEndHost{}
 }
 
 func addPageArchetype(
 	ctx context.Context,
 	k8sClient client.Client,
-	resourcesToDelete map[types.NamespacedName]client.Object,
 	namespace string,
 	name string,
 ) {
@@ -342,17 +295,11 @@ func addPageArchetype(
 		},
 	}
 	Expect(k8sClient.Create(ctx, pageArchetype)).To(Succeed())
-
-	resourcesToDelete[types.NamespacedName{
-		Name:      pageArchetype.Name,
-		Namespace: namespace,
-	}] = &kdexv1alpha1.MicroFrontEndPageArchetype{}
 }
 
 func addPageFooter(
 	ctx context.Context,
 	k8sClient client.Client,
-	resourcesToDelete map[types.NamespacedName]client.Object,
 	namespace string,
 	name string,
 ) {
@@ -366,17 +313,11 @@ func addPageFooter(
 		},
 	}
 	Expect(k8sClient.Create(ctx, pageFooter)).To(Succeed())
-
-	resourcesToDelete[types.NamespacedName{
-		Name:      pageFooter.Name,
-		Namespace: namespace,
-	}] = &kdexv1alpha1.MicroFrontEndPageFooter{}
 }
 
 func addPageHeader(
 	ctx context.Context,
 	k8sClient client.Client,
-	resourcesToDelete map[types.NamespacedName]client.Object,
 	namespace string,
 	name string,
 ) {
@@ -390,17 +331,11 @@ func addPageHeader(
 		},
 	}
 	Expect(k8sClient.Create(ctx, pageHeader)).To(Succeed())
-
-	resourcesToDelete[types.NamespacedName{
-		Name:      pageHeader.Name,
-		Namespace: namespace,
-	}] = &kdexv1alpha1.MicroFrontEndPageHeader{}
 }
 
 func addPageNavigation(
 	ctx context.Context,
 	k8sClient client.Client,
-	resourcesToDelete map[types.NamespacedName]client.Object,
 	namespace string,
 	name string,
 ) {
@@ -414,9 +349,4 @@ func addPageNavigation(
 		},
 	}
 	Expect(k8sClient.Create(ctx, pageNavigation)).To(Succeed())
-
-	resourcesToDelete[types.NamespacedName{
-		Name:      pageNavigation.Name,
-		Namespace: namespace,
-	}] = &kdexv1alpha1.MicroFrontEndPageNavigation{}
 }
