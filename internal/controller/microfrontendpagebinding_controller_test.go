@@ -22,6 +22,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
@@ -41,6 +42,9 @@ var _ = Describe("MicroFrontEndPageBinding Controller", Ordered, func() {
 			By("Cleanup all the test resource instances")
 			for name, resource := range resourcesToDelete {
 				err := k8sClient.Get(ctx, name, resource)
+				if apierrors.IsNotFound(err) {
+					continue
+				}
 				Expect(err).NotTo(HaveOccurred())
 				Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
 			}
