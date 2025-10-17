@@ -36,6 +36,7 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 
 		AfterEach(func() {
 			By("Cleanup all the test resource instances")
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndApp{}, client.InNamespace(namespace))).To(Succeed())
 			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndPageBinding{}, client.InNamespace(namespace))).To(Succeed())
 			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndHost{}, client.InNamespace(namespace))).To(Succeed())
 			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndPageArchetype{}, client.InNamespace(namespace))).To(Succeed())

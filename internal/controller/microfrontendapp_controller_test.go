@@ -29,23 +29,22 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var _ = Describe("MicroFrontEndApp Controller", Ordered, func() {
+var _ = Describe("MicroFrontEndApp Controller", func() {
 	Context("When reconciling a resource", func() {
 		const namespace = "default"
 		const resourceName = "test-resource"
 
 		ctx := context.Background()
 
-		resourcesToDelete := map[types.NamespacedName]client.Object{}
-
 		AfterEach(func() {
 			By("Cleanup all the test resource instances")
-			for name, resource := range resourcesToDelete {
-				err := k8sClient.Get(ctx, name, resource)
-				Expect(err).NotTo(HaveOccurred())
-				Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
-				delete(resourcesToDelete, name)
-			}
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndApp{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndPageBinding{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndHost{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndPageArchetype{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndPageFooter{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndPageHeader{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndPageNavigation{}, client.InNamespace(namespace))).To(Succeed())
 		})
 
 		It("it must not become ready if it has missing package reference", func() {
@@ -70,8 +69,6 @@ var _ = Describe("MicroFrontEndApp Controller", Ordered, func() {
 				Name:      resourceName,
 				Namespace: namespace,
 			}
-
-			resourcesToDelete[typeNamespacedName] = &kdexv1alpha1.MicroFrontEndApp{}
 
 			check := func(g Gomega) {
 				checkResource := &kdexv1alpha1.MicroFrontEndApp{}
@@ -132,8 +129,6 @@ var _ = Describe("MicroFrontEndApp Controller", Ordered, func() {
 				Namespace: namespace,
 			}
 
-			resourcesToDelete[typeNamespacedName] = &kdexv1alpha1.MicroFrontEndApp{}
-
 			check := func(g Gomega) {
 				checkResource := &kdexv1alpha1.MicroFrontEndApp{}
 				err := k8sClient.Get(ctx, typeNamespacedName, checkResource)
@@ -193,8 +188,6 @@ var _ = Describe("MicroFrontEndApp Controller", Ordered, func() {
 				Namespace: namespace,
 			}
 
-			resourcesToDelete[typeNamespacedName] = &kdexv1alpha1.MicroFrontEndApp{}
-
 			check := func(g Gomega) {
 				checkResource := &kdexv1alpha1.MicroFrontEndApp{}
 				err := k8sClient.Get(ctx, typeNamespacedName, checkResource)
@@ -252,8 +245,6 @@ var _ = Describe("MicroFrontEndApp Controller", Ordered, func() {
 				Name:      resourceName,
 				Namespace: namespace,
 			}
-
-			resourcesToDelete[typeNamespacedName] = &kdexv1alpha1.MicroFrontEndApp{}
 
 			check := func(g Gomega) {
 				checkResource := &kdexv1alpha1.MicroFrontEndApp{}
@@ -317,8 +308,6 @@ var _ = Describe("MicroFrontEndApp Controller", Ordered, func() {
 				Namespace: namespace,
 			}
 
-			resourcesToDelete[typeNamespacedName] = &kdexv1alpha1.MicroFrontEndApp{}
-
 			check := func(g Gomega) {
 				checkResource := &kdexv1alpha1.MicroFrontEndApp{}
 				err := k8sClient.Get(ctx, typeNamespacedName, checkResource)
@@ -380,8 +369,6 @@ var _ = Describe("MicroFrontEndApp Controller", Ordered, func() {
 				Namespace: namespace,
 			}
 
-			resourcesToDelete[typeNamespacedName] = &kdexv1alpha1.MicroFrontEndApp{}
-
 			check := func(g Gomega) {
 				checkResource := &kdexv1alpha1.MicroFrontEndApp{}
 				err := k8sClient.Get(ctx, typeNamespacedName, checkResource)
@@ -425,11 +412,6 @@ var _ = Describe("MicroFrontEndApp Controller", Ordered, func() {
 					"password": []byte("password"),
 				},
 			}
-
-			resourcesToDelete[types.NamespacedName{
-				Name:      secret.Name,
-				Namespace: namespace,
-			}] = &corev1.Secret{}
 
 			Expect(k8sClient.Create(ctx, secret)).To(Succeed())
 
