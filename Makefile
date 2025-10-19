@@ -179,7 +179,8 @@ install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~
 		-f https://raw.githubusercontent.com/kdex-tech/kdex-crds/refs/tags/$${CRD_VERSION}/config/crd/bases/kdex.dev_microfrontendpagefooters.yaml \
 		-f https://raw.githubusercontent.com/kdex-tech/kdex-crds/refs/tags/$${CRD_VERSION}/config/crd/bases/kdex.dev_microfrontendpageheaders.yaml \
 		-f https://raw.githubusercontent.com/kdex-tech/kdex-crds/refs/tags/$${CRD_VERSION}/config/crd/bases/kdex.dev_microfrontendpagenavigations.yaml \
-		-f https://raw.githubusercontent.com/kdex-tech/kdex-crds/refs/tags/$${CRD_VERSION}/config/crd/bases/kdex.dev_microfrontendrenderpages.yaml
+		-f https://raw.githubusercontent.com/kdex-tech/kdex-crds/refs/tags/$${CRD_VERSION}/config/crd/bases/kdex.dev_microfrontendrenderpages.yaml \
+		-f https://raw.githubusercontent.com/kdex-tech/kdex-crds/refs/tags/$${CRD_VERSION}/config/crd/bases/kdex.dev_microfrontendtranslations.yaml
 
 .PHONY: uninstall
 uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
@@ -193,7 +194,8 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 		-f https://raw.githubusercontent.com/kdex-tech/kdex-crds/refs/tags/$${CRD_VERSION}/config/crd/bases/kdex.dev_microfrontendpagefooters.yaml \
 		-f https://raw.githubusercontent.com/kdex-tech/kdex-crds/refs/tags/$${CRD_VERSION}/config/crd/bases/kdex.dev_microfrontendpageheaders.yaml \
 		-f https://raw.githubusercontent.com/kdex-tech/kdex-crds/refs/tags/$${CRD_VERSION}/config/crd/bases/kdex.dev_microfrontendpagenavigations.yaml \
-		-f https://raw.githubusercontent.com/kdex-tech/kdex-crds/refs/tags/$${CRD_VERSION}/config/crd/bases/kdex.dev_microfrontendrenderpages.yaml
+		-f https://raw.githubusercontent.com/kdex-tech/kdex-crds/refs/tags/$${CRD_VERSION}/config/crd/bases/kdex.dev_microfrontendrenderpages.yaml \
+		-f https://raw.githubusercontent.com/kdex-tech/kdex-crds/refs/tags/$${CRD_VERSION}/config/crd/bases/kdex.dev_microfrontendtranslations.yaml
 
 .PHONY: deploy
 deploy: manifests kustomize install ## Deploy controller to the K8s cluster specified in ~/.kube/config.
