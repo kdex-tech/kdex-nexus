@@ -30,9 +30,12 @@ import (
 	"kdex.dev/nexus/internal/customelement"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
+
+const pageBindingFinalizerName = "kdex.dev/kdex-nexus-page-binding-finalizer"
 
 // MicroFrontEndPageBindingReconciler reconciles a MicroFrontEndPageBinding object
 type MicroFrontEndPageBindingReconciler struct {
@@ -58,6 +61,35 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 	if err := r.Get(ctx, req.NamespacedName, &pageBinding); err != nil {
 		log.Error(err, "unable to fetch MicroFrontEndPageBinding")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	// handle finalizer
+	if pageBinding.DeletionTimestamp.IsZero() {
+		if !controllerutil.ContainsFinalizer(&pageBinding, pageBindingFinalizerName) {
+			controllerutil.AddFinalizer(&pageBinding, pageBindingFinalizerName)
+			if err := r.Update(ctx, &pageBinding); err != nil {
+				return ctrl.Result{}, err
+			}
+			return ctrl.Result{Requeue: true}, nil
+		}
+	} else {
+		if controllerutil.ContainsFinalizer(&pageBinding, pageBindingFinalizerName) {
+			renderPage := &kdexv1alpha1.MicroFrontEndRenderPage{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      pageBinding.Name,
+					Namespace: pageBinding.Namespace,
+				},
+			}
+			if err := r.Delete(ctx, renderPage); err != nil {
+				return ctrl.Result{}, err
+			}
+
+			controllerutil.RemoveFinalizer(&pageBinding, pageBindingFinalizerName)
+			if err := r.Update(ctx, &pageBinding); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+		return ctrl.Result{}, nil
 	}
 
 	var host kdexv1alpha1.MicroFrontEndHost
@@ -324,6 +356,9 @@ func (r *MicroFrontEndPageBindingReconciler) SetupWithManager(mgr ctrl.Manager) 
 		Watches(
 			&kdexv1alpha1.MicroFrontEndPageArchetype{},
 			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForPageArchetype)).
+		Watches(
+			&kdexv1alpha1.MicroFrontEndPageBinding{},
+			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForPageBindings)).
 		Watches(
 			&kdexv1alpha1.MicroFrontEndPageFooter{},
 			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForPageFooter)).

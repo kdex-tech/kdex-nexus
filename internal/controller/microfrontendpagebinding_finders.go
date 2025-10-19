@@ -99,6 +99,37 @@ func (r *MicroFrontEndPageBindingReconciler) findPageBindingsForPageArchetype(
 	return requests
 }
 
+func (r *MicroFrontEndPageBindingReconciler) findPageBindingsForPageBindings(
+	ctx context.Context,
+	parentPageBinding client.Object,
+) []reconcile.Request {
+	log := logf.FromContext(ctx)
+
+	var pageBindingsList kdexv1alpha1.MicroFrontEndPageBindingList
+	if err := r.List(ctx, &pageBindingsList, &client.ListOptions{
+		Namespace: parentPageBinding.GetNamespace(),
+	}); err != nil {
+		log.Error(err, "unable to list MicroFrontEndPageBindings for page binding", "name", parentPageBinding.GetName())
+		return []reconcile.Request{}
+	}
+
+	requests := []reconcile.Request{}
+	for _, pageBinding := range pageBindingsList.Items {
+		if pageBinding.Spec.ParentPageRef == nil {
+			continue
+		}
+		if pageBinding.Spec.ParentPageRef.Name == parentPageBinding.GetName() {
+			requests = append(requests, reconcile.Request{
+				NamespacedName: types.NamespacedName{
+					Name:      pageBinding.Name,
+					Namespace: pageBinding.Namespace,
+				},
+			})
+		}
+	}
+	return requests
+}
+
 func (r *MicroFrontEndPageBindingReconciler) findPageBindingsForPageFooter(
 	ctx context.Context,
 	pageFooter client.Object,
