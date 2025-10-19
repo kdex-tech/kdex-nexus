@@ -323,7 +323,7 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 		return ctrl.Result{}, err
 	}
 
-	log.Info("reconciled MicroFrontEndPageBinding", "renderPage", renderPage)
+	log.Info("reconciled MicroFrontEndPageBinding")
 
 	apimeta.SetStatusCondition(
 		&pageBinding.Status.Conditions,

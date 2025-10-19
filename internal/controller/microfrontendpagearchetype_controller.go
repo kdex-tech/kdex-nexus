@@ -135,7 +135,7 @@ func (r *MicroFrontEndPageArchetypeReconciler) Reconcile(ctx context.Context, re
 		}
 	}
 
-	log.Info("reconciled MicroFrontEndPageArchetype", "pageArchetype", pageArchetype)
+	log.Info("reconciled MicroFrontEndPageArchetype")
 
 	apimeta.SetStatusCondition(
 		&pageArchetype.Status.Conditions,

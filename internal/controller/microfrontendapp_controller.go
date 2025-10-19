@@ -95,7 +95,7 @@ func (r *MicroFrontEndAppReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		}
 	}
 
-	log.Info("reconciled MicroFrontEndApp", "app", app)
+	log.Info("reconciled MicroFrontEndApp")
 
 	return ctrl.Result{}, nil
 }
