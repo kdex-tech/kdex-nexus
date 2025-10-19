@@ -55,7 +55,6 @@ func (r *MicroFrontEndAppReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	var app kdexv1alpha1.MicroFrontEndApp
 	if err := r.Get(ctx, req.NamespacedName, &app); err != nil {
-		log.Error(err, "unable to fetch MicroFrontEndApp")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 

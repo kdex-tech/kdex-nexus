@@ -59,7 +59,6 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 
 	var pageBinding kdexv1alpha1.MicroFrontEndPageBinding
 	if err := r.Get(ctx, req.NamespacedName, &pageBinding); err != nil {
-		log.Error(err, "unable to fetch MicroFrontEndPageBinding")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 

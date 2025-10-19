@@ -50,7 +50,6 @@ func (r *MicroFrontEndPageArchetypeReconciler) Reconcile(ctx context.Context, re
 
 	var pageArchetype kdexv1alpha1.MicroFrontEndPageArchetype
 	if err := r.Get(ctx, req.NamespacedName, &pageArchetype); err != nil {
-		log.Error(err, "unable to fetch MicroFrontEndPageArchetype")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
