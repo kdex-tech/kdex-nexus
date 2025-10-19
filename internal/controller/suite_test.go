@@ -71,7 +71,12 @@ func (m *MockRegistry) ValidatePackage(packageName string, packageVersion string
 func TestControllers(t *testing.T) {
 	RegisterFailHandler(Fail)
 
-	RunSpecs(t, "Controller Suite")
+	// Get the default Ginkgo configuration
+	suiteConfig, reporterConfig := GinkgoConfiguration()
+
+	// Enable full stack traces
+	reporterConfig.FullTrace = true
+	RunSpecs(t, "Controller Suite", suiteConfig, reporterConfig)
 }
 
 var _ = BeforeSuite(func() {
