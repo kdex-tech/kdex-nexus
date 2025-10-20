@@ -126,7 +126,7 @@ func (r *MicroFrontEndAppReconciler) findAppsForSecret(
 	if err := r.List(ctx, &appList, &client.ListOptions{
 		Namespace: secret.GetNamespace(),
 	}); err != nil {
-		log.Error(err, "unable to list MicroFrontEndApps for secret %s", secret.GetName())
+		log.Error(err, "unable to list MicroFrontEndApps for secret", "name", secret.GetName())
 		return []reconcile.Request{}
 	}
 
