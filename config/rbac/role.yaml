@@ -52,6 +52,7 @@ rules:
   - microfrontendpagefooters
   - microfrontendpageheaders
   - microfrontendpagenavigations
+  - microfrontendstylesheets
   verbs:
   - get
   - list

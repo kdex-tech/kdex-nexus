@@ -114,3 +114,34 @@ func (r *MicroFrontEndPageArchetypeReconciler) findPageArchetypesForPageNavigati
 	}
 	return requests
 }
+
+func (r *MicroFrontEndPageArchetypeReconciler) findPageArchetypesForStylesheet(
+	ctx context.Context,
+	stylesheet client.Object,
+) []reconcile.Request {
+	log := logf.FromContext(ctx)
+
+	var pageArchetypesList kdexv1alpha1.MicroFrontEndPageArchetypeList
+	if err := r.List(ctx, &pageArchetypesList, &client.ListOptions{
+		Namespace: stylesheet.GetNamespace(),
+	}); err != nil {
+		log.Error(err, "unable to list MicroFrontEndPageArchetypes for stylesheet", "name", stylesheet.GetName())
+		return []reconcile.Request{}
+	}
+
+	requests := make([]reconcile.Request, 0, len(pageArchetypesList.Items))
+	for _, pageArchetype := range pageArchetypesList.Items {
+		if pageArchetype.Spec.OverrideStylesheetRef == nil {
+			continue
+		}
+		if pageArchetype.Spec.OverrideStylesheetRef.Name == stylesheet.GetName() {
+			requests = append(requests, reconcile.Request{
+				NamespacedName: types.NamespacedName{
+					Name:      pageArchetype.Name,
+					Namespace: pageArchetype.Namespace,
+				},
+			})
+		}
+	}
+	return requests
+}

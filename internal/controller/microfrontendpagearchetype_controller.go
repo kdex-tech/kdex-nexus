@@ -44,6 +44,7 @@ type MicroFrontEndPageArchetypeReconciler struct {
 // +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendpagearchetypes,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendpagearchetypes/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendpagearchetypes/finalizers,verbs=update
+// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendstylesheets,verbs=get;list;watch
 
 func (r *MicroFrontEndPageArchetypeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx)
@@ -62,14 +63,14 @@ func (r *MicroFrontEndPageArchetypeReconciler) Reconcile(ctx context.Context, re
 
 		if err := r.Get(ctx, footerName, &footer); err != nil {
 			if errors.IsNotFound(err) {
-				log.Error(err, "referenced MicroFrontEndPageFooter not found", "name", pageArchetype.Spec.DefaultFooterRef.Name)
+				log.Error(err, "referenced MicroFrontEndPageFooter not found", "name", footerName.Name)
 				apimeta.SetStatusCondition(
 					&pageArchetype.Status.Conditions,
 					*kdexv1alpha1.NewCondition(
 						kdexv1alpha1.ConditionTypeReady,
 						metav1.ConditionFalse,
 						kdexv1alpha1.ConditionReasonReconcileError,
-						fmt.Sprintf("referenced MicroFrontEndPageFooter %s not found", pageArchetype.Spec.DefaultFooterRef.Name),
+						fmt.Sprintf("referenced MicroFrontEndPageFooter %s not found", footerName.Name),
 					),
 				)
 				if err := r.Status().Update(ctx, &pageArchetype); err != nil {
@@ -79,7 +80,7 @@ func (r *MicroFrontEndPageArchetypeReconciler) Reconcile(ctx context.Context, re
 				return ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
 			}
 
-			log.Error(err, "unable to fetch MicroFrontEndPageFooter", "name", pageArchetype.Spec.DefaultFooterRef.Name)
+			log.Error(err, "unable to fetch MicroFrontEndPageFooter", "name", footerName.Name)
 			return ctrl.Result{}, err
 		}
 	}
@@ -93,14 +94,14 @@ func (r *MicroFrontEndPageArchetypeReconciler) Reconcile(ctx context.Context, re
 
 		if err := r.Get(ctx, headerName, &header); err != nil {
 			if errors.IsNotFound(err) {
-				log.Error(err, "referenced MicroFrontEndPageHeader not found", "name", pageArchetype.Spec.DefaultHeaderRef.Name)
+				log.Error(err, "referenced MicroFrontEndPageHeader not found", "name", headerName.Name)
 				apimeta.SetStatusCondition(
 					&pageArchetype.Status.Conditions,
 					*kdexv1alpha1.NewCondition(
 						kdexv1alpha1.ConditionTypeReady,
 						metav1.ConditionFalse,
 						kdexv1alpha1.ConditionReasonReconcileError,
-						fmt.Sprintf("referenced MicroFrontEndPageHeader %s not found", pageArchetype.Spec.DefaultHeaderRef.Name),
+						fmt.Sprintf("referenced MicroFrontEndPageHeader %s not found", headerName.Name),
 					),
 				)
 				if err := r.Status().Update(ctx, &pageArchetype); err != nil {
@@ -110,7 +111,7 @@ func (r *MicroFrontEndPageArchetypeReconciler) Reconcile(ctx context.Context, re
 				return ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
 			}
 
-			log.Error(err, "unable to fetch MicroFrontEndPageHeader", "name", pageArchetype.Spec.DefaultHeaderRef.Name)
+			log.Error(err, "unable to fetch MicroFrontEndPageHeader", "name", headerName.Name)
 			return ctrl.Result{}, err
 		}
 	}
@@ -132,6 +133,37 @@ func (r *MicroFrontEndPageArchetypeReconciler) Reconcile(ctx context.Context, re
 			if navigation == nil {
 				return response, err
 			}
+		}
+	}
+
+	if pageArchetype.Spec.OverrideStylesheetRef != nil {
+		var stylesheet kdexv1alpha1.MicroFrontEndStylesheet
+		stylesheetName := types.NamespacedName{
+			Name:      pageArchetype.Spec.OverrideStylesheetRef.Name,
+			Namespace: pageArchetype.Namespace,
+		}
+
+		if err := r.Get(ctx, stylesheetName, &stylesheet); err != nil {
+			if errors.IsNotFound(err) {
+				log.Error(err, "referenced MicroFrontEndStylesheet not found", "name", stylesheetName.Name)
+				apimeta.SetStatusCondition(
+					&pageArchetype.Status.Conditions,
+					*kdexv1alpha1.NewCondition(
+						kdexv1alpha1.ConditionTypeReady,
+						metav1.ConditionFalse,
+						kdexv1alpha1.ConditionReasonReconcileError,
+						fmt.Sprintf("referenced MicroFrontEndStylesheet %s not found", stylesheetName.Name),
+					),
+				)
+				if err := r.Status().Update(ctx, &pageArchetype); err != nil {
+					return ctrl.Result{}, err
+				}
+
+				return ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
+			}
+
+			log.Error(err, "unable to fetch MicroFrontEndStylesheet", "name", stylesheetName.Name)
+			return ctrl.Result{}, err
 		}
 	}
 
@@ -166,6 +198,9 @@ func (r *MicroFrontEndPageArchetypeReconciler) SetupWithManager(mgr ctrl.Manager
 		Watches(
 			&kdexv1alpha1.MicroFrontEndPageNavigation{},
 			handler.EnqueueRequestsFromMapFunc(r.findPageArchetypesForPageNavigations)).
+		Watches(
+			&kdexv1alpha1.MicroFrontEndStylesheet{},
+			handler.EnqueueRequestsFromMapFunc(r.findPageArchetypesForStylesheet)).
 		Named("microfrontendpagearchetype").
 		Complete(r)
 }

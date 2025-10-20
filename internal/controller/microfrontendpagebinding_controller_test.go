@@ -274,7 +274,6 @@ func addHost(
 				"example.com",
 			},
 			Organization: "KDex Tech",
-			Stylesheet:   "http://example.com/style.css",
 		},
 	}
 	Expect(k8sClient.Create(ctx, host)).To(Succeed())
