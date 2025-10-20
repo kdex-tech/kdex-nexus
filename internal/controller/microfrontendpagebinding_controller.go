@@ -119,6 +119,24 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 		return ctrl.Result{}, err
 	}
 
+	if !apimeta.IsStatusConditionTrue(host.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady)) {
+		log.Error(fmt.Errorf("referenced MicroFrontEndHost %s is not ready", host.Name), "")
+		apimeta.SetStatusCondition(
+			&pageBinding.Status.Conditions,
+			*kdexv1alpha1.NewCondition(
+				kdexv1alpha1.ConditionTypeReady,
+				metav1.ConditionFalse,
+				kdexv1alpha1.ConditionReasonReconcileError,
+				fmt.Sprintf("referenced MicroFrontEndHost %s is not ready", host.Name),
+			),
+		)
+		if err := r.Status().Update(ctx, &pageBinding); err != nil {
+			return ctrl.Result{}, err
+		}
+
+		return ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
+	}
+
 	var pageArchetype kdexv1alpha1.MicroFrontEndPageArchetype
 	pageArchetypeName := types.NamespacedName{
 		Name:      pageBinding.Spec.PageArchetypeRef.Name,
@@ -295,6 +313,41 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 		}
 	}
 
+	var stylesheet kdexv1alpha1.MicroFrontEndStylesheet
+	stylesheetRef := pageArchetype.Spec.OverrideStylesheetRef
+	if stylesheetRef == nil {
+		stylesheetRef = host.Spec.DefaultStylesheetRef
+	}
+	if stylesheetRef != nil {
+		stylesheetName := types.NamespacedName{
+			Name:      stylesheetRef.Name,
+			Namespace: pageArchetype.Namespace,
+		}
+
+		if err := r.Get(ctx, stylesheetName, &stylesheet); err != nil {
+			if errors.IsNotFound(err) {
+				log.Error(err, "referenced MicroFrontEndStylesheet not found", "name", stylesheetName.Name)
+				apimeta.SetStatusCondition(
+					&pageArchetype.Status.Conditions,
+					*kdexv1alpha1.NewCondition(
+						kdexv1alpha1.ConditionTypeReady,
+						metav1.ConditionFalse,
+						kdexv1alpha1.ConditionReasonReconcileError,
+						fmt.Sprintf("referenced MicroFrontEndStylesheet %s not found", stylesheetName.Name),
+					),
+				)
+				if err := r.Status().Update(ctx, &pageArchetype); err != nil {
+					return ctrl.Result{}, err
+				}
+
+				return ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
+			}
+
+			log.Error(err, "unable to fetch MicroFrontEndStylesheet", "name", stylesheetName.Name)
+			return ctrl.Result{}, err
+		}
+	}
+
 	renderPage := &kdexv1alpha1.MicroFrontEndRenderPage{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      pageBinding.Name,
@@ -316,6 +369,7 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 			},
 			ParentPageRef: parentPageRef,
 			Path:          pageBinding.Spec.Path,
+			StylesheetRef: stylesheetRef,
 		}
 		return ctrl.SetControllerReference(&pageBinding, renderPage, r.Scheme)
 	}); err != nil {
