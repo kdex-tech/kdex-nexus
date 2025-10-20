@@ -119,24 +119,6 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 		return ctrl.Result{}, err
 	}
 
-	if !apimeta.IsStatusConditionTrue(host.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady)) {
-		log.Error(fmt.Errorf("referenced MicroFrontEndHost %s is not ready", host.Name), "")
-		apimeta.SetStatusCondition(
-			&pageBinding.Status.Conditions,
-			*kdexv1alpha1.NewCondition(
-				kdexv1alpha1.ConditionTypeReady,
-				metav1.ConditionFalse,
-				kdexv1alpha1.ConditionReasonReconcileError,
-				fmt.Sprintf("referenced MicroFrontEndHost %s is not ready", host.Name),
-			),
-		)
-		if err := r.Status().Update(ctx, &pageBinding); err != nil {
-			return ctrl.Result{}, err
-		}
-
-		return ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
-	}
-
 	var pageArchetype kdexv1alpha1.MicroFrontEndPageArchetype
 	pageArchetypeName := types.NamespacedName{
 		Name:      pageBinding.Spec.PageArchetypeRef.Name,
