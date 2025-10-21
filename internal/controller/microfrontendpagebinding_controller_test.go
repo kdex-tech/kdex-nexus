@@ -18,6 +18,8 @@ package controller
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -36,13 +38,29 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 
 		AfterEach(func() {
 			By("Cleanup all the test resource instances")
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndApp{}, client.InNamespace(namespace))).To(Succeed())
 			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndPageBinding{}, client.InNamespace(namespace))).To(Succeed())
+
+			Eventually(func() error {
+				var err error
+				mfaList := &kdexv1alpha1.MicroFrontEndPageBindingList{}
+				err = k8sClient.List(ctx, mfaList, client.InNamespace(namespace))
+				if err != nil {
+					return err
+				}
+				if len(mfaList.Items) > 0 {
+					return fmt.Errorf("expected 0 MicroFrontEndPageBinding instances, got %d", len(mfaList.Items))
+				}
+				return nil
+			}).WithTimeout(10 * time.Second).Should(Succeed())
+
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndApp{}, client.InNamespace(namespace))).To(Succeed())
 			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndHost{}, client.InNamespace(namespace))).To(Succeed())
 			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndPageArchetype{}, client.InNamespace(namespace))).To(Succeed())
 			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndPageFooter{}, client.InNamespace(namespace))).To(Succeed())
 			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndPageHeader{}, client.InNamespace(namespace))).To(Succeed())
 			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndPageNavigation{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndStylesheet{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndTranslation{}, client.InNamespace(namespace))).To(Succeed())
 		})
 
 		It("with empty content entries should not succeed", func() {
@@ -60,7 +78,9 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 					PageArchetypeRef: corev1.LocalObjectReference{
 						Name: "non-existent-page-archetype",
 					},
-					Path: "/foo",
+					Paths: kdexv1alpha1.Paths{
+						BasePath: "/foo",
+					},
 				},
 			}
 
@@ -87,7 +107,9 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 					PageArchetypeRef: corev1.LocalObjectReference{
 						Name: "non-existent-page-archetype",
 					},
-					Path: "/foo",
+					Paths: kdexv1alpha1.Paths{
+						BasePath: "/foo",
+					},
 				},
 			}
 
@@ -114,7 +136,9 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 					PageArchetypeRef: corev1.LocalObjectReference{
 						Name: "non-existent-page-archetype",
 					},
-					Path: "/foo",
+					Paths: kdexv1alpha1.Paths{
+						BasePath: "/foo",
+					},
 				},
 			}
 
@@ -166,7 +190,9 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 					PageArchetypeRef: corev1.LocalObjectReference{
 						Name: "non-existent-page-archetype",
 					},
-					Path: "/foo",
+					Paths: kdexv1alpha1.Paths{
+						BasePath: "/foo",
+					},
 				},
 			}
 
@@ -211,7 +237,9 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 					ParentPageRef: &corev1.LocalObjectReference{
 						Name: "non-existent-page-binding",
 					},
-					Path: "/foo",
+					Paths: kdexv1alpha1.Paths{
+						BasePath: "/foo",
+					},
 				},
 			}
 
@@ -244,7 +272,9 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 					PageArchetypeRef: corev1.LocalObjectReference{
 						Name: "non-existent-page-archetype",
 					},
-					Path: "/parent",
+					Paths: kdexv1alpha1.Paths{
+						BasePath: "/parent",
+					},
 				},
 			}
 

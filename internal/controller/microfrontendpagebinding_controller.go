@@ -350,7 +350,7 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 				Title:           pageBinding.Spec.Label,
 			},
 			ParentPageRef: parentPageRef,
-			Path:          pageBinding.Spec.Path,
+			Paths:         pageBinding.Spec.Paths,
 			StylesheetRef: stylesheetRef,
 		}
 		return ctrl.SetControllerReference(&pageBinding, renderPage, r.Scheme)

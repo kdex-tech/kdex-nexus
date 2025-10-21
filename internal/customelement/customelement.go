@@ -25,7 +25,7 @@ func ForApp(
 		app.Generation,
 		app.Name,
 		app.ResourceVersion,
-		pageBinding.Spec.Path,
+		pageBinding.Spec.Paths.BasePath,
 		contentEntry.Slot,
 		contentEntry.CustomElementName)
 }
