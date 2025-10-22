@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -91,78 +92,14 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 		return ctrl.Result{}, nil
 	}
 
-	var host kdexv1alpha1.MicroFrontEndHost
-	hostName := types.NamespacedName{
-		Name:      pageBinding.Spec.HostRef.Name,
-		Namespace: pageBinding.Namespace,
-	}
-	if err := r.Get(ctx, hostName, &host); err != nil {
-		if errors.IsNotFound(err) {
-			log.Error(err, "referenced MicroFrontEndHost not found", "name", pageBinding.Spec.HostRef.Name)
-			apimeta.SetStatusCondition(
-				&pageBinding.Status.Conditions,
-				*kdexv1alpha1.NewCondition(
-					kdexv1alpha1.ConditionTypeReady,
-					metav1.ConditionFalse,
-					kdexv1alpha1.ConditionReasonReconcileError,
-					fmt.Sprintf("referenced MicroFrontEndHost %s not found", pageBinding.Spec.HostRef.Name),
-				),
-			)
-			if err := r.Status().Update(ctx, &pageBinding); err != nil {
-				return ctrl.Result{}, err
-			}
-
-			return ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
-		}
-
-		log.Error(err, "unable to fetch MicroFrontEndHost", "name", pageBinding.Spec.HostRef.Name)
-		return ctrl.Result{}, err
+	host, shouldReturn, r1, err := resolveHost(ctx, pageBinding, r, log)
+	if shouldReturn {
+		return r1, err
 	}
 
-	var pageArchetype kdexv1alpha1.MicroFrontEndPageArchetype
-	pageArchetypeName := types.NamespacedName{
-		Name:      pageBinding.Spec.PageArchetypeRef.Name,
-		Namespace: pageBinding.Namespace,
-	}
-	if err := r.Get(ctx, pageArchetypeName, &pageArchetype); err != nil {
-		if errors.IsNotFound(err) {
-			log.Error(err, "referenced MicroFrontEndPageArchetype not found", "name", pageBinding.Spec.PageArchetypeRef.Name)
-			apimeta.SetStatusCondition(
-				&pageBinding.Status.Conditions,
-				*kdexv1alpha1.NewCondition(
-					kdexv1alpha1.ConditionTypeReady,
-					metav1.ConditionFalse,
-					kdexv1alpha1.ConditionReasonReconcileError,
-					fmt.Sprintf("referenced MicroFrontEndPageArchetype %s not found", pageBinding.Spec.PageArchetypeRef.Name),
-				),
-			)
-			if err := r.Status().Update(ctx, &pageBinding); err != nil {
-				return ctrl.Result{}, err
-			}
-
-			return ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
-		}
-
-		log.Error(err, "unable to fetch MicroFrontEndPageArchetype", "name", pageBinding.Spec.PageArchetypeRef.Name)
-		return ctrl.Result{}, err
-	}
-
-	if !apimeta.IsStatusConditionTrue(pageArchetype.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady)) {
-		log.Error(fmt.Errorf("referenced MicroFrontEndPageArchetype %s is not ready", pageArchetype.Name), "")
-		apimeta.SetStatusCondition(
-			&pageBinding.Status.Conditions,
-			*kdexv1alpha1.NewCondition(
-				kdexv1alpha1.ConditionTypeReady,
-				metav1.ConditionFalse,
-				kdexv1alpha1.ConditionReasonReconcileError,
-				fmt.Sprintf("referenced MicroFrontEndPageArchetype %s is not ready", pageArchetype.Name),
-			),
-		)
-		if err := r.Status().Update(ctx, &pageBinding); err != nil {
-			return ctrl.Result{}, err
-		}
-
-		return ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
+	pageArchetype, shouldReturn, r1, err := resolvePathArchetype(ctx, pageBinding, r, log)
+	if shouldReturn {
+		return r1, err
 	}
 
 	contents, response, err := r.contents(ctx, log, &pageBinding)
@@ -175,159 +112,24 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 		return response, err
 	}
 
-	var parentPage kdexv1alpha1.MicroFrontEndPageBinding
-	parentPageRef := pageBinding.Spec.ParentPageRef
-	if parentPageRef != nil {
-		parentPageName := types.NamespacedName{
-			Name:      parentPageRef.Name,
-			Namespace: pageBinding.Namespace,
-		}
-
-		if err := r.Get(ctx, parentPageName, &parentPage); err != nil {
-			if errors.IsNotFound(err) {
-				log.Error(err, "referenced MicroFrontEndPageBinding not found", "name", parentPageRef.Name)
-				apimeta.SetStatusCondition(
-					&pageBinding.Status.Conditions,
-					*kdexv1alpha1.NewCondition(
-						kdexv1alpha1.ConditionTypeReady,
-						metav1.ConditionFalse,
-						kdexv1alpha1.ConditionReasonReconcileError,
-						fmt.Sprintf("referenced MicroFrontEndPageBinding %s not found", parentPageRef.Name),
-					),
-				)
-				if err := r.Status().Update(ctx, &pageBinding); err != nil {
-					return ctrl.Result{}, err
-				}
-
-				return ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
-			}
-
-			log.Error(err, "unable to fetch MicroFrontEndPageBinding", "name", parentPageRef.Name)
-			return ctrl.Result{}, err
-		}
-
-		if !apimeta.IsStatusConditionTrue(parentPage.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady)) {
-			log.Error(fmt.Errorf("referenced MicroFrontEndPageBinding %s is not ready", parentPage.Name), "")
-			apimeta.SetStatusCondition(
-				&pageBinding.Status.Conditions,
-				*kdexv1alpha1.NewCondition(
-					kdexv1alpha1.ConditionTypeReady,
-					metav1.ConditionFalse,
-					kdexv1alpha1.ConditionReasonReconcileError,
-					fmt.Sprintf("referenced MicroFrontEndPageBinding %s is not ready", parentPage.Name),
-				),
-			)
-			if err := r.Status().Update(ctx, &pageBinding); err != nil {
-				return ctrl.Result{}, err
-			}
-
-			return ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
-		}
+	parentPageRef, shouldReturn, r1, err := resolveParentPageBinding(ctx, pageBinding, r, log)
+	if shouldReturn {
+		return r1, err
 	}
 
-	var header kdexv1alpha1.MicroFrontEndPageHeader
-	headerRef := pageBinding.Spec.OverrideHeaderRef
-	if headerRef == nil {
-		headerRef = pageArchetype.Spec.DefaultHeaderRef
-	}
-	if headerRef != nil {
-		headerName := types.NamespacedName{
-			Name:      headerRef.Name,
-			Namespace: pageBinding.Namespace,
-		}
-
-		if err := r.Get(ctx, headerName, &header); err != nil {
-			if errors.IsNotFound(err) {
-				log.Error(err, "referenced MicroFrontEndPageHeader not found", "name", headerRef.Name)
-				apimeta.SetStatusCondition(
-					&pageBinding.Status.Conditions,
-					*kdexv1alpha1.NewCondition(
-						kdexv1alpha1.ConditionTypeReady,
-						metav1.ConditionFalse,
-						kdexv1alpha1.ConditionReasonReconcileError,
-						fmt.Sprintf("referenced MicroFrontEndPageHeader %s not found", headerRef.Name),
-					),
-				)
-				if err := r.Status().Update(ctx, &pageBinding); err != nil {
-					return ctrl.Result{}, err
-				}
-
-				return ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
-			}
-
-			log.Error(err, "unable to fetch MicroFrontEndPageHeader", "name", headerRef.Name)
-			return ctrl.Result{}, err
-		}
+	header, shouldReturn, r1, err := resolveHeader(ctx, pageBinding, pageArchetype, r, log)
+	if shouldReturn {
+		return r1, err
 	}
 
-	var footer kdexv1alpha1.MicroFrontEndPageFooter
-	footerRef := pageBinding.Spec.OverrideFooterRef
-	if footerRef == nil {
-		footerRef = pageArchetype.Spec.DefaultFooterRef
-	}
-	if footerRef != nil {
-		footerName := types.NamespacedName{
-			Name:      footerRef.Name,
-			Namespace: pageBinding.Namespace,
-		}
-
-		if err := r.Get(ctx, footerName, &footer); err != nil {
-			if errors.IsNotFound(err) {
-				log.Error(err, "referenced MicroFrontEndPageFooter not found", "name", footerRef.Name)
-				apimeta.SetStatusCondition(
-					&pageBinding.Status.Conditions,
-					*kdexv1alpha1.NewCondition(
-						kdexv1alpha1.ConditionTypeReady,
-						metav1.ConditionFalse,
-						kdexv1alpha1.ConditionReasonReconcileError,
-						fmt.Sprintf("referenced MicroFrontEndPageFooter %s not found", footerRef.Name),
-					),
-				)
-				if err := r.Status().Update(ctx, &pageBinding); err != nil {
-					return ctrl.Result{}, err
-				}
-
-				return ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
-			}
-
-			log.Error(err, "unable to fetch MicroFrontEndPageFooter", "name", footerRef.Name)
-			return ctrl.Result{}, err
-		}
+	footer, shouldReturn, r1, err := resolveFooter(ctx, pageBinding, pageArchetype, r, log)
+	if shouldReturn {
+		return r1, err
 	}
 
-	var stylesheet kdexv1alpha1.MicroFrontEndStylesheet
-	stylesheetRef := pageArchetype.Spec.OverrideStylesheetRef
-	if stylesheetRef == nil {
-		stylesheetRef = host.Spec.DefaultStylesheetRef
-	}
-	if stylesheetRef != nil {
-		stylesheetName := types.NamespacedName{
-			Name:      stylesheetRef.Name,
-			Namespace: pageArchetype.Namespace,
-		}
-
-		if err := r.Get(ctx, stylesheetName, &stylesheet); err != nil {
-			if errors.IsNotFound(err) {
-				log.Error(err, "referenced MicroFrontEndStylesheet not found", "name", stylesheetName.Name)
-				apimeta.SetStatusCondition(
-					&pageArchetype.Status.Conditions,
-					*kdexv1alpha1.NewCondition(
-						kdexv1alpha1.ConditionTypeReady,
-						metav1.ConditionFalse,
-						kdexv1alpha1.ConditionReasonReconcileError,
-						fmt.Sprintf("referenced MicroFrontEndStylesheet %s not found", stylesheetName.Name),
-					),
-				)
-				if err := r.Status().Update(ctx, &pageArchetype); err != nil {
-					return ctrl.Result{}, err
-				}
-
-				return ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
-			}
-
-			log.Error(err, "unable to fetch MicroFrontEndStylesheet", "name", stylesheetName.Name)
-			return ctrl.Result{}, err
-		}
+	stylesheetRef, shouldReturn, r1, err := resolveStylesheet(ctx, pageArchetype, host, r, log)
+	if shouldReturn {
+		return r1, err
 	}
 
 	renderPage := &kdexv1alpha1.MicroFrontEndRenderPage{
@@ -513,4 +315,290 @@ func (r *MicroFrontEndPageBindingReconciler) navigations(
 	}
 
 	return navigations, ctrl.Result{}, nil
+}
+
+func resolveFooter(
+	ctx context.Context,
+	pageBinding kdexv1alpha1.MicroFrontEndPageBinding,
+	pageArchetype kdexv1alpha1.MicroFrontEndPageArchetype,
+	r *MicroFrontEndPageBindingReconciler,
+	log logr.Logger,
+) (kdexv1alpha1.MicroFrontEndPageFooter, bool, ctrl.Result, error) {
+	var footer kdexv1alpha1.MicroFrontEndPageFooter
+	footerRef := pageBinding.Spec.OverrideFooterRef
+	if footerRef == nil {
+		footerRef = pageArchetype.Spec.DefaultFooterRef
+	}
+	if footerRef != nil {
+		footerName := types.NamespacedName{
+			Name:      footerRef.Name,
+			Namespace: pageBinding.Namespace,
+		}
+
+		if err := r.Get(ctx, footerName, &footer); err != nil {
+			if errors.IsNotFound(err) {
+				log.Error(err, "referenced MicroFrontEndPageFooter not found", "name", footerRef.Name)
+				apimeta.SetStatusCondition(
+					&pageBinding.Status.Conditions,
+					*kdexv1alpha1.NewCondition(
+						kdexv1alpha1.ConditionTypeReady,
+						metav1.ConditionFalse,
+						kdexv1alpha1.ConditionReasonReconcileError,
+						fmt.Sprintf("referenced MicroFrontEndPageFooter %s not found", footerRef.Name),
+					),
+				)
+				if err := r.Status().Update(ctx, &pageBinding); err != nil {
+					return kdexv1alpha1.MicroFrontEndPageFooter{}, true, ctrl.Result{}, err
+				}
+
+				return kdexv1alpha1.MicroFrontEndPageFooter{}, true, ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
+			}
+
+			log.Error(err, "unable to fetch MicroFrontEndPageFooter", "name", footerRef.Name)
+			return kdexv1alpha1.MicroFrontEndPageFooter{}, true, ctrl.Result{}, err
+		}
+	}
+
+	return footer, false, ctrl.Result{}, nil
+}
+
+func resolveHeader(
+	ctx context.Context,
+	pageBinding kdexv1alpha1.MicroFrontEndPageBinding,
+	pageArchetype kdexv1alpha1.MicroFrontEndPageArchetype,
+	r *MicroFrontEndPageBindingReconciler,
+	log logr.Logger,
+) (kdexv1alpha1.MicroFrontEndPageHeader, bool, ctrl.Result, error) {
+	var header kdexv1alpha1.MicroFrontEndPageHeader
+	headerRef := pageBinding.Spec.OverrideHeaderRef
+	if headerRef == nil {
+		headerRef = pageArchetype.Spec.DefaultHeaderRef
+	}
+	if headerRef != nil {
+		headerName := types.NamespacedName{
+			Name:      headerRef.Name,
+			Namespace: pageBinding.Namespace,
+		}
+
+		if err := r.Get(ctx, headerName, &header); err != nil {
+			if errors.IsNotFound(err) {
+				log.Error(err, "referenced MicroFrontEndPageHeader not found", "name", headerRef.Name)
+				apimeta.SetStatusCondition(
+					&pageBinding.Status.Conditions,
+					*kdexv1alpha1.NewCondition(
+						kdexv1alpha1.ConditionTypeReady,
+						metav1.ConditionFalse,
+						kdexv1alpha1.ConditionReasonReconcileError,
+						fmt.Sprintf("referenced MicroFrontEndPageHeader %s not found", headerRef.Name),
+					),
+				)
+				if err := r.Status().Update(ctx, &pageBinding); err != nil {
+					return kdexv1alpha1.MicroFrontEndPageHeader{}, true, ctrl.Result{}, err
+				}
+
+				return kdexv1alpha1.MicroFrontEndPageHeader{}, true, ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
+			}
+
+			log.Error(err, "unable to fetch MicroFrontEndPageHeader", "name", headerRef.Name)
+			return kdexv1alpha1.MicroFrontEndPageHeader{}, true, ctrl.Result{}, err
+		}
+	}
+
+	return header, false, ctrl.Result{}, nil
+}
+
+func resolveHost(
+	ctx context.Context,
+	pageBinding kdexv1alpha1.MicroFrontEndPageBinding,
+	r *MicroFrontEndPageBindingReconciler,
+	log logr.Logger,
+) (kdexv1alpha1.MicroFrontEndHost, bool, ctrl.Result, error) {
+	var host kdexv1alpha1.MicroFrontEndHost
+	hostName := types.NamespacedName{
+		Name:      pageBinding.Spec.HostRef.Name,
+		Namespace: pageBinding.Namespace,
+	}
+	if err := r.Get(ctx, hostName, &host); err != nil {
+		if errors.IsNotFound(err) {
+			log.Error(err, "referenced MicroFrontEndHost not found", "name", pageBinding.Spec.HostRef.Name)
+			apimeta.SetStatusCondition(
+				&pageBinding.Status.Conditions,
+				*kdexv1alpha1.NewCondition(
+					kdexv1alpha1.ConditionTypeReady,
+					metav1.ConditionFalse,
+					kdexv1alpha1.ConditionReasonReconcileError,
+					fmt.Sprintf("referenced MicroFrontEndHost %s not found", pageBinding.Spec.HostRef.Name),
+				),
+			)
+			if err := r.Status().Update(ctx, &pageBinding); err != nil {
+				return kdexv1alpha1.MicroFrontEndHost{}, true, ctrl.Result{}, err
+			}
+
+			return kdexv1alpha1.MicroFrontEndHost{}, true, ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
+		}
+
+		log.Error(err, "unable to fetch MicroFrontEndHost", "name", pageBinding.Spec.HostRef.Name)
+		return kdexv1alpha1.MicroFrontEndHost{}, true, ctrl.Result{}, err
+	}
+
+	return host, false, ctrl.Result{}, nil
+}
+
+func resolveParentPageBinding(
+	ctx context.Context,
+	pageBinding kdexv1alpha1.MicroFrontEndPageBinding,
+	r *MicroFrontEndPageBindingReconciler,
+	log logr.Logger,
+) (*v1.LocalObjectReference, bool, ctrl.Result, error) {
+	var parentPage kdexv1alpha1.MicroFrontEndPageBinding
+	parentPageRef := pageBinding.Spec.ParentPageRef
+	if parentPageRef != nil {
+		parentPageName := types.NamespacedName{
+			Name:      parentPageRef.Name,
+			Namespace: pageBinding.Namespace,
+		}
+
+		if err := r.Get(ctx, parentPageName, &parentPage); err != nil {
+			if errors.IsNotFound(err) {
+				log.Error(err, "referenced MicroFrontEndPageBinding not found", "name", parentPageRef.Name)
+				apimeta.SetStatusCondition(
+					&pageBinding.Status.Conditions,
+					*kdexv1alpha1.NewCondition(
+						kdexv1alpha1.ConditionTypeReady,
+						metav1.ConditionFalse,
+						kdexv1alpha1.ConditionReasonReconcileError,
+						fmt.Sprintf("referenced MicroFrontEndPageBinding %s not found", parentPageRef.Name),
+					),
+				)
+				if err := r.Status().Update(ctx, &pageBinding); err != nil {
+					return nil, true, ctrl.Result{}, err
+				}
+
+				return nil, true, ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
+			}
+
+			log.Error(err, "unable to fetch MicroFrontEndPageBinding", "name", parentPageRef.Name)
+			return nil, true, ctrl.Result{}, err
+		}
+
+		if !apimeta.IsStatusConditionTrue(parentPage.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady)) {
+			log.Error(fmt.Errorf("referenced MicroFrontEndPageBinding %s is not ready", parentPage.Name), "")
+			apimeta.SetStatusCondition(
+				&pageBinding.Status.Conditions,
+				*kdexv1alpha1.NewCondition(
+					kdexv1alpha1.ConditionTypeReady,
+					metav1.ConditionFalse,
+					kdexv1alpha1.ConditionReasonReconcileError,
+					fmt.Sprintf("referenced MicroFrontEndPageBinding %s is not ready", parentPage.Name),
+				),
+			)
+			if err := r.Status().Update(ctx, &pageBinding); err != nil {
+				return nil, true, ctrl.Result{}, err
+			}
+
+			return nil, true, ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
+		}
+	}
+
+	return parentPageRef, false, ctrl.Result{}, nil
+}
+
+func resolvePathArchetype(
+	ctx context.Context,
+	pageBinding kdexv1alpha1.MicroFrontEndPageBinding,
+	r *MicroFrontEndPageBindingReconciler,
+	log logr.Logger,
+) (kdexv1alpha1.MicroFrontEndPageArchetype, bool, ctrl.Result, error) {
+	var pageArchetype kdexv1alpha1.MicroFrontEndPageArchetype
+	pageArchetypeName := types.NamespacedName{
+		Name:      pageBinding.Spec.PageArchetypeRef.Name,
+		Namespace: pageBinding.Namespace,
+	}
+	if err := r.Get(ctx, pageArchetypeName, &pageArchetype); err != nil {
+		if errors.IsNotFound(err) {
+			log.Error(err, "referenced MicroFrontEndPageArchetype not found", "name", pageBinding.Spec.PageArchetypeRef.Name)
+			apimeta.SetStatusCondition(
+				&pageBinding.Status.Conditions,
+				*kdexv1alpha1.NewCondition(
+					kdexv1alpha1.ConditionTypeReady,
+					metav1.ConditionFalse,
+					kdexv1alpha1.ConditionReasonReconcileError,
+					fmt.Sprintf("referenced MicroFrontEndPageArchetype %s not found", pageBinding.Spec.PageArchetypeRef.Name),
+				),
+			)
+			if err := r.Status().Update(ctx, &pageBinding); err != nil {
+				return kdexv1alpha1.MicroFrontEndPageArchetype{}, true, ctrl.Result{}, err
+			}
+
+			return kdexv1alpha1.MicroFrontEndPageArchetype{}, true, ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
+		}
+
+		log.Error(err, "unable to fetch MicroFrontEndPageArchetype", "name", pageBinding.Spec.PageArchetypeRef.Name)
+		return kdexv1alpha1.MicroFrontEndPageArchetype{}, true, ctrl.Result{}, err
+	}
+
+	if !apimeta.IsStatusConditionTrue(pageArchetype.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady)) {
+		log.Error(fmt.Errorf("referenced MicroFrontEndPageArchetype %s is not ready", pageArchetype.Name), "")
+		apimeta.SetStatusCondition(
+			&pageBinding.Status.Conditions,
+			*kdexv1alpha1.NewCondition(
+				kdexv1alpha1.ConditionTypeReady,
+				metav1.ConditionFalse,
+				kdexv1alpha1.ConditionReasonReconcileError,
+				fmt.Sprintf("referenced MicroFrontEndPageArchetype %s is not ready", pageArchetype.Name),
+			),
+		)
+		if err := r.Status().Update(ctx, &pageBinding); err != nil {
+			return kdexv1alpha1.MicroFrontEndPageArchetype{}, true, ctrl.Result{}, err
+		}
+
+		return kdexv1alpha1.MicroFrontEndPageArchetype{}, true, ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
+	}
+
+	return pageArchetype, false, ctrl.Result{}, nil
+}
+
+func resolveStylesheet(
+	ctx context.Context,
+	pageArchetype kdexv1alpha1.MicroFrontEndPageArchetype,
+	host kdexv1alpha1.MicroFrontEndHost,
+	r *MicroFrontEndPageBindingReconciler,
+	log logr.Logger,
+) (*v1.LocalObjectReference, bool, ctrl.Result, error) {
+	var stylesheet kdexv1alpha1.MicroFrontEndStylesheet
+	stylesheetRef := pageArchetype.Spec.OverrideStylesheetRef
+	if stylesheetRef == nil {
+		stylesheetRef = host.Spec.DefaultStylesheetRef
+	}
+	if stylesheetRef != nil {
+		stylesheetName := types.NamespacedName{
+			Name:      stylesheetRef.Name,
+			Namespace: pageArchetype.Namespace,
+		}
+
+		if err := r.Get(ctx, stylesheetName, &stylesheet); err != nil {
+			if errors.IsNotFound(err) {
+				log.Error(err, "referenced MicroFrontEndStylesheet not found", "name", stylesheetName.Name)
+				apimeta.SetStatusCondition(
+					&pageArchetype.Status.Conditions,
+					*kdexv1alpha1.NewCondition(
+						kdexv1alpha1.ConditionTypeReady,
+						metav1.ConditionFalse,
+						kdexv1alpha1.ConditionReasonReconcileError,
+						fmt.Sprintf("referenced MicroFrontEndStylesheet %s not found", stylesheetName.Name),
+					),
+				)
+				if err := r.Status().Update(ctx, &pageArchetype); err != nil {
+					return nil, true, ctrl.Result{}, err
+				}
+
+				return nil, true, ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
+			}
+
+			log.Error(err, "unable to fetch MicroFrontEndStylesheet", "name", stylesheetName.Name)
+			return nil, true, ctrl.Result{}, err
+		}
+	}
+
+	return stylesheetRef, false, ctrl.Result{}, nil
 }
