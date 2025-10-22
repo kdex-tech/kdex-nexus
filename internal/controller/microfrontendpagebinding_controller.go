@@ -468,7 +468,7 @@ func (r *MicroFrontEndPageBindingReconciler) contents(
 			return nil, ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
 		}
 
-		contents[contentEntry.Slot] = customelement.ForApp(app, contentEntry, *pageBinding)
+		contents[contentEntry.Slot] = customelement.ForApp(app, contentEntry)
 	}
 
 	return contents, ctrl.Result{}, nil
