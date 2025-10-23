@@ -66,7 +66,6 @@ func (r *MicroFrontEndAppReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		}
 		if err := r.Get(ctx, secretName, &secret); err != nil {
 			if errors.IsNotFound(err) {
-				log.Error(err, "referenced Secret not found", "name", app.Spec.PackageReference.SecretRef.Name)
 				apimeta.SetStatusCondition(
 					&app.Status.Conditions,
 					*kdexv1alpha1.NewCondition(

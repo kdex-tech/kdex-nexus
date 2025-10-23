@@ -231,7 +231,6 @@ func (r *MicroFrontEndPageBindingReconciler) contents(
 		var app kdexv1alpha1.MicroFrontEndApp
 		if err := r.Get(ctx, appName, &app); err != nil {
 			if errors.IsNotFound(err) {
-				log.Error(err, "referenced MicroFrontEndApp not found", "name", appRef.Name)
 				apimeta.SetStatusCondition(
 					&pageBinding.Status.Conditions,
 					*kdexv1alpha1.NewCondition(
@@ -337,7 +336,6 @@ func resolveFooter(
 
 		if err := r.Get(ctx, footerName, &footer); err != nil {
 			if errors.IsNotFound(err) {
-				log.Error(err, "referenced MicroFrontEndPageFooter not found", "name", footerRef.Name)
 				apimeta.SetStatusCondition(
 					&pageBinding.Status.Conditions,
 					*kdexv1alpha1.NewCondition(
@@ -382,7 +380,6 @@ func resolveHeader(
 
 		if err := r.Get(ctx, headerName, &header); err != nil {
 			if errors.IsNotFound(err) {
-				log.Error(err, "referenced MicroFrontEndPageHeader not found", "name", headerRef.Name)
 				apimeta.SetStatusCondition(
 					&pageBinding.Status.Conditions,
 					*kdexv1alpha1.NewCondition(
@@ -420,7 +417,6 @@ func resolveHost(
 	}
 	if err := r.Get(ctx, hostName, &host); err != nil {
 		if errors.IsNotFound(err) {
-			log.Error(err, "referenced MicroFrontEndHost not found", "name", pageBinding.Spec.HostRef.Name)
 			apimeta.SetStatusCondition(
 				&pageBinding.Status.Conditions,
 				*kdexv1alpha1.NewCondition(
@@ -460,7 +456,6 @@ func resolveParentPageBinding(
 
 		if err := r.Get(ctx, parentPageName, &parentPage); err != nil {
 			if errors.IsNotFound(err) {
-				log.Error(err, "referenced MicroFrontEndPageBinding not found", "name", parentPageRef.Name)
 				apimeta.SetStatusCondition(
 					&pageBinding.Status.Conditions,
 					*kdexv1alpha1.NewCondition(
@@ -516,7 +511,6 @@ func resolvePathArchetype(
 	}
 	if err := r.Get(ctx, pageArchetypeName, &pageArchetype); err != nil {
 		if errors.IsNotFound(err) {
-			log.Error(err, "referenced MicroFrontEndPageArchetype not found", "name", pageBinding.Spec.PageArchetypeRef.Name)
 			apimeta.SetStatusCondition(
 				&pageBinding.Status.Conditions,
 				*kdexv1alpha1.NewCondition(
@@ -578,7 +572,6 @@ func resolveStylesheet(
 
 		if err := r.Get(ctx, stylesheetName, &stylesheet); err != nil {
 			if errors.IsNotFound(err) {
-				log.Error(err, "referenced MicroFrontEndStylesheet not found", "name", stylesheetName.Name)
 				apimeta.SetStatusCondition(
 					&pageArchetype.Status.Conditions,
 					*kdexv1alpha1.NewCondition(

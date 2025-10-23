@@ -36,7 +36,6 @@ func (r *MicroFrontEndCommonReconciler) GetNavigation(
 	}
 	if err := r.Get(ctx, navigationName, &navigation); err != nil {
 		if errors.IsNotFound(err) {
-			log.Error(err, "referenced MicroFrontEndPageNavigation not found", "name", navigationRef.Name)
 			apimeta.SetStatusCondition(
 				conditions,
 				*kdexv1alpha1.NewCondition(

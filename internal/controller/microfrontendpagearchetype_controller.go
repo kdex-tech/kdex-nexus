@@ -63,7 +63,6 @@ func (r *MicroFrontEndPageArchetypeReconciler) Reconcile(ctx context.Context, re
 
 		if err := r.Get(ctx, footerName, &footer); err != nil {
 			if errors.IsNotFound(err) {
-				log.Error(err, "referenced MicroFrontEndPageFooter not found", "name", footerName.Name)
 				apimeta.SetStatusCondition(
 					&pageArchetype.Status.Conditions,
 					*kdexv1alpha1.NewCondition(
@@ -94,7 +93,6 @@ func (r *MicroFrontEndPageArchetypeReconciler) Reconcile(ctx context.Context, re
 
 		if err := r.Get(ctx, headerName, &header); err != nil {
 			if errors.IsNotFound(err) {
-				log.Error(err, "referenced MicroFrontEndPageHeader not found", "name", headerName.Name)
 				apimeta.SetStatusCondition(
 					&pageArchetype.Status.Conditions,
 					*kdexv1alpha1.NewCondition(
@@ -145,7 +143,6 @@ func (r *MicroFrontEndPageArchetypeReconciler) Reconcile(ctx context.Context, re
 
 		if err := r.Get(ctx, stylesheetName, &stylesheet); err != nil {
 			if errors.IsNotFound(err) {
-				log.Error(err, "referenced MicroFrontEndStylesheet not found", "name", stylesheetName.Name)
 				apimeta.SetStatusCondition(
 					&pageArchetype.Status.Conditions,
 					*kdexv1alpha1.NewCondition(
