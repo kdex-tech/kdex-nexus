@@ -139,24 +139,29 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 		},
 	}
 
-	if _, err := ctrl.CreateOrUpdate(ctx, r.Client, renderPage, func() error {
-		renderPage.Spec = kdexv1alpha1.MicroFrontEndRenderPageSpec{
-			HostRef:         pageBinding.Spec.HostRef,
-			NavigationHints: pageBinding.Spec.NavigationHints,
-			PageComponents: kdexv1alpha1.PageComponents{
-				Contents:        contents,
-				Footer:          footer.Spec.Content,
-				Header:          header.Spec.Content,
-				Navigations:     navigations,
-				PrimaryTemplate: pageArchetype.Spec.Content,
-				Title:           pageBinding.Spec.Label,
-			},
-			ParentPageRef: parentPageRef,
-			Paths:         pageBinding.Spec.Paths,
-			StylesheetRef: stylesheetRef,
-		}
-		return ctrl.SetControllerReference(&pageBinding, renderPage, r.Scheme)
-	}); err != nil {
+	if _, err := ctrl.CreateOrUpdate(
+		ctx,
+		r.Client,
+		renderPage,
+		func() error {
+			renderPage.Spec = kdexv1alpha1.MicroFrontEndRenderPageSpec{
+				HostRef:         pageBinding.Spec.HostRef,
+				NavigationHints: pageBinding.Spec.NavigationHints,
+				PageComponents: kdexv1alpha1.PageComponents{
+					Contents:        contents,
+					Footer:          footer.Spec.Content,
+					Header:          header.Spec.Content,
+					Navigations:     navigations,
+					PrimaryTemplate: pageArchetype.Spec.Content,
+					Title:           pageBinding.Spec.Label,
+				},
+				ParentPageRef: parentPageRef,
+				Paths:         pageBinding.Spec.Paths,
+				StylesheetRef: stylesheetRef,
+			}
+			return ctrl.SetControllerReference(&pageBinding, renderPage, r.Scheme)
+		},
+	); err != nil {
 		log.Error(err, "unable to create or update MicroFrontEndRenderPage")
 		return ctrl.Result{}, err
 	}
