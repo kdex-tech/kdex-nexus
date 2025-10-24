@@ -75,7 +75,7 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 			Expect(err).NotTo(HaveOccurred())
 			condition := apimeta.FindStatusCondition(resource.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady))
 			Expect(condition.Message).To(Equal(
-				`content template invalid: template: test-resource:1: unexpected "!" in command`,
+				`template: test-resource:1: unexpected "!" in command`,
 			))
 		})
 

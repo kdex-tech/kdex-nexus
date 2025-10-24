@@ -64,7 +64,7 @@ func (r *MicroFrontEndPageArchetypeReconciler) Reconcile(ctx context.Context, re
 				kdexv1alpha1.ConditionTypeReady,
 				metav1.ConditionFalse,
 				kdexv1alpha1.ConditionReasonReconcileError,
-				fmt.Sprintf("content template invalid: %s", err.Error()),
+				err.Error(),
 			),
 		)
 		if err := r.Status().Update(ctx, &pageArchetype); err != nil {
