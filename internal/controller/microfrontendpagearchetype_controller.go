@@ -26,7 +26,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
-	"kdex.dev/nexus/internal/validate"
+	"kdex.dev/crds/render"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -55,7 +55,7 @@ func (r *MicroFrontEndPageArchetypeReconciler) Reconcile(ctx context.Context, re
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	if err := validate.TemplateContent(
+	if err := render.ValidateContent(
 		pageArchetype.Name, pageArchetype.Spec.Content,
 	); err != nil {
 		apimeta.SetStatusCondition(
