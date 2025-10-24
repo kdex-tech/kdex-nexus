@@ -140,11 +140,20 @@ func (r *MicroFrontEndPageBindingReconciler) findPageBindingsForPageFooter(
 	if err := r.List(ctx, &pageBindingsList, &client.ListOptions{
 		Namespace: pageFooter.GetNamespace(),
 	}); err != nil {
-		log.Error(err, "unable to list MicroFrontEndPageBindings for page footer", "name", pageFooter.GetName())
+		log.Error(err, "unable to list MicroFrontEndPageBindings for page footer", "footer", pageFooter.GetName())
+		return []reconcile.Request{}
+	}
+
+	var pageArchetypesList kdexv1alpha1.MicroFrontEndPageArchetypeList
+	if err := r.List(ctx, &pageArchetypesList, &client.ListOptions{
+		Namespace: pageFooter.GetNamespace(),
+	}); err != nil {
+		log.Error(err, "unable to list MicroFrontEndPageArchetypes for page footer", "footer", pageFooter.GetName())
 		return []reconcile.Request{}
 	}
 
 	requests := []reconcile.Request{}
+
 	for _, pageBinding := range pageBindingsList.Items {
 		if pageBinding.Spec.OverrideFooterRef == nil {
 			continue
@@ -158,6 +167,25 @@ func (r *MicroFrontEndPageBindingReconciler) findPageBindingsForPageFooter(
 			})
 		}
 	}
+
+	for _, pageArchetype := range pageArchetypesList.Items {
+		if pageArchetype.Spec.DefaultFooterRef == nil {
+			continue
+		}
+		if pageArchetype.Spec.DefaultFooterRef.Name == pageFooter.GetName() {
+			for _, pageBinding := range pageBindingsList.Items {
+				if pageBinding.Spec.PageArchetypeRef.Name == pageArchetype.GetName() {
+					requests = append(requests, reconcile.Request{
+						NamespacedName: types.NamespacedName{
+							Name:      pageBinding.Name,
+							Namespace: pageBinding.Namespace,
+						},
+					})
+				}
+			}
+		}
+	}
+
 	return requests
 }
 
@@ -175,7 +203,16 @@ func (r *MicroFrontEndPageBindingReconciler) findPageBindingsForPageHeader(
 		return []reconcile.Request{}
 	}
 
+	var pageArchetypesList kdexv1alpha1.MicroFrontEndPageArchetypeList
+	if err := r.List(ctx, &pageArchetypesList, &client.ListOptions{
+		Namespace: pageHeader.GetNamespace(),
+	}); err != nil {
+		log.Error(err, "unable to list MicroFrontEndPageArchetypes for page header", "name", pageHeader.GetName())
+		return []reconcile.Request{}
+	}
+
 	requests := []reconcile.Request{}
+
 	for _, pageBinding := range pageBindingsList.Items {
 		if pageBinding.Spec.OverrideHeaderRef == nil {
 			continue
@@ -189,6 +226,25 @@ func (r *MicroFrontEndPageBindingReconciler) findPageBindingsForPageHeader(
 			})
 		}
 	}
+
+	for _, pageArchetype := range pageArchetypesList.Items {
+		if pageArchetype.Spec.DefaultHeaderRef == nil {
+			continue
+		}
+		if pageArchetype.Spec.DefaultHeaderRef.Name == pageHeader.GetName() {
+			for _, pageBinding := range pageBindingsList.Items {
+				if pageBinding.Spec.PageArchetypeRef.Name == pageArchetype.GetName() {
+					requests = append(requests, reconcile.Request{
+						NamespacedName: types.NamespacedName{
+							Name:      pageBinding.Name,
+							Namespace: pageBinding.Namespace,
+						},
+					})
+				}
+			}
+		}
+	}
+
 	return requests
 }
 
@@ -202,11 +258,20 @@ func (r *MicroFrontEndPageBindingReconciler) findPageBindingsForPageNavigations(
 	if err := r.List(ctx, &pageBindingsList, &client.ListOptions{
 		Namespace: pageNavigation.GetNamespace(),
 	}); err != nil {
-		log.Error(err, "unable to list MicroFrontEndPageBindings for page navigation", "name", pageNavigation.GetName())
+		log.Error(err, "unable to list MicroFrontEndPageBindings for page navigation", "navigation", pageNavigation.GetName())
+		return []reconcile.Request{}
+	}
+
+	var pageArchetypesList kdexv1alpha1.MicroFrontEndPageArchetypeList
+	if err := r.List(ctx, &pageArchetypesList, &client.ListOptions{
+		Namespace: pageNavigation.GetNamespace(),
+	}); err != nil {
+		log.Error(err, "unable to list MicroFrontEndPageArchetypes for page navigation", "navigation", pageNavigation.GetName())
 		return []reconcile.Request{}
 	}
 
 	requests := []reconcile.Request{}
+
 	for _, pageBinding := range pageBindingsList.Items {
 		if pageBinding.Spec.OverrideMainNavigationRef == nil {
 			continue
@@ -220,5 +285,39 @@ func (r *MicroFrontEndPageBindingReconciler) findPageBindingsForPageNavigations(
 			})
 		}
 	}
+
+	for _, pageArchetype := range pageArchetypesList.Items {
+		if pageArchetype.Spec.DefaultMainNavigationRef != nil {
+			if pageArchetype.Spec.DefaultMainNavigationRef.Name == pageNavigation.GetName() {
+				for _, pageBinding := range pageBindingsList.Items {
+					if pageBinding.Spec.PageArchetypeRef.Name == pageArchetype.GetName() {
+						requests = append(requests, reconcile.Request{
+							NamespacedName: types.NamespacedName{
+								Name:      pageBinding.Name,
+								Namespace: pageBinding.Namespace,
+							},
+						})
+					}
+				}
+			}
+		}
+		if pageArchetype.Spec.ExtraNavigations != nil {
+			for _, navigationRef := range *pageArchetype.Spec.ExtraNavigations {
+				if navigationRef.Name == pageNavigation.GetName() {
+					for _, pageBinding := range pageBindingsList.Items {
+						if pageBinding.Spec.PageArchetypeRef.Name == pageArchetype.GetName() {
+							requests = append(requests, reconcile.Request{
+								NamespacedName: types.NamespacedName{
+									Name:      pageBinding.Name,
+									Namespace: pageBinding.Namespace,
+								},
+							})
+						}
+					}
+				}
+			}
+		}
+	}
+
 	return requests
 }
