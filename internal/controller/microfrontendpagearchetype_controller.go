@@ -26,6 +26,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
+	"kdex.dev/nexus/internal/validate"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -52,6 +53,25 @@ func (r *MicroFrontEndPageArchetypeReconciler) Reconcile(ctx context.Context, re
 	var pageArchetype kdexv1alpha1.MicroFrontEndPageArchetype
 	if err := r.Get(ctx, req.NamespacedName, &pageArchetype); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	if err := validate.TemplateContent(
+		pageArchetype.Name, pageArchetype.Spec.Content,
+	); err != nil {
+		apimeta.SetStatusCondition(
+			&pageArchetype.Status.Conditions,
+			*kdexv1alpha1.NewCondition(
+				kdexv1alpha1.ConditionTypeReady,
+				metav1.ConditionFalse,
+				kdexv1alpha1.ConditionReasonReconcileError,
+				fmt.Sprintf("content template invalid: %s", err.Error()),
+			),
+		)
+		if err := r.Status().Update(ctx, &pageArchetype); err != nil {
+			return ctrl.Result{}, err
+		}
+
+		return ctrl.Result{}, err
 	}
 
 	if pageArchetype.Spec.DefaultFooterRef != nil {

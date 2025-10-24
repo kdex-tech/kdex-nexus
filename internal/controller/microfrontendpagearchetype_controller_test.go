@@ -22,7 +22,9 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
+	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -46,6 +48,35 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndPageNavigation{}, client.InNamespace(namespace))).To(Succeed())
 			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndStylesheet{}, client.InNamespace(namespace))).To(Succeed())
 			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndTranslation{}, client.InNamespace(namespace))).To(Succeed())
+		})
+
+		It("with invalid content will not reconcile the resource", func() {
+			resource := &kdexv1alpha1.MicroFrontEndPageArchetype{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.MicroFrontEndPageArchetypeSpec{
+					Content: "<h1>{{ !?$ }}</h1>",
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.MicroFrontEndPageArchetype{}, false)
+
+			resourceName := types.NamespacedName{
+				Name:      resourceName,
+				Namespace: namespace,
+			}
+			err := k8sClient.Get(ctx, resourceName, resource)
+			Expect(err).NotTo(HaveOccurred())
+			condition := apimeta.FindStatusCondition(resource.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady))
+			Expect(condition.Message).To(Equal(
+				`content template invalid: template: test-resource:1: unexpected "!" in command`,
+			))
 		})
 
 		It("with missing extra navigation reference should not successfully reconcile the resource", func() {
