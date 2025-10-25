@@ -371,9 +371,9 @@ func resolveStylesheet(
 	objectConditions *[]metav1.Condition,
 	stylesheetRef *v1.LocalObjectReference,
 	requeueDelay time.Duration,
-) (*v1.LocalObjectReference, bool, ctrl.Result, error) {
+) (*kdexv1alpha1.MicroFrontEndStylesheet, bool, ctrl.Result, error) {
+	var stylesheet kdexv1alpha1.MicroFrontEndStylesheet
 	if stylesheetRef != nil {
-		var stylesheet kdexv1alpha1.MicroFrontEndStylesheet
 		stylesheetName := types.NamespacedName{
 			Name:      stylesheetRef.Name,
 			Namespace: object.GetNamespace(),
@@ -404,5 +404,5 @@ func resolveStylesheet(
 		}
 	}
 
-	return stylesheetRef, false, ctrl.Result{}, nil
+	return &stylesheet, false, ctrl.Result{}, nil
 }
