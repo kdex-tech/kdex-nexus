@@ -224,6 +224,13 @@ var _ = BeforeSuite(func() {
 	err = pageNavigationReconciler.SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 
+	stylesheetReconciler := &MicroFrontEndStylesheetReconciler{
+		Client: k8sClient,
+		Scheme: k8sClient.Scheme(),
+	}
+	err = stylesheetReconciler.SetupWithManager(k8sManager)
+	Expect(err).ToNot(HaveOccurred())
+
 	go func() {
 		defer GinkgoRecover()
 		err := k8sManager.Start(ctx)

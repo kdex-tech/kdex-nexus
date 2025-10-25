@@ -113,6 +113,26 @@ func addOrUpdatePageNavigation(
 	}
 }
 
+func addOrUpdateStylesheet(
+	ctx context.Context,
+	k8sClient client.Client,
+	stylesheet kdexv1alpha1.MicroFrontEndStylesheet,
+) {
+	list := &kdexv1alpha1.MicroFrontEndStylesheetList{}
+	err := k8sClient.List(ctx, list, &client.ListOptions{
+		Namespace:     stylesheet.Namespace,
+		FieldSelector: fields.OneTermEqualSelector("metadata.name", stylesheet.Name),
+	})
+	Expect(err).NotTo(HaveOccurred())
+	if len(list.Items) > 0 {
+		existing := list.Items[0]
+		existing.Spec = stylesheet.Spec
+		Expect(k8sClient.Update(ctx, &existing)).To(Succeed())
+	} else {
+		Expect(k8sClient.Create(ctx, &stylesheet)).To(Succeed())
+	}
+}
+
 func assertResourceReady(ctx context.Context, k8sClient client.Client, name string, namespace string, checkResource client.Object, ready bool) {
 	typeNamespacedName := types.NamespacedName{
 		Name:      name,
