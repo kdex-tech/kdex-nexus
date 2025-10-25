@@ -18,6 +18,7 @@ rules:
   - microfrontendapps
   - microfrontendpagearchetypes
   - microfrontendpagebindings
+  - microfrontendpagefooters
   - microfrontendpageheaders
   - microfrontendrenderpages
   verbs:
@@ -34,6 +35,7 @@ rules:
   - microfrontendapps/finalizers
   - microfrontendpagearchetypes/finalizers
   - microfrontendpagebindings/finalizers
+  - microfrontendpagefooters/finalizers
   - microfrontendpageheaders/finalizers
   verbs:
   - update
@@ -43,6 +45,7 @@ rules:
   - microfrontendapps/status
   - microfrontendpagearchetypes/status
   - microfrontendpagebindings/status
+  - microfrontendpagefooters/status
   - microfrontendpageheaders/status
   verbs:
   - get
@@ -52,7 +55,6 @@ rules:
   - kdex.dev
   resources:
   - microfrontendhosts
-  - microfrontendpagefooters
   - microfrontendpagenavigations
   - microfrontendstylesheets
   verbs:

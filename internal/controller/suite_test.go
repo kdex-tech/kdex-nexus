@@ -139,7 +139,6 @@ var _ = BeforeSuite(func() {
 		RequeueDelay: 0,
 		Scheme:       k8sManager.GetScheme(),
 	}
-
 	err = pageReconciler.SetupWithManager(k8sManager)
 	Expect(err).NotTo(HaveOccurred())
 
@@ -150,7 +149,6 @@ var _ = BeforeSuite(func() {
 		},
 		RequeueDelay: 0,
 	}
-
 	err = pageArchetypeReconciler.SetupWithManager(k8sManager)
 	Expect(err).NotTo(HaveOccurred())
 
@@ -161,7 +159,6 @@ var _ = BeforeSuite(func() {
 		},
 		RequeueDelay: 0,
 	}
-
 	err = pageBindingReconciler.SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 
@@ -169,8 +166,14 @@ var _ = BeforeSuite(func() {
 		Client: k8sClient,
 		Scheme: k8sClient.Scheme(),
 	}
-
 	err = pageHeaderReconciler.SetupWithManager(k8sManager)
+	Expect(err).ToNot(HaveOccurred())
+
+	pageFooterReconciler := &MicroFrontEndPageFooterReconciler{
+		Client: k8sClient,
+		Scheme: k8sClient.Scheme(),
+	}
+	err = pageFooterReconciler.SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 
 	go func() {
