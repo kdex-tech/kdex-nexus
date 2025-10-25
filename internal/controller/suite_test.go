@@ -89,13 +89,13 @@ var _ = BeforeSuite(func() {
 		ErrorIfCRDPathMissing: true,
 	}
 
+	kdexCrdVersion := getCRDModuleVersion()
 	tempDir, err := os.MkdirTemp("", "crd")
 	if err != nil {
 		panic(err)
 	}
 	defer os.RemoveAll(tempDir)
 
-	kdexCrdVersion := getCRDModuleVersion()
 	array := fetchSetofCRDs(kdexCrdVersion, tempDir)
 
 	for _, path := range array {
@@ -174,6 +174,13 @@ var _ = BeforeSuite(func() {
 		Scheme: k8sClient.Scheme(),
 	}
 	err = pageFooterReconciler.SetupWithManager(k8sManager)
+	Expect(err).ToNot(HaveOccurred())
+
+	pageNavigationReconciler := &MicroFrontEndPageNavigationReconciler{
+		Client: k8sClient,
+		Scheme: k8sClient.Scheme(),
+	}
+	err = pageNavigationReconciler.SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 
 	go func() {

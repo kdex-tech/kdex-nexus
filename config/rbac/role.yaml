@@ -20,6 +20,7 @@ rules:
   - microfrontendpagebindings
   - microfrontendpagefooters
   - microfrontendpageheaders
+  - microfrontendpagenavigations
   - microfrontendrenderpages
   verbs:
   - create
@@ -37,6 +38,7 @@ rules:
   - microfrontendpagebindings/finalizers
   - microfrontendpagefooters/finalizers
   - microfrontendpageheaders/finalizers
+  - microfrontendpagenavigations/finalizers
   verbs:
   - update
 - apiGroups:
@@ -47,6 +49,7 @@ rules:
   - microfrontendpagebindings/status
   - microfrontendpagefooters/status
   - microfrontendpageheaders/status
+  - microfrontendpagenavigations/status
   verbs:
   - get
   - patch
@@ -55,7 +58,6 @@ rules:
   - kdex.dev
   resources:
   - microfrontendhosts
-  - microfrontendpagenavigations
   - microfrontendstylesheets
   verbs:
   - get
