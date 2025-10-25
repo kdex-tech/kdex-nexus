@@ -18,6 +18,7 @@ rules:
   - microfrontendapps
   - microfrontendpagearchetypes
   - microfrontendpagebindings
+  - microfrontendpageheaders
   - microfrontendrenderpages
   verbs:
   - create
@@ -33,6 +34,7 @@ rules:
   - microfrontendapps/finalizers
   - microfrontendpagearchetypes/finalizers
   - microfrontendpagebindings/finalizers
+  - microfrontendpageheaders/finalizers
   verbs:
   - update
 - apiGroups:
@@ -41,6 +43,7 @@ rules:
   - microfrontendapps/status
   - microfrontendpagearchetypes/status
   - microfrontendpagebindings/status
+  - microfrontendpageheaders/status
   verbs:
   - get
   - patch
@@ -50,7 +53,6 @@ rules:
   resources:
   - microfrontendhosts
   - microfrontendpagefooters
-  - microfrontendpageheaders
   - microfrontendpagenavigations
   - microfrontendstylesheets
   verbs:

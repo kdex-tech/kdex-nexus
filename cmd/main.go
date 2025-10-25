@@ -181,14 +181,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := (&controller.MicroFrontEndPageBindingReconciler{
-		MicroFrontEndCommonReconciler: controller.MicroFrontEndCommonReconciler{
-			Client: mgr.GetClient(),
-			Scheme: mgr.GetScheme(),
-		},
-		RequeueDelay: time.Duration(requeueDelaySeconds) * time.Second,
+	if err := (&controller.MicroFrontEndAppReconciler{
+		Client:          mgr.GetClient(),
+		RegistryFactory: npm.NewRegistry,
+		RequeueDelay:    time.Duration(requeueDelaySeconds) * time.Second,
+		Scheme:          mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "MicroFrontEndPageBinding")
+		setupLog.Error(err, "unable to create controller", "controller", "MicroFrontEndApp")
 		os.Exit(1)
 	}
 	if err := (&controller.MicroFrontEndPageArchetypeReconciler{
@@ -201,13 +200,21 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "MicroFrontEndPageArchetype")
 		os.Exit(1)
 	}
-	if err := (&controller.MicroFrontEndAppReconciler{
-		Client:          mgr.GetClient(),
-		RegistryFactory: npm.NewRegistry,
-		RequeueDelay:    time.Duration(requeueDelaySeconds) * time.Second,
-		Scheme:          mgr.GetScheme(),
+	if err := (&controller.MicroFrontEndPageBindingReconciler{
+		MicroFrontEndCommonReconciler: controller.MicroFrontEndCommonReconciler{
+			Client: mgr.GetClient(),
+			Scheme: mgr.GetScheme(),
+		},
+		RequeueDelay: time.Duration(requeueDelaySeconds) * time.Second,
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "MicroFrontEndApp")
+		setupLog.Error(err, "unable to create controller", "controller", "MicroFrontEndPageBinding")
+		os.Exit(1)
+	}
+	if err := (&controller.MicroFrontEndPageHeaderReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "MicroFrontEndPageHeader")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder

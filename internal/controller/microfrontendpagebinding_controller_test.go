@@ -25,7 +25,6 @@ import (
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -151,7 +150,22 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 				&kdexv1alpha1.MicroFrontEndPageBinding{}, false)
 
 			By("and when Host added should still not become ready")
-			addHost(ctx, k8sClient, namespace, "non-existent-host")
+			addOrUpdateHost(
+				ctx, k8sClient,
+				kdexv1alpha1.MicroFrontEndHost{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "non-existent-host",
+						Namespace: namespace,
+					},
+					Spec: kdexv1alpha1.MicroFrontEndHostSpec{
+						AppPolicy: kdexv1alpha1.NonStrictAppPolicy,
+						Domains: []string{
+							"example.com",
+						},
+						Organization: "KDex Tech",
+					},
+				},
+			)
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
 				&kdexv1alpha1.MicroFrontEndPageBinding{}, false)
@@ -216,7 +230,22 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 				&kdexv1alpha1.MicroFrontEndPageBinding{}, false)
 
 			By("adding all the missing references")
-			addHost(ctx, k8sClient, namespace, "non-existent-host")
+			addOrUpdateHost(
+				ctx, k8sClient,
+				kdexv1alpha1.MicroFrontEndHost{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "non-existent-host",
+						Namespace: namespace,
+					},
+					Spec: kdexv1alpha1.MicroFrontEndHostSpec{
+						AppPolicy: kdexv1alpha1.NonStrictAppPolicy,
+						Domains: []string{
+							"example.com",
+						},
+						Organization: "KDex Tech",
+					},
+				},
+			)
 			addOrUpdatePageArchetype(
 				ctx, k8sClient,
 				kdexv1alpha1.MicroFrontEndPageArchetype{
@@ -229,7 +258,17 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 					},
 				},
 			)
-			addPageFooter(ctx, k8sClient, namespace, "non-existent-footer")
+			addOrUpdatePageFooter(ctx, k8sClient,
+				kdexv1alpha1.MicroFrontEndPageFooter{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "non-existent-footer",
+						Namespace: namespace,
+					},
+					Spec: kdexv1alpha1.MicroFrontEndPageFooterSpec{
+						Content: "<h1>Hello, from down under!</h1>",
+					},
+				},
+			)
 			addOrUpdatePageHeader(
 				ctx, k8sClient,
 				kdexv1alpha1.MicroFrontEndPageHeader{
@@ -242,7 +281,17 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 					},
 				},
 			)
-			addPageNavigation(ctx, k8sClient, namespace, "non-existent-navigation")
+			addOrUpdatePageNavigation(ctx, k8sClient,
+				kdexv1alpha1.MicroFrontEndPageNavigation{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "non-existent-navigation",
+						Namespace: namespace,
+					},
+					Spec: kdexv1alpha1.MicroFrontEndPageNavigationSpec{
+						Content: "<h1>Hello, from up north!</h1>",
+					},
+				},
+			)
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
@@ -285,7 +334,22 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 				&kdexv1alpha1.MicroFrontEndPageBinding{}, false)
 
 			By("adding all the missing references")
-			addHost(ctx, k8sClient, namespace, "non-existent-host")
+			addOrUpdateHost(
+				ctx, k8sClient,
+				kdexv1alpha1.MicroFrontEndHost{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "non-existent-host",
+						Namespace: namespace,
+					},
+					Spec: kdexv1alpha1.MicroFrontEndHostSpec{
+						AppPolicy: kdexv1alpha1.NonStrictAppPolicy,
+						Domains: []string{
+							"example.com",
+						},
+						Organization: "KDex Tech",
+					},
+				},
+			)
 			addOrUpdatePageArchetype(
 				ctx, k8sClient,
 				kdexv1alpha1.MicroFrontEndPageArchetype{
@@ -367,7 +431,22 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 				&kdexv1alpha1.MicroFrontEndPageBinding{}, false)
 
 			By("adding missing references")
-			addHost(ctx, k8sClient, namespace, "non-existent-host")
+			addOrUpdateHost(
+				ctx, k8sClient,
+				kdexv1alpha1.MicroFrontEndHost{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "non-existent-host",
+						Namespace: namespace,
+					},
+					Spec: kdexv1alpha1.MicroFrontEndHostSpec{
+						AppPolicy: kdexv1alpha1.NonStrictAppPolicy,
+						Domains: []string{
+							"example.com",
+						},
+						Organization: "KDex Tech",
+					},
+				},
+			)
 			addOrUpdatePageArchetype(
 				ctx, k8sClient,
 				kdexv1alpha1.MicroFrontEndPageArchetype{
@@ -474,7 +553,22 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 				&kdexv1alpha1.MicroFrontEndPageBinding{}, false)
 
 			By("adding missing references")
-			addHost(ctx, k8sClient, namespace, "non-existent-host")
+			addOrUpdateHost(
+				ctx, k8sClient,
+				kdexv1alpha1.MicroFrontEndHost{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "non-existent-host",
+						Namespace: namespace,
+					},
+					Spec: kdexv1alpha1.MicroFrontEndHostSpec{
+						AppPolicy: kdexv1alpha1.NonStrictAppPolicy,
+						Domains: []string{
+							"example.com",
+						},
+						Organization: "KDex Tech",
+					},
+				},
+			)
 			addOrUpdatePageArchetype(
 				ctx, k8sClient,
 				kdexv1alpha1.MicroFrontEndPageArchetype{
@@ -552,90 +646,3 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 		})
 	})
 })
-
-func addHost(
-	ctx context.Context,
-	k8sClient client.Client,
-	namespace string,
-	name string,
-) {
-	host := &kdexv1alpha1.MicroFrontEndHost{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-		Spec: kdexv1alpha1.MicroFrontEndHostSpec{
-			AppPolicy: kdexv1alpha1.NonStrictAppPolicy,
-			Domains: []string{
-				"example.com",
-			},
-			Organization: "KDex Tech",
-		},
-	}
-	Expect(k8sClient.Create(ctx, host)).To(Succeed())
-}
-
-func addOrUpdatePageArchetype(
-	ctx context.Context,
-	k8sClient client.Client,
-	pageArchetype kdexv1alpha1.MicroFrontEndPageArchetype,
-) {
-	Expect(k8sClient.Create(ctx, &pageArchetype)).To(Succeed())
-}
-
-func addPageFooter(
-	ctx context.Context,
-	k8sClient client.Client,
-	namespace string,
-	name string,
-) {
-	pageFooter := &kdexv1alpha1.MicroFrontEndPageFooter{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-		Spec: kdexv1alpha1.MicroFrontEndPageFooterSpec{
-			Content: "<h1>Hello, from down under!</h1>",
-		},
-	}
-	Expect(k8sClient.Create(ctx, pageFooter)).To(Succeed())
-}
-
-func addOrUpdatePageHeader(
-	ctx context.Context,
-	k8sClient client.Client,
-	pageHeader kdexv1alpha1.MicroFrontEndPageHeader,
-) {
-	list := &kdexv1alpha1.MicroFrontEndPageHeaderList{}
-	err := k8sClient.List(ctx, list, &client.ListOptions{
-		Namespace:     pageHeader.Namespace,
-		FieldSelector: fields.OneTermEqualSelector("metadata.name", pageHeader.Name),
-	})
-	Expect(err).NotTo(HaveOccurred())
-	if len(list.Items) > 0 {
-		existing := list.Items[0]
-		existing.Spec.Content = pageHeader.Spec.Content
-		Expect(k8sClient.Update(ctx, &existing)).To(Succeed())
-	} else {
-		Expect(k8sClient.Create(ctx, &pageHeader)).To(Succeed())
-	}
-
-}
-
-func addPageNavigation(
-	ctx context.Context,
-	k8sClient client.Client,
-	namespace string,
-	name string,
-) {
-	pageNavigation := &kdexv1alpha1.MicroFrontEndPageNavigation{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-		Spec: kdexv1alpha1.MicroFrontEndPageNavigationSpec{
-			Content: "<h1>Hello, from up north!</h1>",
-		},
-	}
-	Expect(k8sClient.Create(ctx, pageNavigation)).To(Succeed())
-}
