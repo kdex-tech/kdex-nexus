@@ -88,7 +88,7 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 		return ctrl.Result{}, nil
 	}
 
-	host, shouldReturn, r1, err := resolveHost(ctx, r.Client, &pageBinding, r.RequeueDelay)
+	host, shouldReturn, r1, err := resolveHost(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, &pageBinding.Spec.HostRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}

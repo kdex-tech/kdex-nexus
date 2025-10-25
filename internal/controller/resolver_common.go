@@ -71,26 +71,28 @@ func resolveContents(
 func resolveHost(
 	ctx context.Context,
 	c client.Client,
-	pageBinding *kdexv1alpha1.MicroFrontEndPageBinding,
+	object client.Object,
+	objectConditions *[]metav1.Condition,
+	hostRef *v1.LocalObjectReference,
 	requeueDelay time.Duration,
 ) (*kdexv1alpha1.MicroFrontEndHost, bool, ctrl.Result, error) {
 	var host kdexv1alpha1.MicroFrontEndHost
 	hostName := types.NamespacedName{
-		Name:      pageBinding.Spec.HostRef.Name,
-		Namespace: pageBinding.Namespace,
+		Name:      hostRef.Name,
+		Namespace: object.GetNamespace(),
 	}
 	if err := c.Get(ctx, hostName, &host); err != nil {
 		if errors.IsNotFound(err) {
 			apimeta.SetStatusCondition(
-				&pageBinding.Status.Conditions,
+				objectConditions,
 				*kdexv1alpha1.NewCondition(
 					kdexv1alpha1.ConditionTypeReady,
 					metav1.ConditionFalse,
 					kdexv1alpha1.ConditionReasonReconcileError,
-					fmt.Sprintf("referenced MicroFrontEndHost %s not found", pageBinding.Spec.HostRef.Name),
+					fmt.Sprintf("referenced MicroFrontEndHost %s not found", hostName.Name),
 				),
 			)
-			if err := c.Status().Update(ctx, pageBinding); err != nil {
+			if err := c.Status().Update(ctx, object); err != nil {
 				return nil, true, ctrl.Result{}, err
 			}
 
@@ -100,7 +102,7 @@ func resolveHost(
 		return nil, true, ctrl.Result{}, err
 	}
 
-	if isReady, r1, err := isReady(ctx, c, pageBinding, &host, &host.Status.Conditions, requeueDelay); !isReady {
+	if isReady, r1, err := isReady(ctx, c, object, &host, &host.Status.Conditions, requeueDelay); !isReady {
 		return nil, true, r1, err
 	}
 
@@ -284,7 +286,7 @@ func resolvePageNavigations(
 	extraNavigations map[string]*v1.LocalObjectReference,
 	requeueDelay time.Duration,
 ) (map[string]string, ctrl.Result, error) {
-	navigations := make(map[string]string)
+	var navigations map[string]string
 	if navigationRef != nil {
 		navigation, response, err := resolvePageNavigation(
 			ctx, c, object, objectConditions, navigationRef, requeueDelay)
@@ -293,6 +295,7 @@ func resolvePageNavigations(
 			return nil, response, err
 		}
 
+		navigations = make(map[string]string)
 		navigations["main"] = navigation.Spec.Content
 	}
 
@@ -306,6 +309,10 @@ func resolvePageNavigations(
 
 		if navigation == nil {
 			return nil, response, err
+		}
+
+		if navigations == nil {
+			navigations = make(map[string]string)
 		}
 
 		navigations[navigationName] = navigation.Spec.Content
