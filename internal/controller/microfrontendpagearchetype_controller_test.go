@@ -229,6 +229,51 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 				&kdexv1alpha1.MicroFrontEndPageArchetype{}, true)
 		})
 
+		It("with missing stylesheet reference should not successfully reconcile", func() {
+			resource := &kdexv1alpha1.MicroFrontEndPageArchetype{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.MicroFrontEndPageArchetypeSpec{
+					Content: "<h1>Hello, World!</h1>",
+					OverrideStylesheetRef: &corev1.LocalObjectReference{
+						Name: "non-existent-stylesheet",
+					},
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.MicroFrontEndPageArchetype{}, false)
+
+			addOrUpdateStylesheet(
+				ctx, k8sClient,
+				kdexv1alpha1.MicroFrontEndStylesheet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "non-existent-stylesheet",
+						Namespace: namespace,
+					},
+					Spec: kdexv1alpha1.MicroFrontEndStylesheetSpec{
+						StyleItems: []kdexv1alpha1.StyleItem{
+							{
+								LinkHref: "style.css",
+								Attributes: map[string]string{
+									"rel": "stylesheet",
+								},
+							},
+						},
+					},
+				},
+			)
+
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.MicroFrontEndPageArchetype{}, true)
+		})
+
 		It("with only content should successfully reconcile the resource", func() {
 			resource := &kdexv1alpha1.MicroFrontEndPageArchetype{
 				ObjectMeta: metav1.ObjectMeta{

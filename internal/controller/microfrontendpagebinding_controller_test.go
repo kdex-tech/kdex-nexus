@@ -329,11 +329,6 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 
 			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 
-			assertResourceReady(
-				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.MicroFrontEndPageBinding{}, false)
-
-			By("adding all the missing references")
 			addOrUpdateHost(
 				ctx, k8sClient,
 				kdexv1alpha1.MicroFrontEndHost{
@@ -362,6 +357,10 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 					},
 				},
 			)
+
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.MicroFrontEndPageBinding{}, false)
 
 			referencedPage := &kdexv1alpha1.MicroFrontEndPageBinding{
 				ObjectMeta: metav1.ObjectMeta{

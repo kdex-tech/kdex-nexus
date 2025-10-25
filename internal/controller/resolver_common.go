@@ -314,32 +314,32 @@ func resolvePageNavigations(
 	return navigations, ctrl.Result{}, nil
 }
 
-func resolveParentPageBinding(
+func resolvePageBinding(
 	ctx context.Context,
 	c client.Client,
-	pageBinding *kdexv1alpha1.MicroFrontEndPageBinding,
+	object client.Object,
+	objectConditions *[]metav1.Condition,
+	pageBindingRef *v1.LocalObjectReference,
 	requeueDelay time.Duration,
 ) (*v1.LocalObjectReference, bool, ctrl.Result, error) {
-	var parentPage kdexv1alpha1.MicroFrontEndPageBinding
-	parentPageRef := pageBinding.Spec.ParentPageRef
-	if parentPageRef != nil {
-		parentPageName := types.NamespacedName{
-			Name:      parentPageRef.Name,
-			Namespace: pageBinding.Namespace,
+	if pageBindingRef != nil {
+		var pageBinding kdexv1alpha1.MicroFrontEndPageBinding
+		pageBindingName := types.NamespacedName{
+			Name:      pageBindingRef.Name,
+			Namespace: object.GetNamespace(),
 		}
-
-		if err := c.Get(ctx, parentPageName, &parentPage); err != nil {
+		if err := c.Get(ctx, pageBindingName, &pageBinding); err != nil {
 			if errors.IsNotFound(err) {
 				apimeta.SetStatusCondition(
-					&pageBinding.Status.Conditions,
+					objectConditions,
 					*kdexv1alpha1.NewCondition(
 						kdexv1alpha1.ConditionTypeReady,
 						metav1.ConditionFalse,
 						kdexv1alpha1.ConditionReasonReconcileError,
-						fmt.Sprintf("referenced MicroFrontEndPageBinding %s not found", parentPageRef.Name),
+						fmt.Sprintf("referenced MicroFrontEndPageBinding %s not found", pageBindingName.Name),
 					),
 				)
-				if err := c.Status().Update(ctx, pageBinding); err != nil {
+				if err := c.Status().Update(ctx, object); err != nil {
 					return nil, true, ctrl.Result{}, err
 				}
 
@@ -349,12 +349,12 @@ func resolveParentPageBinding(
 			return nil, true, ctrl.Result{}, err
 		}
 
-		if isReady, r1, err := isReady(ctx, c, pageBinding, &parentPage, &parentPage.Status.Conditions, requeueDelay); !isReady {
+		if isReady, r1, err := isReady(ctx, c, object, &pageBinding, &pageBinding.Status.Conditions, requeueDelay); !isReady {
 			return nil, true, r1, err
 		}
 	}
 
-	return parentPageRef, false, ctrl.Result{}, nil
+	return pageBindingRef, false, ctrl.Result{}, nil
 }
 
 func resolveStylesheet(

@@ -112,7 +112,7 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 		return response, err
 	}
 
-	parentPageRef, shouldReturn, r1, err := resolveParentPageBinding(ctx, r.Client, &pageBinding, r.RequeueDelay)
+	parentPageRef, shouldReturn, r1, err := resolvePageBinding(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, pageBinding.Spec.ParentPageRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
