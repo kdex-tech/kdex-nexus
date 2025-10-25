@@ -34,7 +34,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 // MicroFrontEndAppReconciler reconciles a MicroFrontEndApp object
@@ -72,7 +71,7 @@ func (r *MicroFrontEndAppReconciler) Reconcile(ctx context.Context, req ctrl.Req
 						kdexv1alpha1.ConditionTypeReady,
 						metav1.ConditionFalse,
 						kdexv1alpha1.ConditionReasonReconcileError,
-						fmt.Sprintf("referenced Secret %s not found", app.Spec.PackageReference.SecretRef.Name),
+						fmt.Sprintf("referenced Secret %s not found", secretName.Name),
 					),
 				)
 				if err := r.Status().Update(ctx, &app); err != nil {
@@ -88,7 +87,6 @@ func (r *MicroFrontEndAppReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		if apimeta.IsStatusConditionFalse(app.Status.Conditions, kdexv1alpha1.ConditionTypeReady.String()) {
 			condition := apimeta.FindStatusCondition(app.Status.Conditions, kdexv1alpha1.ConditionTypeReady.String())
 			if condition.Reason == "PackageValidationFailed" {
-				log.Info("reconcile failed due to failed validation", "app", app)
 				return ctrl.Result{}, err
 			}
 		}
@@ -111,40 +109,6 @@ func (r *MicroFrontEndAppReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *MicroFrontEndAppReconciler) findAppsForSecret(
-	ctx context.Context,
-	secret client.Object,
-) []reconcile.Request {
-	log := logf.FromContext(ctx)
-
-	if _, ok := secret.GetAnnotations()["kdex.dev/npm-server-address"]; !ok {
-		return []reconcile.Request{}
-	}
-
-	var appList kdexv1alpha1.MicroFrontEndAppList
-	if err := r.List(ctx, &appList, &client.ListOptions{
-		Namespace: secret.GetNamespace(),
-	}); err != nil {
-		log.Error(err, "unable to list MicroFrontEndApps for secret", "name", secret.GetName())
-		return []reconcile.Request{}
-	}
-
-	requests := make([]reconcile.Request, 0, len(appList.Items))
-	for _, app := range appList.Items {
-		if app.Spec.PackageReference.SecretRef.Name == secret.GetName() {
-			requests = append(requests, reconcile.Request{
-				NamespacedName: types.NamespacedName{
-					Name:      app.Name,
-					Namespace: app.Namespace,
-				},
-			})
-		}
-	}
-	return requests
-}
-
-// validatePackageReference fetches, extracts, and validates the NPM package reference that contains the App.
-// This is a placeholder for the actual implementation.
 func (r *MicroFrontEndAppReconciler) validatePackageReference(
 	ctx context.Context, app *kdexv1alpha1.MicroFrontEndApp, secret *corev1.Secret,
 ) error {
