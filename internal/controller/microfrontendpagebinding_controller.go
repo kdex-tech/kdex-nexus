@@ -76,7 +76,7 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 					Namespace: pageBinding.Namespace,
 				},
 			}
-			if err := r.Delete(ctx, renderPage); err != nil {
+			if err := r.Delete(ctx, renderPage); client.IgnoreNotFound(err) != nil {
 				return ctrl.Result{}, err
 			}
 
