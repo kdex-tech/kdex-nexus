@@ -100,7 +100,7 @@ func (r *MicroFrontEndPageArchetypeReconciler) findPageArchetypesForPageNavigati
 		}
 
 		if pageArchetype.Spec.ExtraNavigations != nil {
-			for _, navigationRef := range *pageArchetype.Spec.ExtraNavigations {
+			for _, navigationRef := range pageArchetype.Spec.ExtraNavigations {
 				if navigationRef.Name == pageNavigation.GetName() {
 					requests = append(requests, reconcile.Request{
 						NamespacedName: types.NamespacedName{

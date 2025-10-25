@@ -18,14 +18,11 @@ package controller
 
 import (
 	"context"
-	"fmt"
 	"time"
 
-	"k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	"kdex.dev/crds/render"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -76,113 +73,24 @@ func (r *MicroFrontEndPageArchetypeReconciler) Reconcile(ctx context.Context, re
 		return ctrl.Result{}, err
 	}
 
-	var footer kdexv1alpha1.MicroFrontEndPageFooter
-	if pageArchetype.Spec.DefaultFooterRef != nil {
-		footerName := types.NamespacedName{
-			Name:      pageArchetype.Spec.DefaultFooterRef.Name,
-			Namespace: pageArchetype.Namespace,
-		}
-		if err := r.Get(ctx, footerName, &footer); err != nil {
-			if errors.IsNotFound(err) {
-				apimeta.SetStatusCondition(
-					&pageArchetype.Status.Conditions,
-					*kdexv1alpha1.NewCondition(
-						kdexv1alpha1.ConditionTypeReady,
-						metav1.ConditionFalse,
-						kdexv1alpha1.ConditionReasonReconcileError,
-						fmt.Sprintf("referenced MicroFrontEndPageFooter %s not found", footerName.Name),
-					),
-				)
-				if err := r.Status().Update(ctx, &pageArchetype); err != nil {
-					return ctrl.Result{}, err
-				}
-
-				return ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
-			}
-
-			log.Error(err, "unable to fetch MicroFrontEndPageFooter", "name", footerName.Name)
-			return ctrl.Result{}, err
-		}
+	_, shouldReturn, r1, err := resolvePageFooter(ctx, r.Client, &pageArchetype, &pageArchetype.Status.Conditions, pageArchetype.Spec.DefaultFooterRef, r.RequeueDelay)
+	if shouldReturn {
+		return r1, err
 	}
 
-	if pageArchetype.Spec.DefaultHeaderRef != nil {
-		var header kdexv1alpha1.MicroFrontEndPageHeader
-		headerName := types.NamespacedName{
-			Name:      pageArchetype.Spec.DefaultHeaderRef.Name,
-			Namespace: pageArchetype.Namespace,
-		}
-
-		if err := r.Get(ctx, headerName, &header); err != nil {
-			if errors.IsNotFound(err) {
-				apimeta.SetStatusCondition(
-					&pageArchetype.Status.Conditions,
-					*kdexv1alpha1.NewCondition(
-						kdexv1alpha1.ConditionTypeReady,
-						metav1.ConditionFalse,
-						kdexv1alpha1.ConditionReasonReconcileError,
-						fmt.Sprintf("referenced MicroFrontEndPageHeader %s not found", headerName.Name),
-					),
-				)
-				if err := r.Status().Update(ctx, &pageArchetype); err != nil {
-					return ctrl.Result{}, err
-				}
-
-				return ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
-			}
-
-			log.Error(err, "unable to fetch MicroFrontEndPageHeader", "name", headerName.Name)
-			return ctrl.Result{}, err
-		}
+	_, shouldReturn, r1, err = resolvePageHeader(ctx, r.Client, &pageArchetype, &pageArchetype.Status.Conditions, pageArchetype.Spec.DefaultHeaderRef, r.RequeueDelay)
+	if shouldReturn {
+		return r1, err
 	}
 
-	if pageArchetype.Spec.DefaultMainNavigationRef != nil {
-		navigation, response, err := resolvePageNavigation(
-			ctx, r.Client, &pageArchetype, &pageArchetype.Status.Conditions, pageArchetype.Spec.DefaultMainNavigationRef, r.RequeueDelay)
-
-		if navigation == nil {
-			return response, err
-		}
+	_, response, err := resolvePageNavigations(ctx, r.Client, &pageArchetype, &pageArchetype.Status.Conditions, pageArchetype.Spec.DefaultMainNavigationRef, pageArchetype.Spec.ExtraNavigations, r.RequeueDelay)
+	if err != nil {
+		return response, err
 	}
 
-	if pageArchetype.Spec.ExtraNavigations != nil {
-		for _, navigationRef := range *pageArchetype.Spec.ExtraNavigations {
-			navigation, response, err := resolvePageNavigation(
-				ctx, r.Client, &pageArchetype, &pageArchetype.Status.Conditions, &navigationRef, r.RequeueDelay)
-
-			if navigation == nil {
-				return response, err
-			}
-		}
-	}
-
-	if pageArchetype.Spec.OverrideStylesheetRef != nil {
-		var stylesheet kdexv1alpha1.MicroFrontEndStylesheet
-		stylesheetName := types.NamespacedName{
-			Name:      pageArchetype.Spec.OverrideStylesheetRef.Name,
-			Namespace: pageArchetype.Namespace,
-		}
-
-		if err := r.Get(ctx, stylesheetName, &stylesheet); err != nil {
-			if errors.IsNotFound(err) {
-				apimeta.SetStatusCondition(
-					&pageArchetype.Status.Conditions,
-					*kdexv1alpha1.NewCondition(
-						kdexv1alpha1.ConditionTypeReady,
-						metav1.ConditionFalse,
-						kdexv1alpha1.ConditionReasonReconcileError,
-						fmt.Sprintf("referenced MicroFrontEndStylesheet %s not found", stylesheetName.Name),
-					),
-				)
-				if err := r.Status().Update(ctx, &pageArchetype); err != nil {
-					return ctrl.Result{}, err
-				}
-
-				return ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
-			}
-
-			log.Error(err, "unable to fetch MicroFrontEndStylesheet", "name", stylesheetName.Name)
-			return ctrl.Result{}, err
-		}
+	_, shouldReturn, r1, err = resolveStylesheet(ctx, r.Client, &pageArchetype, &pageArchetype.Status.Conditions, pageArchetype.Spec.OverrideStylesheetRef, r.RequeueDelay)
+	if shouldReturn {
+		return r1, err
 	}
 
 	log.Info("reconciled MicroFrontEndPageArchetype")

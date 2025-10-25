@@ -302,7 +302,7 @@ func (r *MicroFrontEndPageBindingReconciler) findPageBindingsForPageNavigations(
 			}
 		}
 		if pageArchetype.Spec.ExtraNavigations != nil {
-			for _, navigationRef := range *pageArchetype.Spec.ExtraNavigations {
+			for _, navigationRef := range pageArchetype.Spec.ExtraNavigations {
 				if navigationRef.Name == pageNavigation.GetName() {
 					for _, pageBinding := range pageBindingsList.Items {
 						if pageBinding.Spec.PageArchetypeRef.Name == pageArchetype.GetName() {

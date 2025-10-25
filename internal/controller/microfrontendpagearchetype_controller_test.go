@@ -87,7 +87,7 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 				},
 				Spec: kdexv1alpha1.MicroFrontEndPageArchetypeSpec{
 					Content: "<h1>Hello, World!</h1>",
-					ExtraNavigations: &map[string]corev1.LocalObjectReference{
+					ExtraNavigations: map[string]*corev1.LocalObjectReference{
 						"non-existent-navigation": {
 							Name: "non-existent-navigation",
 						},

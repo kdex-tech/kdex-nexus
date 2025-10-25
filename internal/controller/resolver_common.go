@@ -149,25 +149,22 @@ func resolvePageArchetype(
 func resolvePageFooter(
 	ctx context.Context,
 	c client.Client,
-	pageBinding *kdexv1alpha1.MicroFrontEndPageBinding,
-	pageArchetype *kdexv1alpha1.MicroFrontEndPageArchetype,
+	object client.Object,
+	objectConditions *[]metav1.Condition,
+	footerRef *v1.LocalObjectReference,
 	requeueDelay time.Duration,
 ) (*kdexv1alpha1.MicroFrontEndPageFooter, bool, ctrl.Result, error) {
 	var footer kdexv1alpha1.MicroFrontEndPageFooter
-	footerRef := pageBinding.Spec.OverrideFooterRef
-	if footerRef == nil {
-		footerRef = pageArchetype.Spec.DefaultFooterRef
-	}
 	if footerRef != nil {
 		footerName := types.NamespacedName{
 			Name:      footerRef.Name,
-			Namespace: pageBinding.Namespace,
+			Namespace: object.GetNamespace(),
 		}
 
 		if err := c.Get(ctx, footerName, &footer); err != nil {
 			if errors.IsNotFound(err) {
 				apimeta.SetStatusCondition(
-					&pageBinding.Status.Conditions,
+					objectConditions,
 					*kdexv1alpha1.NewCondition(
 						kdexv1alpha1.ConditionTypeReady,
 						metav1.ConditionFalse,
@@ -175,7 +172,7 @@ func resolvePageFooter(
 						fmt.Sprintf("referenced MicroFrontEndPageFooter %s not found", footerRef.Name),
 					),
 				)
-				if err := c.Status().Update(ctx, pageBinding); err != nil {
+				if err := c.Status().Update(ctx, object); err != nil {
 					return nil, true, ctrl.Result{}, err
 				}
 
@@ -185,7 +182,7 @@ func resolvePageFooter(
 			return nil, true, ctrl.Result{}, err
 		}
 
-		if isReady, r1, err := isReady(ctx, c, pageBinding, &footer, &footer.Status.Conditions, requeueDelay); !isReady {
+		if isReady, r1, err := isReady(ctx, c, object, &footer, &footer.Status.Conditions, requeueDelay); !isReady {
 			return nil, true, r1, err
 		}
 	}
@@ -196,25 +193,22 @@ func resolvePageFooter(
 func resolvePageHeader(
 	ctx context.Context,
 	c client.Client,
-	pageBinding *kdexv1alpha1.MicroFrontEndPageBinding,
-	pageArchetype *kdexv1alpha1.MicroFrontEndPageArchetype,
+	object client.Object,
+	objectConditions *[]metav1.Condition,
+	headerRef *v1.LocalObjectReference,
 	requeueDelay time.Duration,
 ) (*kdexv1alpha1.MicroFrontEndPageHeader, bool, ctrl.Result, error) {
 	var header kdexv1alpha1.MicroFrontEndPageHeader
-	headerRef := pageBinding.Spec.OverrideHeaderRef
-	if headerRef == nil {
-		headerRef = pageArchetype.Spec.DefaultHeaderRef
-	}
 	if headerRef != nil {
 		headerName := types.NamespacedName{
 			Name:      headerRef.Name,
-			Namespace: pageBinding.Namespace,
+			Namespace: object.GetNamespace(),
 		}
 
 		if err := c.Get(ctx, headerName, &header); err != nil {
 			if errors.IsNotFound(err) {
 				apimeta.SetStatusCondition(
-					&pageBinding.Status.Conditions,
+					objectConditions,
 					*kdexv1alpha1.NewCondition(
 						kdexv1alpha1.ConditionTypeReady,
 						metav1.ConditionFalse,
@@ -222,7 +216,7 @@ func resolvePageHeader(
 						fmt.Sprintf("referenced MicroFrontEndPageHeader %s not found", headerRef.Name),
 					),
 				)
-				if err := c.Status().Update(ctx, pageBinding); err != nil {
+				if err := c.Status().Update(ctx, object); err != nil {
 					return nil, true, ctrl.Result{}, err
 				}
 
@@ -232,7 +226,7 @@ func resolvePageHeader(
 			return nil, true, ctrl.Result{}, err
 		}
 
-		if isReady, r1, err := isReady(ctx, c, pageBinding, &header, &header.Status.Conditions, requeueDelay); !isReady {
+		if isReady, r1, err := isReady(ctx, c, object, &header, &header.Status.Conditions, requeueDelay); !isReady {
 			return nil, true, r1, err
 		}
 	}
@@ -284,19 +278,16 @@ func resolvePageNavigation(
 func resolvePageNavigations(
 	ctx context.Context,
 	c client.Client,
-	pageBinding *kdexv1alpha1.MicroFrontEndPageBinding,
-	pageArchetype *kdexv1alpha1.MicroFrontEndPageArchetype,
+	object client.Object,
+	objectConditions *[]metav1.Condition,
+	navigationRef *v1.LocalObjectReference,
+	extraNavigations map[string]*v1.LocalObjectReference,
 	requeueDelay time.Duration,
 ) (map[string]string, ctrl.Result, error) {
 	navigations := make(map[string]string)
-
-	navigationRef := pageBinding.Spec.OverrideMainNavigationRef
-	if navigationRef == nil {
-		navigationRef = pageArchetype.Spec.DefaultMainNavigationRef
-	}
 	if navigationRef != nil {
 		navigation, response, err := resolvePageNavigation(
-			ctx, c, pageBinding, &pageBinding.Status.Conditions, navigationRef, requeueDelay)
+			ctx, c, object, objectConditions, navigationRef, requeueDelay)
 
 		if navigation == nil {
 			return nil, response, err
@@ -305,13 +296,13 @@ func resolvePageNavigations(
 		navigations["main"] = navigation.Spec.Content
 	}
 
-	if pageArchetype.Spec.ExtraNavigations == nil {
-		return navigations, ctrl.Result{}, nil
+	if extraNavigations == nil {
+		extraNavigations = map[string]*v1.LocalObjectReference{}
 	}
 
-	for navigationName, navigationRef := range *pageArchetype.Spec.ExtraNavigations {
+	for navigationName, navigationRef := range extraNavigations {
 		navigation, response, err := resolvePageNavigation(
-			ctx, c, pageBinding, &pageBinding.Status.Conditions, &navigationRef, requeueDelay)
+			ctx, c, object, objectConditions, navigationRef, requeueDelay)
 
 		if navigation == nil {
 			return nil, response, err
@@ -369,25 +360,21 @@ func resolveParentPageBinding(
 func resolveStylesheet(
 	ctx context.Context,
 	c client.Client,
-	pageBinding *kdexv1alpha1.MicroFrontEndPageBinding,
-	pageArchetype *kdexv1alpha1.MicroFrontEndPageArchetype,
-	host *kdexv1alpha1.MicroFrontEndHost,
+	object client.Object,
+	objectConditions *[]metav1.Condition,
+	stylesheetRef *v1.LocalObjectReference,
 	requeueDelay time.Duration,
 ) (*v1.LocalObjectReference, bool, ctrl.Result, error) {
-	stylesheetRef := pageArchetype.Spec.OverrideStylesheetRef
-	if stylesheetRef == nil {
-		stylesheetRef = host.Spec.DefaultStylesheetRef
-	}
 	if stylesheetRef != nil {
 		var stylesheet kdexv1alpha1.MicroFrontEndStylesheet
 		stylesheetName := types.NamespacedName{
 			Name:      stylesheetRef.Name,
-			Namespace: pageBinding.Namespace,
+			Namespace: object.GetNamespace(),
 		}
 		if err := c.Get(ctx, stylesheetName, &stylesheet); err != nil {
 			if errors.IsNotFound(err) {
 				apimeta.SetStatusCondition(
-					&pageArchetype.Status.Conditions,
+					objectConditions,
 					*kdexv1alpha1.NewCondition(
 						kdexv1alpha1.ConditionTypeReady,
 						metav1.ConditionFalse,
@@ -395,7 +382,7 @@ func resolveStylesheet(
 						fmt.Sprintf("referenced MicroFrontEndStylesheet %s not found", stylesheetName.Name),
 					),
 				)
-				if err := c.Status().Update(ctx, pageBinding); err != nil {
+				if err := c.Status().Update(ctx, object); err != nil {
 					return nil, true, ctrl.Result{}, err
 				}
 
@@ -405,7 +392,7 @@ func resolveStylesheet(
 			return nil, true, ctrl.Result{}, err
 		}
 
-		if isReady, r1, err := isReady(ctx, c, pageBinding, &stylesheet, &stylesheet.Status.Conditions, requeueDelay); !isReady {
+		if isReady, r1, err := isReady(ctx, c, object, &stylesheet, &stylesheet.Status.Conditions, requeueDelay); !isReady {
 			return nil, true, r1, err
 		}
 	}

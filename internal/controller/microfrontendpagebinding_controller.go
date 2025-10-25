@@ -103,7 +103,11 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 		return response, err
 	}
 
-	navigations, response, err := resolvePageNavigations(ctx, r.Client, &pageBinding, pageArchetype, r.RequeueDelay)
+	navigationRef := pageBinding.Spec.OverrideMainNavigationRef
+	if navigationRef == nil {
+		navigationRef = pageArchetype.Spec.DefaultMainNavigationRef
+	}
+	navigations, response, err := resolvePageNavigations(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, navigationRef, pageArchetype.Spec.ExtraNavigations, r.RequeueDelay)
 	if err != nil {
 		return response, err
 	}
@@ -113,17 +117,29 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 		return r1, err
 	}
 
-	header, shouldReturn, r1, err := resolvePageHeader(ctx, r.Client, &pageBinding, pageArchetype, r.RequeueDelay)
+	headerRef := pageBinding.Spec.OverrideHeaderRef
+	if headerRef == nil {
+		headerRef = pageArchetype.Spec.DefaultHeaderRef
+	}
+	header, shouldReturn, r1, err := resolvePageHeader(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, headerRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
 
-	footer, shouldReturn, r1, err := resolvePageFooter(ctx, r.Client, &pageBinding, pageArchetype, r.RequeueDelay)
+	footerRef := pageBinding.Spec.OverrideFooterRef
+	if footerRef == nil {
+		footerRef = pageArchetype.Spec.DefaultFooterRef
+	}
+	footer, shouldReturn, r1, err := resolvePageFooter(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, footerRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
 
-	stylesheetRef, shouldReturn, r1, err := resolveStylesheet(ctx, r.Client, &pageBinding, pageArchetype, host, r.RequeueDelay)
+	stylesheetRef := pageArchetype.Spec.OverrideStylesheetRef
+	if stylesheetRef == nil {
+		stylesheetRef = host.Spec.DefaultStylesheetRef
+	}
+	_, shouldReturn, r1, err = resolveStylesheet(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, stylesheetRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
