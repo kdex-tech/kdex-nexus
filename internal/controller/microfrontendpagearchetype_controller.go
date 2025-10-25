@@ -24,6 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	"kdex.dev/crds/render"
@@ -35,7 +36,8 @@ import (
 
 // MicroFrontEndPageArchetypeReconciler reconciles a MicroFrontEndPageArchetype object
 type MicroFrontEndPageArchetypeReconciler struct {
-	MicroFrontEndCommonReconciler
+	client.Client
+	Scheme       *runtime.Scheme
 	RequeueDelay time.Duration
 }
 
@@ -74,13 +76,12 @@ func (r *MicroFrontEndPageArchetypeReconciler) Reconcile(ctx context.Context, re
 		return ctrl.Result{}, err
 	}
 
+	var footer kdexv1alpha1.MicroFrontEndPageFooter
 	if pageArchetype.Spec.DefaultFooterRef != nil {
-		var footer kdexv1alpha1.MicroFrontEndPageFooter
 		footerName := types.NamespacedName{
 			Name:      pageArchetype.Spec.DefaultFooterRef.Name,
 			Namespace: pageArchetype.Namespace,
 		}
-
 		if err := r.Get(ctx, footerName, &footer); err != nil {
 			if errors.IsNotFound(err) {
 				apimeta.SetStatusCondition(
@@ -135,8 +136,8 @@ func (r *MicroFrontEndPageArchetypeReconciler) Reconcile(ctx context.Context, re
 	}
 
 	if pageArchetype.Spec.DefaultMainNavigationRef != nil {
-		navigation, response, err := r.GetNavigation(
-			ctx, log, *pageArchetype.Spec.DefaultMainNavigationRef, &pageArchetype.Status.Conditions, &pageArchetype)
+		navigation, response, err := resolvePageNavigation(
+			ctx, r.Client, &pageArchetype, &pageArchetype.Status.Conditions, pageArchetype.Spec.DefaultMainNavigationRef, r.RequeueDelay)
 
 		if navigation == nil {
 			return response, err
@@ -145,8 +146,8 @@ func (r *MicroFrontEndPageArchetypeReconciler) Reconcile(ctx context.Context, re
 
 	if pageArchetype.Spec.ExtraNavigations != nil {
 		for _, navigationRef := range *pageArchetype.Spec.ExtraNavigations {
-			navigation, response, err := r.GetNavigation(
-				ctx, log, navigationRef, &pageArchetype.Status.Conditions, &pageArchetype)
+			navigation, response, err := resolvePageNavigation(
+				ctx, r.Client, &pageArchetype, &pageArchetype.Status.Conditions, &navigationRef, r.RequeueDelay)
 
 			if navigation == nil {
 				return response, err

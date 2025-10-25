@@ -191,20 +191,16 @@ func main() {
 		os.Exit(1)
 	}
 	if err := (&controller.MicroFrontEndPageArchetypeReconciler{
-		MicroFrontEndCommonReconciler: controller.MicroFrontEndCommonReconciler{
-			Client: mgr.GetClient(),
-			Scheme: mgr.GetScheme(),
-		},
+		Client:       mgr.GetClient(),
+		Scheme:       mgr.GetScheme(),
 		RequeueDelay: time.Duration(requeueDelaySeconds) * time.Second,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "MicroFrontEndPageArchetype")
 		os.Exit(1)
 	}
 	if err := (&controller.MicroFrontEndPageBindingReconciler{
-		MicroFrontEndCommonReconciler: controller.MicroFrontEndCommonReconciler{
-			Client: mgr.GetClient(),
-			Scheme: mgr.GetScheme(),
-		},
+		Client:       mgr.GetClient(),
+		Scheme:       mgr.GetScheme(),
 		RequeueDelay: time.Duration(requeueDelaySeconds) * time.Second,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "MicroFrontEndPageBinding")
