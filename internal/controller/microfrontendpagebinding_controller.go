@@ -88,7 +88,7 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 		return ctrl.Result{}, nil
 	}
 
-	host, shouldReturn, r1, err := resolveHost(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, &pageBinding.Spec.HostRef, r.RequeueDelay)
+	_, shouldReturn, r1, err := resolveHost(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, &pageBinding.Spec.HostRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
@@ -135,11 +135,7 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 		return r1, err
 	}
 
-	stylesheetRef := pageArchetype.Spec.OverrideStylesheetRef
-	if stylesheetRef == nil {
-		stylesheetRef = host.Spec.DefaultStylesheetRef
-	}
-	_, shouldReturn, r1, err = resolveStylesheet(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, stylesheetRef, r.RequeueDelay)
+	_, shouldReturn, r1, err = resolveStylesheet(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, pageArchetype.Spec.OverrideStylesheetRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
@@ -169,7 +165,7 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 				},
 				ParentPageRef: parentPageRef,
 				Paths:         pageBinding.Spec.Paths,
-				StylesheetRef: stylesheetRef,
+				StylesheetRef: pageArchetype.Spec.OverrideStylesheetRef,
 			}
 			return ctrl.SetControllerReference(&pageBinding, renderPage, r.Scheme)
 		},
