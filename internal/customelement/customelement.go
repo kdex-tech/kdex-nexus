@@ -7,7 +7,7 @@ import (
 )
 
 func ForApp(
-	app kdexv1alpha1.MicroFrontEndApp,
+	app kdexv1alpha1.KDexApp,
 	contentEntry kdexv1alpha1.ContentEntry,
 ) string {
 	return fmt.Sprintf(`

@@ -10,7 +10,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-func (r *MicroFrontEndAppReconciler) findAppsForSecret(
+func (r *KDexAppReconciler) findAppsForSecret(
 	ctx context.Context,
 	secret client.Object,
 ) []reconcile.Request {
@@ -20,11 +20,11 @@ func (r *MicroFrontEndAppReconciler) findAppsForSecret(
 		return []reconcile.Request{}
 	}
 
-	var appList kdexv1alpha1.MicroFrontEndAppList
+	var appList kdexv1alpha1.KDexAppList
 	if err := r.List(ctx, &appList, &client.ListOptions{
 		Namespace: secret.GetNamespace(),
 	}); err != nil {
-		log.Error(err, "unable to list MicroFrontEndApps for secret", "name", secret.GetName())
+		log.Error(err, "unable to list KDexApps for secret", "name", secret.GetName())
 		return []reconcile.Request{}
 	}
 

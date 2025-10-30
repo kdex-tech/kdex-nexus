@@ -36,8 +36,8 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-// MicroFrontEndAppReconciler reconciles a MicroFrontEndApp object
-type MicroFrontEndAppReconciler struct {
+// KDexAppReconciler reconciles a KDexApp object
+type KDexAppReconciler struct {
 	client.Client
 	RegistryFactory func(secret *corev1.Secret, error func(err error, msg string, keysAndValues ...any)) npm.Registry
 	RequeueDelay    time.Duration
@@ -45,14 +45,14 @@ type MicroFrontEndAppReconciler struct {
 }
 
 // +kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch
-// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendapps,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendapps/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendapps/finalizers,verbs=update
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexapps,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexapps/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexapps/finalizers,verbs=update
 
-func (r *MicroFrontEndAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *KDexAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx)
 
-	var app kdexv1alpha1.MicroFrontEndApp
+	var app kdexv1alpha1.KDexApp
 	if err := r.Get(ctx, req.NamespacedName, &app); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -92,25 +92,25 @@ func (r *MicroFrontEndAppReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		}
 	}
 
-	log.Info("reconciled MicroFrontEndApp")
+	log.Info("reconciled KDexApp")
 
 	return ctrl.Result{}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *MicroFrontEndAppReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *KDexAppReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&kdexv1alpha1.MicroFrontEndApp{}).
+		For(&kdexv1alpha1.KDexApp{}).
 		Watches(
 			&corev1.Secret{},
 			handler.EnqueueRequestsFromMapFunc(r.findAppsForSecret),
 		).
-		Named("microfrontendapp").
+		Named("kdexapp").
 		Complete(r)
 }
 
-func (r *MicroFrontEndAppReconciler) validatePackageReference(
-	ctx context.Context, app *kdexv1alpha1.MicroFrontEndApp, secret *corev1.Secret,
+func (r *KDexAppReconciler) validatePackageReference(
+	ctx context.Context, app *kdexv1alpha1.KDexApp, secret *corev1.Secret,
 ) error {
 	log := logf.FromContext(ctx)
 
@@ -118,7 +118,7 @@ func (r *MicroFrontEndAppReconciler) validatePackageReference(
 		return nil
 	}
 
-	log.Info("validating package reference for MicroFrontEndApp", "app", app.Name)
+	log.Info("validating package reference for KDexApp", "app", app.Name)
 
 	if !strings.HasPrefix(app.Spec.PackageReference.Name, "@") || !strings.Contains(app.Spec.PackageReference.Name, "/") {
 		apimeta.SetStatusCondition(&app.Status.Conditions, *kdexv1alpha1.NewCondition(

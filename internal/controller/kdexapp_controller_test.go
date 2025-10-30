@@ -29,7 +29,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var _ = Describe("MicroFrontEndApp Controller", func() {
+var _ = Describe("KDexApp Controller", func() {
 	Context("When reconciling a resource", func() {
 		const namespace = "default"
 		const resourceName = "test-resource"
@@ -38,25 +38,25 @@ var _ = Describe("MicroFrontEndApp Controller", func() {
 
 		AfterEach(func() {
 			By("Cleanup all the test resource instances")
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndApp{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexApp{}, client.InNamespace(namespace))).To(Succeed())
 
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndHost{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndPageArchetype{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndPageBinding{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndPageFooter{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndPageHeader{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndPageNavigation{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndStylesheet{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndTranslation{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexHost{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageArchetype{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageBinding{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageFooter{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageHeader{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageNavigation{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexStylesheet{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexTranslation{}, client.InNamespace(namespace))).To(Succeed())
 		})
 
 		It("it must not become ready if it has missing package reference", func() {
-			resource := &kdexv1alpha1.MicroFrontEndApp{
+			resource := &kdexv1alpha1.KDexApp{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
 					Namespace: namespace,
 				},
-				Spec: kdexv1alpha1.MicroFrontEndAppSpec{
+				Spec: kdexv1alpha1.KDexAppSpec{
 					CustomElements: []kdexv1alpha1.CustomElement{
 						{
 							Description: "",
@@ -74,7 +74,7 @@ var _ = Describe("MicroFrontEndApp Controller", func() {
 			}
 
 			check := func(g Gomega) {
-				checkResource := &kdexv1alpha1.MicroFrontEndApp{}
+				checkResource := &kdexv1alpha1.KDexApp{}
 				err := k8sClient.Get(ctx, typeNamespacedName, checkResource)
 
 				g.Expect(err).NotTo(HaveOccurred())
@@ -106,12 +106,12 @@ var _ = Describe("MicroFrontEndApp Controller", func() {
 		})
 
 		It("it should become ready if it has a valid package reference", func() {
-			resource := &kdexv1alpha1.MicroFrontEndApp{
+			resource := &kdexv1alpha1.KDexApp{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
 					Namespace: namespace,
 				},
-				Spec: kdexv1alpha1.MicroFrontEndAppSpec{
+				Spec: kdexv1alpha1.KDexAppSpec{
 					CustomElements: []kdexv1alpha1.CustomElement{
 						{
 							Description: "",
@@ -133,7 +133,7 @@ var _ = Describe("MicroFrontEndApp Controller", func() {
 			}
 
 			check := func(g Gomega) {
-				checkResource := &kdexv1alpha1.MicroFrontEndApp{}
+				checkResource := &kdexv1alpha1.KDexApp{}
 				err := k8sClient.Get(ctx, typeNamespacedName, checkResource)
 
 				g.Expect(err).NotTo(HaveOccurred())
@@ -165,12 +165,12 @@ var _ = Describe("MicroFrontEndApp Controller", func() {
 		})
 
 		It("should not become ready if it has a unscoped package reference", func() {
-			resource := &kdexv1alpha1.MicroFrontEndApp{
+			resource := &kdexv1alpha1.KDexApp{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
 					Namespace: namespace,
 				},
-				Spec: kdexv1alpha1.MicroFrontEndAppSpec{
+				Spec: kdexv1alpha1.KDexAppSpec{
 					CustomElements: []kdexv1alpha1.CustomElement{
 						{
 							Description: "",
@@ -192,7 +192,7 @@ var _ = Describe("MicroFrontEndApp Controller", func() {
 			}
 
 			check := func(g Gomega) {
-				checkResource := &kdexv1alpha1.MicroFrontEndApp{}
+				checkResource := &kdexv1alpha1.KDexApp{}
 				err := k8sClient.Get(ctx, typeNamespacedName, checkResource)
 				g.Expect(err).NotTo(HaveOccurred())
 
@@ -223,12 +223,12 @@ var _ = Describe("MicroFrontEndApp Controller", func() {
 		})
 
 		It("it must not become ready if it has a valid package reference but the package is missing", func() {
-			resource := &kdexv1alpha1.MicroFrontEndApp{
+			resource := &kdexv1alpha1.KDexApp{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
 					Namespace: namespace,
 				},
-				Spec: kdexv1alpha1.MicroFrontEndAppSpec{
+				Spec: kdexv1alpha1.KDexAppSpec{
 					CustomElements: []kdexv1alpha1.CustomElement{
 						{
 							Description: "",
@@ -250,7 +250,7 @@ var _ = Describe("MicroFrontEndApp Controller", func() {
 			}
 
 			check := func(g Gomega) {
-				checkResource := &kdexv1alpha1.MicroFrontEndApp{}
+				checkResource := &kdexv1alpha1.KDexApp{}
 				err := k8sClient.Get(ctx, typeNamespacedName, checkResource)
 
 				g.Expect(err).NotTo(HaveOccurred())
@@ -282,12 +282,12 @@ var _ = Describe("MicroFrontEndApp Controller", func() {
 		})
 
 		It("should not become ready when referenced secret is not found", func() {
-			resource := &kdexv1alpha1.MicroFrontEndApp{
+			resource := &kdexv1alpha1.KDexApp{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
 					Namespace: namespace,
 				},
-				Spec: kdexv1alpha1.MicroFrontEndAppSpec{
+				Spec: kdexv1alpha1.KDexAppSpec{
 					CustomElements: []kdexv1alpha1.CustomElement{
 						{
 							Description: "",
@@ -312,7 +312,7 @@ var _ = Describe("MicroFrontEndApp Controller", func() {
 			}
 
 			check := func(g Gomega) {
-				checkResource := &kdexv1alpha1.MicroFrontEndApp{}
+				checkResource := &kdexv1alpha1.KDexApp{}
 				err := k8sClient.Get(ctx, typeNamespacedName, checkResource)
 				g.Expect(err).NotTo(HaveOccurred())
 
@@ -343,12 +343,12 @@ var _ = Describe("MicroFrontEndApp Controller", func() {
 		})
 
 		It("should become ready when referenced secret is found", func() {
-			resource := &kdexv1alpha1.MicroFrontEndApp{
+			resource := &kdexv1alpha1.KDexApp{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
 					Namespace: namespace,
 				},
-				Spec: kdexv1alpha1.MicroFrontEndAppSpec{
+				Spec: kdexv1alpha1.KDexAppSpec{
 					CustomElements: []kdexv1alpha1.CustomElement{
 						{
 							Description: "",
@@ -373,7 +373,7 @@ var _ = Describe("MicroFrontEndApp Controller", func() {
 			}
 
 			check := func(g Gomega) {
-				checkResource := &kdexv1alpha1.MicroFrontEndApp{}
+				checkResource := &kdexv1alpha1.KDexApp{}
 				err := k8sClient.Get(ctx, typeNamespacedName, checkResource)
 				g.Expect(err).NotTo(HaveOccurred())
 
@@ -419,7 +419,7 @@ var _ = Describe("MicroFrontEndApp Controller", func() {
 			Expect(k8sClient.Create(ctx, secret)).To(Succeed())
 
 			check = func(g Gomega) {
-				checkResource := &kdexv1alpha1.MicroFrontEndApp{}
+				checkResource := &kdexv1alpha1.KDexApp{}
 				err := k8sClient.Get(ctx, typeNamespacedName, checkResource)
 				g.Expect(err).NotTo(HaveOccurred())
 

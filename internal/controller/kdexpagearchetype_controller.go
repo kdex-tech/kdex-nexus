@@ -31,25 +31,25 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-// MicroFrontEndPageArchetypeReconciler reconciles a MicroFrontEndPageArchetype object
-type MicroFrontEndPageArchetypeReconciler struct {
+// KDexPageArchetypeReconciler reconciles a KDexPageArchetype object
+type KDexPageArchetypeReconciler struct {
 	client.Client
 	Scheme       *runtime.Scheme
 	RequeueDelay time.Duration
 }
 
-// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendpagefooters,verbs=get;list;watch
-// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendpageheaders,verbs=get;list;watch
-// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendpagenavigations,verbs=get;list;watch
-// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendpagearchetypes,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendpagearchetypes/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendpagearchetypes/finalizers,verbs=update
-// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendstylesheets,verbs=get;list;watch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagefooters,verbs=get;list;watch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpageheaders,verbs=get;list;watch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagenavigations,verbs=get;list;watch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagearchetypes,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagearchetypes/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagearchetypes/finalizers,verbs=update
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexstylesheets,verbs=get;list;watch
 
-func (r *MicroFrontEndPageArchetypeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *KDexPageArchetypeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx)
 
-	var pageArchetype kdexv1alpha1.MicroFrontEndPageArchetype
+	var pageArchetype kdexv1alpha1.KDexPageArchetype
 	if err := r.Get(ctx, req.NamespacedName, &pageArchetype); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -93,7 +93,7 @@ func (r *MicroFrontEndPageArchetypeReconciler) Reconcile(ctx context.Context, re
 		return r1, err
 	}
 
-	log.Info("reconciled MicroFrontEndPageArchetype")
+	log.Info("reconciled KDexPageArchetype")
 
 	apimeta.SetStatusCondition(
 		&pageArchetype.Status.Conditions,
@@ -112,21 +112,21 @@ func (r *MicroFrontEndPageArchetypeReconciler) Reconcile(ctx context.Context, re
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *MicroFrontEndPageArchetypeReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *KDexPageArchetypeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&kdexv1alpha1.MicroFrontEndPageArchetype{}).
+		For(&kdexv1alpha1.KDexPageArchetype{}).
 		Watches(
-			&kdexv1alpha1.MicroFrontEndPageFooter{},
+			&kdexv1alpha1.KDexPageFooter{},
 			handler.EnqueueRequestsFromMapFunc(r.findPageArchetypesForPageFooter)).
 		Watches(
-			&kdexv1alpha1.MicroFrontEndPageHeader{},
+			&kdexv1alpha1.KDexPageHeader{},
 			handler.EnqueueRequestsFromMapFunc(r.findPageArchetypesForPageHeader)).
 		Watches(
-			&kdexv1alpha1.MicroFrontEndPageNavigation{},
+			&kdexv1alpha1.KDexPageNavigation{},
 			handler.EnqueueRequestsFromMapFunc(r.findPageArchetypesForPageNavigations)).
 		Watches(
-			&kdexv1alpha1.MicroFrontEndStylesheet{},
+			&kdexv1alpha1.KDexStylesheet{},
 			handler.EnqueueRequestsFromMapFunc(r.findPageArchetypesForStylesheet)).
-		Named("microfrontendpagearchetype").
+		Named("kdexpagearchetype").
 		Complete(r)
 }

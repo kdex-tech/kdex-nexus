@@ -33,28 +33,28 @@ import (
 
 const pageBindingFinalizerName = "kdex.dev/kdex-nexus-page-binding-finalizer"
 
-// MicroFrontEndPageBindingReconciler reconciles a MicroFrontEndPageBinding object
-type MicroFrontEndPageBindingReconciler struct {
+// KDexPageBindingReconciler reconciles a KDexPageBinding object
+type KDexPageBindingReconciler struct {
 	client.Client
 	Scheme       *runtime.Scheme
 	RequeueDelay time.Duration
 }
 
-// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendapps,verbs=get;list;watch
-// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendhosts,verbs=get;list;watch
-// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendpagearchetypes,verbs=get;list;watch
-// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendpagebindings,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendpagebindings/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendpagebindings/finalizers,verbs=update
-// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendpagefooters,verbs=get;list;watch
-// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendpageheaders,verbs=get;list;watch
-// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendpagenavigations,verbs=get;list;watch
-// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendrenderpages,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexapps,verbs=get;list;watch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexhosts,verbs=get;list;watch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagearchetypes,verbs=get;list;watch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagebindings,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagebindings/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagebindings/finalizers,verbs=update
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagefooters,verbs=get;list;watch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpageheaders,verbs=get;list;watch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagenavigations,verbs=get;list;watch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexrenderpages,verbs=get;list;watch;create;update;patch;delete
 
-func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *KDexPageBindingReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx)
 
-	var pageBinding kdexv1alpha1.MicroFrontEndPageBinding
+	var pageBinding kdexv1alpha1.KDexPageBinding
 	if err := r.Get(ctx, req.NamespacedName, &pageBinding); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -70,7 +70,7 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 		}
 	} else {
 		if controllerutil.ContainsFinalizer(&pageBinding, pageBindingFinalizerName) {
-			renderPage := &kdexv1alpha1.MicroFrontEndRenderPage{
+			renderPage := &kdexv1alpha1.KDexRenderPage{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      pageBinding.Name,
 					Namespace: pageBinding.Namespace,
@@ -140,7 +140,7 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 		return r1, err
 	}
 
-	renderPage := &kdexv1alpha1.MicroFrontEndRenderPage{
+	renderPage := &kdexv1alpha1.KDexRenderPage{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      pageBinding.Name,
 			Namespace: pageBinding.Namespace,
@@ -152,7 +152,7 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 		r.Client,
 		renderPage,
 		func() error {
-			renderPage.Spec = kdexv1alpha1.MicroFrontEndRenderPageSpec{
+			renderPage.Spec = kdexv1alpha1.KDexRenderPageSpec{
 				HostRef:         pageBinding.Spec.HostRef,
 				NavigationHints: pageBinding.Spec.NavigationHints,
 				PageComponents: kdexv1alpha1.PageComponents{
@@ -170,11 +170,11 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 			return ctrl.SetControllerReference(&pageBinding, renderPage, r.Scheme)
 		},
 	); err != nil {
-		log.Error(err, "unable to create or update MicroFrontEndRenderPage")
+		log.Error(err, "unable to create or update KDexRenderPage")
 		return ctrl.Result{}, err
 	}
 
-	log.Info("reconciled MicroFrontEndPageBinding")
+	log.Info("reconciled KDexPageBinding")
 
 	apimeta.SetStatusCondition(
 		&pageBinding.Status.Conditions,
@@ -193,31 +193,31 @@ func (r *MicroFrontEndPageBindingReconciler) Reconcile(ctx context.Context, req 
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *MicroFrontEndPageBindingReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *KDexPageBindingReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&kdexv1alpha1.MicroFrontEndPageBinding{}).
-		Owns(&kdexv1alpha1.MicroFrontEndRenderPage{}).
+		For(&kdexv1alpha1.KDexPageBinding{}).
+		Owns(&kdexv1alpha1.KDexRenderPage{}).
 		Watches(
-			&kdexv1alpha1.MicroFrontEndApp{},
+			&kdexv1alpha1.KDexApp{},
 			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForApp)).
 		Watches(
-			&kdexv1alpha1.MicroFrontEndHost{},
+			&kdexv1alpha1.KDexHost{},
 			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForHost)).
 		Watches(
-			&kdexv1alpha1.MicroFrontEndPageArchetype{},
+			&kdexv1alpha1.KDexPageArchetype{},
 			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForPageArchetype)).
 		Watches(
-			&kdexv1alpha1.MicroFrontEndPageBinding{},
+			&kdexv1alpha1.KDexPageBinding{},
 			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForPageBindings)).
 		Watches(
-			&kdexv1alpha1.MicroFrontEndPageFooter{},
+			&kdexv1alpha1.KDexPageFooter{},
 			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForPageFooter)).
 		Watches(
-			&kdexv1alpha1.MicroFrontEndPageHeader{},
+			&kdexv1alpha1.KDexPageHeader{},
 			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForPageHeader)).
 		Watches(
-			&kdexv1alpha1.MicroFrontEndPageNavigation{},
+			&kdexv1alpha1.KDexPageNavigation{},
 			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForPageNavigations)).
-		Named("microfrontendpagebinding").
+		Named("kdexpagebinding").
 		Complete(r)
 }

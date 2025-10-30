@@ -19,7 +19,7 @@ import (
 func resolveContents(
 	ctx context.Context,
 	c client.Client,
-	pageBinding *kdexv1alpha1.MicroFrontEndPageBinding,
+	pageBinding *kdexv1alpha1.KDexPageBinding,
 	requeueDelay time.Duration,
 ) (map[string]string, ctrl.Result, error) {
 	contents := make(map[string]string)
@@ -32,7 +32,7 @@ func resolveContents(
 			continue
 		}
 
-		var app kdexv1alpha1.MicroFrontEndApp
+		var app kdexv1alpha1.KDexApp
 		appName := types.NamespacedName{
 			Name:      appRef.Name,
 			Namespace: pageBinding.Namespace,
@@ -45,7 +45,7 @@ func resolveContents(
 						kdexv1alpha1.ConditionTypeReady,
 						metav1.ConditionFalse,
 						kdexv1alpha1.ConditionReasonReconcileError,
-						fmt.Sprintf("referenced MicroFrontEndApp %s not found", appRef.Name),
+						fmt.Sprintf("referenced KDexApp %s not found", appRef.Name),
 					),
 				)
 				if err := c.Status().Update(ctx, pageBinding); err != nil {
@@ -75,8 +75,8 @@ func resolveHost(
 	objectConditions *[]metav1.Condition,
 	hostRef *v1.LocalObjectReference,
 	requeueDelay time.Duration,
-) (*kdexv1alpha1.MicroFrontEndHost, bool, ctrl.Result, error) {
-	var host kdexv1alpha1.MicroFrontEndHost
+) (*kdexv1alpha1.KDexHost, bool, ctrl.Result, error) {
+	var host kdexv1alpha1.KDexHost
 	hostName := types.NamespacedName{
 		Name:      hostRef.Name,
 		Namespace: object.GetNamespace(),
@@ -89,7 +89,7 @@ func resolveHost(
 					kdexv1alpha1.ConditionTypeReady,
 					metav1.ConditionFalse,
 					kdexv1alpha1.ConditionReasonReconcileError,
-					fmt.Sprintf("referenced MicroFrontEndHost %s not found", hostName.Name),
+					fmt.Sprintf("referenced KDexHost %s not found", hostName.Name),
 				),
 			)
 			if err := c.Status().Update(ctx, object); err != nil {
@@ -112,10 +112,10 @@ func resolveHost(
 func resolvePageArchetype(
 	ctx context.Context,
 	c client.Client,
-	pageBinding *kdexv1alpha1.MicroFrontEndPageBinding,
+	pageBinding *kdexv1alpha1.KDexPageBinding,
 	requeueDelay time.Duration,
-) (*kdexv1alpha1.MicroFrontEndPageArchetype, bool, ctrl.Result, error) {
-	var pageArchetype kdexv1alpha1.MicroFrontEndPageArchetype
+) (*kdexv1alpha1.KDexPageArchetype, bool, ctrl.Result, error) {
+	var pageArchetype kdexv1alpha1.KDexPageArchetype
 	pageArchetypeName := types.NamespacedName{
 		Name:      pageBinding.Spec.PageArchetypeRef.Name,
 		Namespace: pageBinding.Namespace,
@@ -128,7 +128,7 @@ func resolvePageArchetype(
 					kdexv1alpha1.ConditionTypeReady,
 					metav1.ConditionFalse,
 					kdexv1alpha1.ConditionReasonReconcileError,
-					fmt.Sprintf("referenced MicroFrontEndPageArchetype %s not found", pageBinding.Spec.PageArchetypeRef.Name),
+					fmt.Sprintf("referenced KDexPageArchetype %s not found", pageBinding.Spec.PageArchetypeRef.Name),
 				),
 			)
 			if err := c.Status().Update(ctx, pageBinding); err != nil {
@@ -155,8 +155,8 @@ func resolvePageFooter(
 	objectConditions *[]metav1.Condition,
 	footerRef *v1.LocalObjectReference,
 	requeueDelay time.Duration,
-) (*kdexv1alpha1.MicroFrontEndPageFooter, bool, ctrl.Result, error) {
-	var footer kdexv1alpha1.MicroFrontEndPageFooter
+) (*kdexv1alpha1.KDexPageFooter, bool, ctrl.Result, error) {
+	var footer kdexv1alpha1.KDexPageFooter
 	if footerRef != nil {
 		footerName := types.NamespacedName{
 			Name:      footerRef.Name,
@@ -171,7 +171,7 @@ func resolvePageFooter(
 						kdexv1alpha1.ConditionTypeReady,
 						metav1.ConditionFalse,
 						kdexv1alpha1.ConditionReasonReconcileError,
-						fmt.Sprintf("referenced MicroFrontEndPageFooter %s not found", footerRef.Name),
+						fmt.Sprintf("referenced KDexPageFooter %s not found", footerRef.Name),
 					),
 				)
 				if err := c.Status().Update(ctx, object); err != nil {
@@ -199,8 +199,8 @@ func resolvePageHeader(
 	objectConditions *[]metav1.Condition,
 	headerRef *v1.LocalObjectReference,
 	requeueDelay time.Duration,
-) (*kdexv1alpha1.MicroFrontEndPageHeader, bool, ctrl.Result, error) {
-	var header kdexv1alpha1.MicroFrontEndPageHeader
+) (*kdexv1alpha1.KDexPageHeader, bool, ctrl.Result, error) {
+	var header kdexv1alpha1.KDexPageHeader
 	if headerRef != nil {
 		headerName := types.NamespacedName{
 			Name:      headerRef.Name,
@@ -215,7 +215,7 @@ func resolvePageHeader(
 						kdexv1alpha1.ConditionTypeReady,
 						metav1.ConditionFalse,
 						kdexv1alpha1.ConditionReasonReconcileError,
-						fmt.Sprintf("referenced MicroFrontEndPageHeader %s not found", headerRef.Name),
+						fmt.Sprintf("referenced KDexPageHeader %s not found", headerRef.Name),
 					),
 				)
 				if err := c.Status().Update(ctx, object); err != nil {
@@ -243,8 +243,8 @@ func resolvePageNavigation(
 	objectConditions *[]metav1.Condition,
 	navigationRef *v1.LocalObjectReference,
 	requeueDelay time.Duration,
-) (*kdexv1alpha1.MicroFrontEndPageNavigation, ctrl.Result, error) {
-	var navigation kdexv1alpha1.MicroFrontEndPageNavigation
+) (*kdexv1alpha1.KDexPageNavigation, ctrl.Result, error) {
+	var navigation kdexv1alpha1.KDexPageNavigation
 	navigationName := types.NamespacedName{
 		Name:      navigationRef.Name,
 		Namespace: object.GetNamespace(),
@@ -257,7 +257,7 @@ func resolvePageNavigation(
 					kdexv1alpha1.ConditionTypeReady,
 					metav1.ConditionFalse,
 					kdexv1alpha1.ConditionReasonReconcileError,
-					fmt.Sprintf("referenced MicroFrontEndPageNavigation %s not found", navigationRef.Name),
+					fmt.Sprintf("referenced KDexPageNavigation %s not found", navigationRef.Name),
 				),
 			)
 			if err := c.Status().Update(ctx, object); err != nil {
@@ -330,7 +330,7 @@ func resolvePageBinding(
 	requeueDelay time.Duration,
 ) (*v1.LocalObjectReference, bool, ctrl.Result, error) {
 	if pageBindingRef != nil {
-		var pageBinding kdexv1alpha1.MicroFrontEndPageBinding
+		var pageBinding kdexv1alpha1.KDexPageBinding
 		pageBindingName := types.NamespacedName{
 			Name:      pageBindingRef.Name,
 			Namespace: object.GetNamespace(),
@@ -343,7 +343,7 @@ func resolvePageBinding(
 						kdexv1alpha1.ConditionTypeReady,
 						metav1.ConditionFalse,
 						kdexv1alpha1.ConditionReasonReconcileError,
-						fmt.Sprintf("referenced MicroFrontEndPageBinding %s not found", pageBindingName.Name),
+						fmt.Sprintf("referenced KDexPageBinding %s not found", pageBindingName.Name),
 					),
 				)
 				if err := c.Status().Update(ctx, object); err != nil {
@@ -371,8 +371,8 @@ func resolveStylesheet(
 	objectConditions *[]metav1.Condition,
 	stylesheetRef *v1.LocalObjectReference,
 	requeueDelay time.Duration,
-) (*kdexv1alpha1.MicroFrontEndStylesheet, bool, ctrl.Result, error) {
-	var stylesheet kdexv1alpha1.MicroFrontEndStylesheet
+) (*kdexv1alpha1.KDexStylesheet, bool, ctrl.Result, error) {
+	var stylesheet kdexv1alpha1.KDexStylesheet
 	if stylesheetRef != nil {
 		stylesheetName := types.NamespacedName{
 			Name:      stylesheetRef.Name,
@@ -386,7 +386,7 @@ func resolveStylesheet(
 						kdexv1alpha1.ConditionTypeReady,
 						metav1.ConditionFalse,
 						kdexv1alpha1.ConditionReasonReconcileError,
-						fmt.Sprintf("referenced MicroFrontEndStylesheet %s not found", stylesheetName.Name),
+						fmt.Sprintf("referenced KDexStylesheet %s not found", stylesheetName.Name),
 					),
 				)
 				if err := c.Status().Update(ctx, object); err != nil {

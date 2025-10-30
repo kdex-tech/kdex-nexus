@@ -16,9 +16,9 @@ import (
 func addOrUpdatePageArchetype(
 	ctx context.Context,
 	k8sClient client.Client,
-	pageArchetype kdexv1alpha1.MicroFrontEndPageArchetype,
+	pageArchetype kdexv1alpha1.KDexPageArchetype,
 ) {
-	list := &kdexv1alpha1.MicroFrontEndPageArchetypeList{}
+	list := &kdexv1alpha1.KDexPageArchetypeList{}
 	err := k8sClient.List(ctx, list, &client.ListOptions{
 		Namespace:     pageArchetype.Namespace,
 		FieldSelector: fields.OneTermEqualSelector("metadata.name", pageArchetype.Name),
@@ -36,9 +36,9 @@ func addOrUpdatePageArchetype(
 func addOrUpdatePageHeader(
 	ctx context.Context,
 	k8sClient client.Client,
-	pageHeader kdexv1alpha1.MicroFrontEndPageHeader,
+	pageHeader kdexv1alpha1.KDexPageHeader,
 ) {
-	list := &kdexv1alpha1.MicroFrontEndPageHeaderList{}
+	list := &kdexv1alpha1.KDexPageHeaderList{}
 	err := k8sClient.List(ctx, list, &client.ListOptions{
 		Namespace:     pageHeader.Namespace,
 		FieldSelector: fields.OneTermEqualSelector("metadata.name", pageHeader.Name),
@@ -56,9 +56,9 @@ func addOrUpdatePageHeader(
 func addOrUpdatePageFooter(
 	ctx context.Context,
 	k8sClient client.Client,
-	pageFooter kdexv1alpha1.MicroFrontEndPageFooter,
+	pageFooter kdexv1alpha1.KDexPageFooter,
 ) {
-	list := &kdexv1alpha1.MicroFrontEndPageFooterList{}
+	list := &kdexv1alpha1.KDexPageFooterList{}
 	err := k8sClient.List(ctx, list, &client.ListOptions{
 		Namespace:     pageFooter.Namespace,
 		FieldSelector: fields.OneTermEqualSelector("metadata.name", pageFooter.Name),
@@ -76,9 +76,9 @@ func addOrUpdatePageFooter(
 func addOrUpdateHost(
 	ctx context.Context,
 	k8sClient client.Client,
-	host kdexv1alpha1.MicroFrontEndHost,
+	host kdexv1alpha1.KDexHost,
 ) {
-	list := &kdexv1alpha1.MicroFrontEndHostList{}
+	list := &kdexv1alpha1.KDexHostList{}
 	err := k8sClient.List(ctx, list, &client.ListOptions{
 		Namespace:     host.Namespace,
 		FieldSelector: fields.OneTermEqualSelector("metadata.name", host.Name),
@@ -96,9 +96,9 @@ func addOrUpdateHost(
 func addOrUpdatePageNavigation(
 	ctx context.Context,
 	k8sClient client.Client,
-	pageNavigation kdexv1alpha1.MicroFrontEndPageNavigation,
+	pageNavigation kdexv1alpha1.KDexPageNavigation,
 ) {
-	list := &kdexv1alpha1.MicroFrontEndPageNavigationList{}
+	list := &kdexv1alpha1.KDexPageNavigationList{}
 	err := k8sClient.List(ctx, list, &client.ListOptions{
 		Namespace:     pageNavigation.Namespace,
 		FieldSelector: fields.OneTermEqualSelector("metadata.name", pageNavigation.Name),
@@ -116,9 +116,9 @@ func addOrUpdatePageNavigation(
 func addOrUpdateStylesheet(
 	ctx context.Context,
 	k8sClient client.Client,
-	stylesheet kdexv1alpha1.MicroFrontEndStylesheet,
+	stylesheet kdexv1alpha1.KDexStylesheet,
 ) {
-	list := &kdexv1alpha1.MicroFrontEndStylesheetList{}
+	list := &kdexv1alpha1.KDexStylesheetList{}
 	err := k8sClient.List(ctx, list, &client.ListOptions{
 		Namespace:     stylesheet.Namespace,
 		FieldSelector: fields.OneTermEqualSelector("metadata.name", stylesheet.Name),

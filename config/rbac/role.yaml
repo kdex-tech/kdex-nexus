@@ -15,14 +15,14 @@ rules:
 - apiGroups:
   - kdex.dev
   resources:
-  - microfrontendapps
-  - microfrontendpagearchetypes
-  - microfrontendpagebindings
-  - microfrontendpagefooters
-  - microfrontendpageheaders
-  - microfrontendpagenavigations
-  - microfrontendrenderpages
-  - microfrontendstylesheets
+  - kdexapps
+  - kdexpagearchetypes
+  - kdexpagebindings
+  - kdexpagefooters
+  - kdexpageheaders
+  - kdexpagenavigations
+  - kdexrenderpages
+  - kdexstylesheets
   verbs:
   - create
   - delete
@@ -34,25 +34,25 @@ rules:
 - apiGroups:
   - kdex.dev
   resources:
-  - microfrontendapps/finalizers
-  - microfrontendpagearchetypes/finalizers
-  - microfrontendpagebindings/finalizers
-  - microfrontendpagefooters/finalizers
-  - microfrontendpageheaders/finalizers
-  - microfrontendpagenavigations/finalizers
-  - microfrontendstylesheets/finalizers
+  - kdexapps/finalizers
+  - kdexpagearchetypes/finalizers
+  - kdexpagebindings/finalizers
+  - kdexpagefooters/finalizers
+  - kdexpageheaders/finalizers
+  - kdexpagenavigations/finalizers
+  - kdexstylesheets/finalizers
   verbs:
   - update
 - apiGroups:
   - kdex.dev
   resources:
-  - microfrontendapps/status
-  - microfrontendpagearchetypes/status
-  - microfrontendpagebindings/status
-  - microfrontendpagefooters/status
-  - microfrontendpageheaders/status
-  - microfrontendpagenavigations/status
-  - microfrontendstylesheets/status
+  - kdexapps/status
+  - kdexpagearchetypes/status
+  - kdexpagebindings/status
+  - kdexpagefooters/status
+  - kdexpageheaders/status
+  - kdexpagenavigations/status
+  - kdexstylesheets/status
   verbs:
   - get
   - patch
@@ -60,7 +60,7 @@ rules:
 - apiGroups:
   - kdex.dev
   resources:
-  - microfrontendhosts
+  - kdexhosts
   verbs:
   - get
   - list

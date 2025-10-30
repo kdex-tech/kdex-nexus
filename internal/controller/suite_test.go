@@ -64,7 +64,7 @@ type MockHostReconciler struct {
 }
 
 func (r *MockHostReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	var host kdexv1alpha1.MicroFrontEndHost
+	var host kdexv1alpha1.KDexHost
 	if err := r.Get(ctx, req.NamespacedName, &host); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -87,7 +87,7 @@ func (r *MockHostReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 func (r *MockHostReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&kdexv1alpha1.MicroFrontEndHost{}).
+		For(&kdexv1alpha1.KDexHost{}).
 		Named("mockhostreconciler").
 		Complete(r)
 }
@@ -173,7 +173,7 @@ var _ = BeforeSuite(func() {
 	err = mockHostReconciler.SetupWithManager(k8sManager)
 	Expect(err).NotTo(HaveOccurred())
 
-	pageReconciler := &MicroFrontEndAppReconciler{
+	pageReconciler := &KDexAppReconciler{
 		Client: k8sManager.GetClient(),
 		RegistryFactory: func(
 			secret *corev1.Secret,
@@ -187,7 +187,7 @@ var _ = BeforeSuite(func() {
 	err = pageReconciler.SetupWithManager(k8sManager)
 	Expect(err).NotTo(HaveOccurred())
 
-	pageArchetypeReconciler := &MicroFrontEndPageArchetypeReconciler{
+	pageArchetypeReconciler := &KDexPageArchetypeReconciler{
 		Client:       k8sClient,
 		Scheme:       k8sClient.Scheme(),
 		RequeueDelay: 0,
@@ -195,7 +195,7 @@ var _ = BeforeSuite(func() {
 	err = pageArchetypeReconciler.SetupWithManager(k8sManager)
 	Expect(err).NotTo(HaveOccurred())
 
-	pageBindingReconciler := &MicroFrontEndPageBindingReconciler{
+	pageBindingReconciler := &KDexPageBindingReconciler{
 		Client:       k8sClient,
 		Scheme:       k8sClient.Scheme(),
 		RequeueDelay: 0,
@@ -203,28 +203,28 @@ var _ = BeforeSuite(func() {
 	err = pageBindingReconciler.SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 
-	pageHeaderReconciler := &MicroFrontEndPageHeaderReconciler{
+	pageHeaderReconciler := &KDexPageHeaderReconciler{
 		Client: k8sClient,
 		Scheme: k8sClient.Scheme(),
 	}
 	err = pageHeaderReconciler.SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 
-	pageFooterReconciler := &MicroFrontEndPageFooterReconciler{
+	pageFooterReconciler := &KDexPageFooterReconciler{
 		Client: k8sClient,
 		Scheme: k8sClient.Scheme(),
 	}
 	err = pageFooterReconciler.SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 
-	pageNavigationReconciler := &MicroFrontEndPageNavigationReconciler{
+	pageNavigationReconciler := &KDexPageNavigationReconciler{
 		Client: k8sClient,
 		Scheme: k8sClient.Scheme(),
 	}
 	err = pageNavigationReconciler.SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 
-	stylesheetReconciler := &MicroFrontEndStylesheetReconciler{
+	stylesheetReconciler := &KDexStylesheetReconciler{
 		Client: k8sClient,
 		Scheme: k8sClient.Scheme(),
 	}

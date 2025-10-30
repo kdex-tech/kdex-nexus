@@ -22,36 +22,37 @@ import (
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
-	"kdex.dev/crds/render"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+
+	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
+	"kdex.dev/crds/render"
 )
 
-// MicroFrontEndPageNavigationReconciler reconciles a MicroFrontEndPageNavigation object
-type MicroFrontEndPageNavigationReconciler struct {
+// KDexPageHeaderReconciler reconciles a KDexPageHeader object
+type KDexPageHeaderReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendpagenavigations,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendpagenavigations/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendpagenavigations/finalizers,verbs=update
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpageheaders,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpageheaders/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpageheaders/finalizers,verbs=update
 
-func (r *MicroFrontEndPageNavigationReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *KDexPageHeaderReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx)
 
-	var pageNavigation kdexv1alpha1.MicroFrontEndPageNavigation
-	if err := r.Get(ctx, req.NamespacedName, &pageNavigation); err != nil {
+	var pageHeader kdexv1alpha1.KDexPageHeader
+	if err := r.Get(ctx, req.NamespacedName, &pageHeader); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
 	if err := render.ValidateContent(
-		pageNavigation.Name, pageNavigation.Spec.Content,
+		pageHeader.Name, pageHeader.Spec.Content,
 	); err != nil {
 		apimeta.SetStatusCondition(
-			&pageNavigation.Status.Conditions,
+			&pageHeader.Status.Conditions,
 			*kdexv1alpha1.NewCondition(
 				kdexv1alpha1.ConditionTypeReady,
 				metav1.ConditionFalse,
@@ -59,17 +60,17 @@ func (r *MicroFrontEndPageNavigationReconciler) Reconcile(ctx context.Context, r
 				err.Error(),
 			),
 		)
-		if err := r.Status().Update(ctx, &pageNavigation); err != nil {
+		if err := r.Status().Update(ctx, &pageHeader); err != nil {
 			return ctrl.Result{}, err
 		}
 
 		return ctrl.Result{}, err
 	}
 
-	log.Info("reconciled MicroFrontEndPageNavigation")
+	log.Info("reconciled KDexPageHeader")
 
 	apimeta.SetStatusCondition(
-		&pageNavigation.Status.Conditions,
+		&pageHeader.Status.Conditions,
 		*kdexv1alpha1.NewCondition(
 			kdexv1alpha1.ConditionTypeReady,
 			metav1.ConditionTrue,
@@ -77,7 +78,7 @@ func (r *MicroFrontEndPageNavigationReconciler) Reconcile(ctx context.Context, r
 			"content template is valid",
 		),
 	)
-	if err := r.Status().Update(ctx, &pageNavigation); err != nil {
+	if err := r.Status().Update(ctx, &pageHeader); err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -85,9 +86,9 @@ func (r *MicroFrontEndPageNavigationReconciler) Reconcile(ctx context.Context, r
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *MicroFrontEndPageNavigationReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *KDexPageHeaderReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&kdexv1alpha1.MicroFrontEndPageNavigation{}).
-		Named("microfrontendpagenavigation").
+		For(&kdexv1alpha1.KDexPageHeader{}).
+		Named("kdexpageheader").
 		Complete(r)
 }

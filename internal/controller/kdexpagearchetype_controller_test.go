@@ -29,7 +29,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
+var _ = Describe("KDexPageArchetype Controller", Ordered, func() {
 	Context("When reconciling a resource", func() {
 		const namespace = "default"
 		const resourceName = "test-resource"
@@ -38,25 +38,25 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 
 		AfterEach(func() {
 			By("Cleanup all the test resource instances")
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndPageArchetype{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageArchetype{}, client.InNamespace(namespace))).To(Succeed())
 
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndApp{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndHost{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndPageBinding{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndPageFooter{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndPageHeader{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndPageNavigation{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndStylesheet{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndTranslation{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexApp{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexHost{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageBinding{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageFooter{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageHeader{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageNavigation{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexStylesheet{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexTranslation{}, client.InNamespace(namespace))).To(Succeed())
 		})
 
 		It("with invalid content will not reconcile the resource", func() {
-			resource := &kdexv1alpha1.MicroFrontEndPageArchetype{
+			resource := &kdexv1alpha1.KDexPageArchetype{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
 					Namespace: namespace,
 				},
-				Spec: kdexv1alpha1.MicroFrontEndPageArchetypeSpec{
+				Spec: kdexv1alpha1.KDexPageArchetypeSpec{
 					Content: "<h1>{{ !?$ }}</h1>",
 				},
 			}
@@ -65,7 +65,7 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.MicroFrontEndPageArchetype{}, false)
+				&kdexv1alpha1.KDexPageArchetype{}, false)
 
 			resourceName := types.NamespacedName{
 				Name:      resourceName,
@@ -80,12 +80,12 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 		})
 
 		It("with missing extra navigation reference should not successfully reconcile the resource", func() {
-			resource := &kdexv1alpha1.MicroFrontEndPageArchetype{
+			resource := &kdexv1alpha1.KDexPageArchetype{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
 					Namespace: namespace,
 				},
-				Spec: kdexv1alpha1.MicroFrontEndPageArchetypeSpec{
+				Spec: kdexv1alpha1.KDexPageArchetypeSpec{
 					Content: "<h1>Hello, World!</h1>",
 					ExtraNavigations: map[string]*corev1.LocalObjectReference{
 						"non-existent-navigation": {
@@ -99,15 +99,15 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.MicroFrontEndPageArchetype{}, false)
+				&kdexv1alpha1.KDexPageArchetype{}, false)
 
 			By("but when added should become ready")
-			navigation := &kdexv1alpha1.MicroFrontEndPageNavigation{
+			navigation := &kdexv1alpha1.KDexPageNavigation{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "non-existent-navigation",
 					Namespace: namespace,
 				},
-				Spec: kdexv1alpha1.MicroFrontEndPageNavigationSpec{
+				Spec: kdexv1alpha1.KDexPageNavigationSpec{
 					Content: "<h1>Hello, World!</h1>",
 				},
 			}
@@ -115,16 +115,16 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.MicroFrontEndPageArchetype{}, true)
+				&kdexv1alpha1.KDexPageArchetype{}, true)
 		})
 
 		It("with missing default main navigation reference should not successfully reconcile the resource", func() {
-			resource := &kdexv1alpha1.MicroFrontEndPageArchetype{
+			resource := &kdexv1alpha1.KDexPageArchetype{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
 					Namespace: namespace,
 				},
-				Spec: kdexv1alpha1.MicroFrontEndPageArchetypeSpec{
+				Spec: kdexv1alpha1.KDexPageArchetypeSpec{
 					Content: "<h1>Hello, World!</h1>",
 					DefaultMainNavigationRef: &corev1.LocalObjectReference{
 						Name: "non-existent-main-navigation",
@@ -136,15 +136,15 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.MicroFrontEndPageArchetype{}, false)
+				&kdexv1alpha1.KDexPageArchetype{}, false)
 
 			By("but when added should become ready")
-			navigation := &kdexv1alpha1.MicroFrontEndPageNavigation{
+			navigation := &kdexv1alpha1.KDexPageNavigation{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "non-existent-main-navigation",
 					Namespace: namespace,
 				},
-				Spec: kdexv1alpha1.MicroFrontEndPageNavigationSpec{
+				Spec: kdexv1alpha1.KDexPageNavigationSpec{
 					Content: "<h1>Hello, World!</h1>",
 				},
 			}
@@ -152,16 +152,16 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.MicroFrontEndPageArchetype{}, true)
+				&kdexv1alpha1.KDexPageArchetype{}, true)
 		})
 
 		It("with missing default footer reference should not successfully reconcile the resource", func() {
-			resource := &kdexv1alpha1.MicroFrontEndPageArchetype{
+			resource := &kdexv1alpha1.KDexPageArchetype{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
 					Namespace: namespace,
 				},
-				Spec: kdexv1alpha1.MicroFrontEndPageArchetypeSpec{
+				Spec: kdexv1alpha1.KDexPageArchetypeSpec{
 					Content: "<h1>Hello, World!</h1>",
 					DefaultFooterRef: &corev1.LocalObjectReference{
 						Name: "non-existent-footer",
@@ -173,15 +173,15 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.MicroFrontEndPageArchetype{}, false)
+				&kdexv1alpha1.KDexPageArchetype{}, false)
 
 			By("but when added should become ready")
-			footer := &kdexv1alpha1.MicroFrontEndPageFooter{
+			footer := &kdexv1alpha1.KDexPageFooter{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "non-existent-footer",
 					Namespace: namespace,
 				},
-				Spec: kdexv1alpha1.MicroFrontEndPageFooterSpec{
+				Spec: kdexv1alpha1.KDexPageFooterSpec{
 					Content: "<h1>Hello, World!</h1>",
 				},
 			}
@@ -189,16 +189,16 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.MicroFrontEndPageArchetype{}, true)
+				&kdexv1alpha1.KDexPageArchetype{}, true)
 		})
 
 		It("with missing default header reference should not successfully reconcile the resource", func() {
-			resource := &kdexv1alpha1.MicroFrontEndPageArchetype{
+			resource := &kdexv1alpha1.KDexPageArchetype{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
 					Namespace: namespace,
 				},
-				Spec: kdexv1alpha1.MicroFrontEndPageArchetypeSpec{
+				Spec: kdexv1alpha1.KDexPageArchetypeSpec{
 					Content: "<h1>Hello, World!</h1>",
 					DefaultHeaderRef: &corev1.LocalObjectReference{
 						Name: "non-existent-header",
@@ -210,15 +210,15 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.MicroFrontEndPageArchetype{}, false)
+				&kdexv1alpha1.KDexPageArchetype{}, false)
 
 			By("but when added should become ready")
-			header := &kdexv1alpha1.MicroFrontEndPageHeader{
+			header := &kdexv1alpha1.KDexPageHeader{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "non-existent-header",
 					Namespace: namespace,
 				},
-				Spec: kdexv1alpha1.MicroFrontEndPageHeaderSpec{
+				Spec: kdexv1alpha1.KDexPageHeaderSpec{
 					Content: "<h1>Hello, World!</h1>",
 				},
 			}
@@ -226,16 +226,16 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.MicroFrontEndPageArchetype{}, true)
+				&kdexv1alpha1.KDexPageArchetype{}, true)
 		})
 
 		It("with missing stylesheet reference should not successfully reconcile", func() {
-			resource := &kdexv1alpha1.MicroFrontEndPageArchetype{
+			resource := &kdexv1alpha1.KDexPageArchetype{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
 					Namespace: namespace,
 				},
-				Spec: kdexv1alpha1.MicroFrontEndPageArchetypeSpec{
+				Spec: kdexv1alpha1.KDexPageArchetypeSpec{
 					Content: "<h1>Hello, World!</h1>",
 					OverrideStylesheetRef: &corev1.LocalObjectReference{
 						Name: "non-existent-stylesheet",
@@ -247,16 +247,16 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.MicroFrontEndPageArchetype{}, false)
+				&kdexv1alpha1.KDexPageArchetype{}, false)
 
 			addOrUpdateStylesheet(
 				ctx, k8sClient,
-				kdexv1alpha1.MicroFrontEndStylesheet{
+				kdexv1alpha1.KDexStylesheet{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "non-existent-stylesheet",
 						Namespace: namespace,
 					},
-					Spec: kdexv1alpha1.MicroFrontEndStylesheetSpec{
+					Spec: kdexv1alpha1.KDexStylesheetSpec{
 						StyleItems: []kdexv1alpha1.StyleItem{
 							{
 								LinkHref: "style.css",
@@ -271,16 +271,16 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.MicroFrontEndPageArchetype{}, true)
+				&kdexv1alpha1.KDexPageArchetype{}, true)
 		})
 
 		It("with only content should successfully reconcile the resource", func() {
-			resource := &kdexv1alpha1.MicroFrontEndPageArchetype{
+			resource := &kdexv1alpha1.KDexPageArchetype{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
 					Namespace: namespace,
 				},
-				Spec: kdexv1alpha1.MicroFrontEndPageArchetypeSpec{
+				Spec: kdexv1alpha1.KDexPageArchetypeSpec{
 					Content: "<h1>Hello, World!</h1>",
 				},
 			}
@@ -289,7 +289,7 @@ var _ = Describe("MicroFrontEndPageArchetype Controller", Ordered, func() {
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.MicroFrontEndPageArchetype{}, true)
+				&kdexv1alpha1.KDexPageArchetype{}, true)
 		})
 	})
 })

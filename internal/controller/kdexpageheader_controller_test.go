@@ -26,7 +26,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var _ = Describe("MicroFrontEndPageNavigation Controller", func() {
+var _ = Describe("KDexPageHeader Controller", func() {
 	Context("When reconciling a resource", func() {
 		const namespace = "default"
 		const resourceName = "test-resource"
@@ -35,16 +35,16 @@ var _ = Describe("MicroFrontEndPageNavigation Controller", func() {
 
 		AfterEach(func() {
 			By("Cleanup all the test resource instances")
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndPageNavigation{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageHeader{}, client.InNamespace(namespace))).To(Succeed())
 		})
 
 		It("should successfully reconcile the resource", func() {
-			resource := &kdexv1alpha1.MicroFrontEndPageNavigation{
+			resource := &kdexv1alpha1.KDexPageHeader{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
 					Namespace: namespace,
 				},
-				Spec: kdexv1alpha1.MicroFrontEndPageNavigationSpec{
+				Spec: kdexv1alpha1.KDexPageHeaderSpec{
 					Content: "<h1>Hello, World!</h1>",
 				},
 			}
@@ -53,18 +53,18 @@ var _ = Describe("MicroFrontEndPageNavigation Controller", func() {
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.MicroFrontEndPageNavigation{}, true)
+				&kdexv1alpha1.KDexPageHeader{}, true)
 		})
 
 		It("should successfully reconcile after template becomes valid html", func() {
-			addOrUpdatePageNavigation(
+			addOrUpdatePageHeader(
 				ctx, k8sClient,
-				kdexv1alpha1.MicroFrontEndPageNavigation{
+				kdexv1alpha1.KDexPageHeader{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      resourceName,
 						Namespace: namespace,
 					},
-					Spec: kdexv1alpha1.MicroFrontEndPageNavigationSpec{
+					Spec: kdexv1alpha1.KDexPageHeaderSpec{
 						Content: "<h1>Hello, World!</h1",
 					},
 				},
@@ -72,16 +72,16 @@ var _ = Describe("MicroFrontEndPageNavigation Controller", func() {
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.MicroFrontEndPageNavigation{}, false)
+				&kdexv1alpha1.KDexPageHeader{}, false)
 
-			addOrUpdatePageNavigation(
+			addOrUpdatePageHeader(
 				ctx, k8sClient,
-				kdexv1alpha1.MicroFrontEndPageNavigation{
+				kdexv1alpha1.KDexPageHeader{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      resourceName,
 						Namespace: namespace,
 					},
-					Spec: kdexv1alpha1.MicroFrontEndPageNavigationSpec{
+					Spec: kdexv1alpha1.KDexPageHeaderSpec{
 						Content: "<h1>Hello, World!</h1>",
 					},
 				},
@@ -89,7 +89,7 @@ var _ = Describe("MicroFrontEndPageNavigation Controller", func() {
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.MicroFrontEndPageNavigation{}, true)
+				&kdexv1alpha1.KDexPageHeader{}, true)
 		})
 	})
 })

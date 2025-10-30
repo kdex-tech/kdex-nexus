@@ -10,17 +10,17 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-func (r *MicroFrontEndPageArchetypeReconciler) findPageArchetypesForPageFooter(
+func (r *KDexPageArchetypeReconciler) findPageArchetypesForPageFooter(
 	ctx context.Context,
 	pageFooter client.Object,
 ) []reconcile.Request {
 	log := logf.FromContext(ctx)
 
-	var pageArchetypesList kdexv1alpha1.MicroFrontEndPageArchetypeList
+	var pageArchetypesList kdexv1alpha1.KDexPageArchetypeList
 	if err := r.List(ctx, &pageArchetypesList, &client.ListOptions{
 		Namespace: pageFooter.GetNamespace(),
 	}); err != nil {
-		log.Error(err, "unable to list MicroFrontEndPageArchetypes for page footer", "name", pageFooter.GetName())
+		log.Error(err, "unable to list KDexPageArchetypes for page footer", "name", pageFooter.GetName())
 		return []reconcile.Request{}
 	}
 
@@ -41,17 +41,17 @@ func (r *MicroFrontEndPageArchetypeReconciler) findPageArchetypesForPageFooter(
 	return requests
 }
 
-func (r *MicroFrontEndPageArchetypeReconciler) findPageArchetypesForPageHeader(
+func (r *KDexPageArchetypeReconciler) findPageArchetypesForPageHeader(
 	ctx context.Context,
 	pageHeader client.Object,
 ) []reconcile.Request {
 	log := logf.FromContext(ctx)
 
-	var pageArchetypesList kdexv1alpha1.MicroFrontEndPageArchetypeList
+	var pageArchetypesList kdexv1alpha1.KDexPageArchetypeList
 	if err := r.List(ctx, &pageArchetypesList, &client.ListOptions{
 		Namespace: pageHeader.GetNamespace(),
 	}); err != nil {
-		log.Error(err, "unable to list MicroFrontEndPageArchetypes for page header", "name", pageHeader.GetName())
+		log.Error(err, "unable to list KDexPageArchetypes for page header", "name", pageHeader.GetName())
 		return []reconcile.Request{}
 	}
 
@@ -72,17 +72,17 @@ func (r *MicroFrontEndPageArchetypeReconciler) findPageArchetypesForPageHeader(
 	return requests
 }
 
-func (r *MicroFrontEndPageArchetypeReconciler) findPageArchetypesForPageNavigations(
+func (r *KDexPageArchetypeReconciler) findPageArchetypesForPageNavigations(
 	ctx context.Context,
 	pageNavigation client.Object,
 ) []reconcile.Request {
 	log := logf.FromContext(ctx)
 
-	var pageArchetypesList kdexv1alpha1.MicroFrontEndPageArchetypeList
+	var pageArchetypesList kdexv1alpha1.KDexPageArchetypeList
 	if err := r.List(ctx, &pageArchetypesList, &client.ListOptions{
 		Namespace: pageNavigation.GetNamespace(),
 	}); err != nil {
-		log.Error(err, "unable to list MicroFrontEndPageArchetypes for page navigation", "name", pageNavigation.GetName())
+		log.Error(err, "unable to list KDexPageArchetypes for page navigation", "name", pageNavigation.GetName())
 		return []reconcile.Request{}
 	}
 
@@ -115,17 +115,17 @@ func (r *MicroFrontEndPageArchetypeReconciler) findPageArchetypesForPageNavigati
 	return requests
 }
 
-func (r *MicroFrontEndPageArchetypeReconciler) findPageArchetypesForStylesheet(
+func (r *KDexPageArchetypeReconciler) findPageArchetypesForStylesheet(
 	ctx context.Context,
 	stylesheet client.Object,
 ) []reconcile.Request {
 	log := logf.FromContext(ctx)
 
-	var pageArchetypesList kdexv1alpha1.MicroFrontEndPageArchetypeList
+	var pageArchetypesList kdexv1alpha1.KDexPageArchetypeList
 	if err := r.List(ctx, &pageArchetypesList, &client.ListOptions{
 		Namespace: stylesheet.GetNamespace(),
 	}); err != nil {
-		log.Error(err, "unable to list MicroFrontEndPageArchetypes for stylesheet", "name", stylesheet.GetName())
+		log.Error(err, "unable to list KDexPageArchetypes for stylesheet", "name", stylesheet.GetName())
 		return []reconcile.Request{}
 	}
 

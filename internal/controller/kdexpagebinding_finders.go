@@ -10,17 +10,17 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-func (r *MicroFrontEndPageBindingReconciler) findPageBindingsForApp(
+func (r *KDexPageBindingReconciler) findPageBindingsForApp(
 	ctx context.Context,
 	app client.Object,
 ) []reconcile.Request {
 	log := logf.FromContext(ctx)
 
-	var pageBindingsList kdexv1alpha1.MicroFrontEndPageBindingList
+	var pageBindingsList kdexv1alpha1.KDexPageBindingList
 	if err := r.List(ctx, &pageBindingsList, &client.ListOptions{
 		Namespace: app.GetNamespace(),
 	}); err != nil {
-		log.Error(err, "unable to list MicroFrontEndPageBindings for app", "name", app.GetName())
+		log.Error(err, "unable to list KDexPageBindings for app", "name", app.GetName())
 		return []reconcile.Request{}
 	}
 
@@ -43,17 +43,17 @@ func (r *MicroFrontEndPageBindingReconciler) findPageBindingsForApp(
 	return requests
 }
 
-func (r *MicroFrontEndPageBindingReconciler) findPageBindingsForHost(
+func (r *KDexPageBindingReconciler) findPageBindingsForHost(
 	ctx context.Context,
 	host client.Object,
 ) []reconcile.Request {
 	log := logf.FromContext(ctx)
 
-	var pageBindingsList kdexv1alpha1.MicroFrontEndPageBindingList
+	var pageBindingsList kdexv1alpha1.KDexPageBindingList
 	if err := r.List(ctx, &pageBindingsList, &client.ListOptions{
 		Namespace: host.GetNamespace(),
 	}); err != nil {
-		log.Error(err, "unable to list MicroFrontEndPageBindings for host", "name", host.GetName())
+		log.Error(err, "unable to list KDexPageBindings for host", "name", host.GetName())
 		return []reconcile.Request{}
 	}
 
@@ -71,17 +71,17 @@ func (r *MicroFrontEndPageBindingReconciler) findPageBindingsForHost(
 	return requests
 }
 
-func (r *MicroFrontEndPageBindingReconciler) findPageBindingsForPageArchetype(
+func (r *KDexPageBindingReconciler) findPageBindingsForPageArchetype(
 	ctx context.Context,
 	pageArchetype client.Object,
 ) []reconcile.Request {
 	log := logf.FromContext(ctx)
 
-	var pageBindingsList kdexv1alpha1.MicroFrontEndPageBindingList
+	var pageBindingsList kdexv1alpha1.KDexPageBindingList
 	if err := r.List(ctx, &pageBindingsList, &client.ListOptions{
 		Namespace: pageArchetype.GetNamespace(),
 	}); err != nil {
-		log.Error(err, "unable to list MicroFrontEndPageBindings for page archetype", "name", pageArchetype.GetName())
+		log.Error(err, "unable to list KDexPageBindings for page archetype", "name", pageArchetype.GetName())
 		return []reconcile.Request{}
 	}
 
@@ -99,17 +99,17 @@ func (r *MicroFrontEndPageBindingReconciler) findPageBindingsForPageArchetype(
 	return requests
 }
 
-func (r *MicroFrontEndPageBindingReconciler) findPageBindingsForPageBindings(
+func (r *KDexPageBindingReconciler) findPageBindingsForPageBindings(
 	ctx context.Context,
 	parentPageBinding client.Object,
 ) []reconcile.Request {
 	log := logf.FromContext(ctx)
 
-	var pageBindingsList kdexv1alpha1.MicroFrontEndPageBindingList
+	var pageBindingsList kdexv1alpha1.KDexPageBindingList
 	if err := r.List(ctx, &pageBindingsList, &client.ListOptions{
 		Namespace: parentPageBinding.GetNamespace(),
 	}); err != nil {
-		log.Error(err, "unable to list MicroFrontEndPageBindings for page binding", "name", parentPageBinding.GetName())
+		log.Error(err, "unable to list KDexPageBindings for page binding", "name", parentPageBinding.GetName())
 		return []reconcile.Request{}
 	}
 
@@ -130,25 +130,25 @@ func (r *MicroFrontEndPageBindingReconciler) findPageBindingsForPageBindings(
 	return requests
 }
 
-func (r *MicroFrontEndPageBindingReconciler) findPageBindingsForPageFooter(
+func (r *KDexPageBindingReconciler) findPageBindingsForPageFooter(
 	ctx context.Context,
 	pageFooter client.Object,
 ) []reconcile.Request {
 	log := logf.FromContext(ctx)
 
-	var pageBindingsList kdexv1alpha1.MicroFrontEndPageBindingList
+	var pageBindingsList kdexv1alpha1.KDexPageBindingList
 	if err := r.List(ctx, &pageBindingsList, &client.ListOptions{
 		Namespace: pageFooter.GetNamespace(),
 	}); err != nil {
-		log.Error(err, "unable to list MicroFrontEndPageBindings for page footer", "footer", pageFooter.GetName())
+		log.Error(err, "unable to list KDexPageBindings for page footer", "footer", pageFooter.GetName())
 		return []reconcile.Request{}
 	}
 
-	var pageArchetypesList kdexv1alpha1.MicroFrontEndPageArchetypeList
+	var pageArchetypesList kdexv1alpha1.KDexPageArchetypeList
 	if err := r.List(ctx, &pageArchetypesList, &client.ListOptions{
 		Namespace: pageFooter.GetNamespace(),
 	}); err != nil {
-		log.Error(err, "unable to list MicroFrontEndPageArchetypes for page footer", "footer", pageFooter.GetName())
+		log.Error(err, "unable to list KDexPageArchetypes for page footer", "footer", pageFooter.GetName())
 		return []reconcile.Request{}
 	}
 
@@ -189,25 +189,25 @@ func (r *MicroFrontEndPageBindingReconciler) findPageBindingsForPageFooter(
 	return requests
 }
 
-func (r *MicroFrontEndPageBindingReconciler) findPageBindingsForPageHeader(
+func (r *KDexPageBindingReconciler) findPageBindingsForPageHeader(
 	ctx context.Context,
 	pageHeader client.Object,
 ) []reconcile.Request {
 	log := logf.FromContext(ctx)
 
-	var pageBindingsList kdexv1alpha1.MicroFrontEndPageBindingList
+	var pageBindingsList kdexv1alpha1.KDexPageBindingList
 	if err := r.List(ctx, &pageBindingsList, &client.ListOptions{
 		Namespace: pageHeader.GetNamespace(),
 	}); err != nil {
-		log.Error(err, "unable to list MicroFrontEndPageBindings for page header", "name", pageHeader.GetName())
+		log.Error(err, "unable to list KDexPageBindings for page header", "name", pageHeader.GetName())
 		return []reconcile.Request{}
 	}
 
-	var pageArchetypesList kdexv1alpha1.MicroFrontEndPageArchetypeList
+	var pageArchetypesList kdexv1alpha1.KDexPageArchetypeList
 	if err := r.List(ctx, &pageArchetypesList, &client.ListOptions{
 		Namespace: pageHeader.GetNamespace(),
 	}); err != nil {
-		log.Error(err, "unable to list MicroFrontEndPageArchetypes for page header", "name", pageHeader.GetName())
+		log.Error(err, "unable to list KDexPageArchetypes for page header", "name", pageHeader.GetName())
 		return []reconcile.Request{}
 	}
 
@@ -248,25 +248,25 @@ func (r *MicroFrontEndPageBindingReconciler) findPageBindingsForPageHeader(
 	return requests
 }
 
-func (r *MicroFrontEndPageBindingReconciler) findPageBindingsForPageNavigations(
+func (r *KDexPageBindingReconciler) findPageBindingsForPageNavigations(
 	ctx context.Context,
 	pageNavigation client.Object,
 ) []reconcile.Request {
 	log := logf.FromContext(ctx)
 
-	var pageBindingsList kdexv1alpha1.MicroFrontEndPageBindingList
+	var pageBindingsList kdexv1alpha1.KDexPageBindingList
 	if err := r.List(ctx, &pageBindingsList, &client.ListOptions{
 		Namespace: pageNavigation.GetNamespace(),
 	}); err != nil {
-		log.Error(err, "unable to list MicroFrontEndPageBindings for page navigation", "navigation", pageNavigation.GetName())
+		log.Error(err, "unable to list KDexPageBindings for page navigation", "navigation", pageNavigation.GetName())
 		return []reconcile.Request{}
 	}
 
-	var pageArchetypesList kdexv1alpha1.MicroFrontEndPageArchetypeList
+	var pageArchetypesList kdexv1alpha1.KDexPageArchetypeList
 	if err := r.List(ctx, &pageArchetypesList, &client.ListOptions{
 		Namespace: pageNavigation.GetNamespace(),
 	}); err != nil {
-		log.Error(err, "unable to list MicroFrontEndPageArchetypes for page navigation", "navigation", pageNavigation.GetName())
+		log.Error(err, "unable to list KDexPageArchetypes for page navigation", "navigation", pageNavigation.GetName())
 		return []reconcile.Request{}
 	}
 

@@ -29,27 +29,29 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-// MicroFrontEndStylesheetReconciler reconciles a MicroFrontEndStylesheet object
-type MicroFrontEndStylesheetReconciler struct {
+// KDexPageFooterReconciler reconciles a KDexPageFooter object
+type KDexPageFooterReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendstylesheets,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendstylesheets/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=kdex.dev,resources=microfrontendstylesheets/finalizers,verbs=update
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagefooters,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagefooters/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagefooters/finalizers,verbs=update
 
-func (r *MicroFrontEndStylesheetReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *KDexPageFooterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx)
 
-	var stylesheet kdexv1alpha1.MicroFrontEndStylesheet
-	if err := r.Get(ctx, req.NamespacedName, &stylesheet); err != nil {
+	var pageFooter kdexv1alpha1.KDexPageFooter
+	if err := r.Get(ctx, req.NamespacedName, &pageFooter); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	if err := validateItems(stylesheet.Spec.StyleItems); err != nil {
+	if err := render.ValidateContent(
+		pageFooter.Name, pageFooter.Spec.Content,
+	); err != nil {
 		apimeta.SetStatusCondition(
-			&stylesheet.Status.Conditions,
+			&pageFooter.Status.Conditions,
 			*kdexv1alpha1.NewCondition(
 				kdexv1alpha1.ConditionTypeReady,
 				metav1.ConditionFalse,
@@ -57,17 +59,17 @@ func (r *MicroFrontEndStylesheetReconciler) Reconcile(ctx context.Context, req c
 				err.Error(),
 			),
 		)
-		if err := r.Status().Update(ctx, &stylesheet); err != nil {
+		if err := r.Status().Update(ctx, &pageFooter); err != nil {
 			return ctrl.Result{}, err
 		}
 
 		return ctrl.Result{}, err
 	}
 
-	log.Info("reconciled MicroFrontEndStylesheet")
+	log.Info("reconciled KDexPageFooter")
 
 	apimeta.SetStatusCondition(
-		&stylesheet.Status.Conditions,
+		&pageFooter.Status.Conditions,
 		*kdexv1alpha1.NewCondition(
 			kdexv1alpha1.ConditionTypeReady,
 			metav1.ConditionTrue,
@@ -75,7 +77,7 @@ func (r *MicroFrontEndStylesheetReconciler) Reconcile(ctx context.Context, req c
 			"content template is valid",
 		),
 	)
-	if err := r.Status().Update(ctx, &stylesheet); err != nil {
+	if err := r.Status().Update(ctx, &pageFooter); err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -83,23 +85,9 @@ func (r *MicroFrontEndStylesheetReconciler) Reconcile(ctx context.Context, req c
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *MicroFrontEndStylesheetReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *KDexPageFooterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&kdexv1alpha1.MicroFrontEndStylesheet{}).
-		Named("microfrontendstylesheet").
+		For(&kdexv1alpha1.KDexPageFooter{}).
+		Named("kdexpagefooter").
 		Complete(r)
-}
-
-func validateItems(styleItems []kdexv1alpha1.StyleItem) error {
-	renderer := render.Renderer{
-		StyleItems: styleItems,
-	}
-
-	_, err := renderer.RenderOne(
-		"style-items",
-		renderer.StyleItemsToString(),
-		render.DefaultTemplateData(),
-	)
-
-	return err
 }

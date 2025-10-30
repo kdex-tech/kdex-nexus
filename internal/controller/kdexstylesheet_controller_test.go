@@ -26,7 +26,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var _ = Describe("MicroFrontEndPageFooter Controller", func() {
+var _ = Describe("KDexStylesheet Controller", func() {
 	Context("When reconciling a resource", func() {
 		const namespace = "default"
 		const resourceName = "test-resource"
@@ -35,17 +35,24 @@ var _ = Describe("MicroFrontEndPageFooter Controller", func() {
 
 		AfterEach(func() {
 			By("Cleanup all the test resource instances")
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndPageFooter{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexStylesheet{}, client.InNamespace(namespace))).To(Succeed())
 		})
 
 		It("should successfully reconcile the resource", func() {
-			resource := &kdexv1alpha1.MicroFrontEndPageFooter{
+			resource := &kdexv1alpha1.KDexStylesheet{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
 					Namespace: namespace,
 				},
-				Spec: kdexv1alpha1.MicroFrontEndPageFooterSpec{
-					Content: "<h1>Hello, World!</h1>",
+				Spec: kdexv1alpha1.KDexStylesheetSpec{
+					StyleItems: []kdexv1alpha1.StyleItem{
+						{
+							Attributes: map[string]string{
+								"rel": "stylesheet",
+							},
+							LinkHref: "style.css",
+						},
+					},
 				},
 			}
 
@@ -53,43 +60,57 @@ var _ = Describe("MicroFrontEndPageFooter Controller", func() {
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.MicroFrontEndPageFooter{}, true)
+				&kdexv1alpha1.KDexStylesheet{}, true)
 		})
 
 		It("should successfully reconcile after template becomes valid html", func() {
-			addOrUpdatePageFooter(
+			addOrUpdateStylesheet(
 				ctx, k8sClient,
-				kdexv1alpha1.MicroFrontEndPageFooter{
+				kdexv1alpha1.KDexStylesheet{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      resourceName,
 						Namespace: namespace,
 					},
-					Spec: kdexv1alpha1.MicroFrontEndPageFooterSpec{
-						Content: "<h1>Hello, World!</h1",
+					Spec: kdexv1alpha1.KDexStylesheetSpec{
+						StyleItems: []kdexv1alpha1.StyleItem{
+							{
+								Attributes: map[string]string{
+									"!": `"`,
+								},
+								LinkHref: `"`,
+							},
+						},
 					},
 				},
 			)
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.MicroFrontEndPageFooter{}, false)
+				&kdexv1alpha1.KDexStylesheet{}, false)
 
-			addOrUpdatePageFooter(
+			addOrUpdateStylesheet(
 				ctx, k8sClient,
-				kdexv1alpha1.MicroFrontEndPageFooter{
+				kdexv1alpha1.KDexStylesheet{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      resourceName,
 						Namespace: namespace,
 					},
-					Spec: kdexv1alpha1.MicroFrontEndPageFooterSpec{
-						Content: "<h1>Hello, World!</h1>",
+					Spec: kdexv1alpha1.KDexStylesheetSpec{
+						StyleItems: []kdexv1alpha1.StyleItem{
+							{
+								Attributes: map[string]string{
+									"rel": "stylesheet",
+								},
+								LinkHref: "style.css",
+							},
+						},
 					},
 				},
 			)
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.MicroFrontEndPageFooter{}, true)
+				&kdexv1alpha1.KDexStylesheet{}, true)
 		})
 	})
 })

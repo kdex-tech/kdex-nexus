@@ -26,7 +26,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var _ = Describe("MicroFrontEndStylesheet Controller", func() {
+var _ = Describe("KDexPageNavigation Controller", func() {
 	Context("When reconciling a resource", func() {
 		const namespace = "default"
 		const resourceName = "test-resource"
@@ -35,24 +35,17 @@ var _ = Describe("MicroFrontEndStylesheet Controller", func() {
 
 		AfterEach(func() {
 			By("Cleanup all the test resource instances")
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndStylesheet{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageNavigation{}, client.InNamespace(namespace))).To(Succeed())
 		})
 
 		It("should successfully reconcile the resource", func() {
-			resource := &kdexv1alpha1.MicroFrontEndStylesheet{
+			resource := &kdexv1alpha1.KDexPageNavigation{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
 					Namespace: namespace,
 				},
-				Spec: kdexv1alpha1.MicroFrontEndStylesheetSpec{
-					StyleItems: []kdexv1alpha1.StyleItem{
-						{
-							Attributes: map[string]string{
-								"rel": "stylesheet",
-							},
-							LinkHref: "style.css",
-						},
-					},
+				Spec: kdexv1alpha1.KDexPageNavigationSpec{
+					Content: "<h1>Hello, World!</h1>",
 				},
 			}
 
@@ -60,57 +53,43 @@ var _ = Describe("MicroFrontEndStylesheet Controller", func() {
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.MicroFrontEndStylesheet{}, true)
+				&kdexv1alpha1.KDexPageNavigation{}, true)
 		})
 
 		It("should successfully reconcile after template becomes valid html", func() {
-			addOrUpdateStylesheet(
+			addOrUpdatePageNavigation(
 				ctx, k8sClient,
-				kdexv1alpha1.MicroFrontEndStylesheet{
+				kdexv1alpha1.KDexPageNavigation{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      resourceName,
 						Namespace: namespace,
 					},
-					Spec: kdexv1alpha1.MicroFrontEndStylesheetSpec{
-						StyleItems: []kdexv1alpha1.StyleItem{
-							{
-								Attributes: map[string]string{
-									"!": `"`,
-								},
-								LinkHref: `"`,
-							},
-						},
+					Spec: kdexv1alpha1.KDexPageNavigationSpec{
+						Content: "<h1>Hello, World!</h1",
 					},
 				},
 			)
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.MicroFrontEndStylesheet{}, false)
+				&kdexv1alpha1.KDexPageNavigation{}, false)
 
-			addOrUpdateStylesheet(
+			addOrUpdatePageNavigation(
 				ctx, k8sClient,
-				kdexv1alpha1.MicroFrontEndStylesheet{
+				kdexv1alpha1.KDexPageNavigation{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      resourceName,
 						Namespace: namespace,
 					},
-					Spec: kdexv1alpha1.MicroFrontEndStylesheetSpec{
-						StyleItems: []kdexv1alpha1.StyleItem{
-							{
-								Attributes: map[string]string{
-									"rel": "stylesheet",
-								},
-								LinkHref: "style.css",
-							},
-						},
+					Spec: kdexv1alpha1.KDexPageNavigationSpec{
+						Content: "<h1>Hello, World!</h1>",
 					},
 				},
 			)
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.MicroFrontEndStylesheet{}, true)
+				&kdexv1alpha1.KDexPageNavigation{}, true)
 		})
 	})
 })

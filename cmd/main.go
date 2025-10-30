@@ -181,57 +181,57 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := (&controller.MicroFrontEndAppReconciler{
+	if err := (&controller.KDexAppReconciler{
 		Client:          mgr.GetClient(),
 		RegistryFactory: npm.NewRegistry,
 		RequeueDelay:    time.Duration(requeueDelaySeconds) * time.Second,
 		Scheme:          mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "MicroFrontEndApp")
+		setupLog.Error(err, "unable to create controller", "controller", "KDexApp")
 		os.Exit(1)
 	}
-	if err := (&controller.MicroFrontEndPageArchetypeReconciler{
+	if err := (&controller.KDexPageArchetypeReconciler{
 		Client:       mgr.GetClient(),
 		Scheme:       mgr.GetScheme(),
 		RequeueDelay: time.Duration(requeueDelaySeconds) * time.Second,
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "MicroFrontEndPageArchetype")
+		setupLog.Error(err, "unable to create controller", "controller", "KDexPageArchetype")
 		os.Exit(1)
 	}
-	if err := (&controller.MicroFrontEndPageBindingReconciler{
+	if err := (&controller.KDexPageBindingReconciler{
 		Client:       mgr.GetClient(),
 		Scheme:       mgr.GetScheme(),
 		RequeueDelay: time.Duration(requeueDelaySeconds) * time.Second,
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "MicroFrontEndPageBinding")
+		setupLog.Error(err, "unable to create controller", "controller", "KDexPageBinding")
 		os.Exit(1)
 	}
-	if err := (&controller.MicroFrontEndPageHeaderReconciler{
+	if err := (&controller.KDexPageHeaderReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "MicroFrontEndPageHeader")
+		setupLog.Error(err, "unable to create controller", "controller", "KDexPageHeader")
 		os.Exit(1)
 	}
-	if err := (&controller.MicroFrontEndPageFooterReconciler{
+	if err := (&controller.KDexPageFooterReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "MicroFrontEndPageFooter")
+		setupLog.Error(err, "unable to create controller", "controller", "KDexPageFooter")
 		os.Exit(1)
 	}
-	if err := (&controller.MicroFrontEndPageNavigationReconciler{
+	if err := (&controller.KDexPageNavigationReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "MicroFrontEndPageNavigation")
+		setupLog.Error(err, "unable to create controller", "controller", "KDexPageNavigation")
 		os.Exit(1)
 	}
-	if err := (&controller.MicroFrontEndStylesheetReconciler{
+	if err := (&controller.KDexStylesheetReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "MicroFrontEndStylesheet")
+		setupLog.Error(err, "unable to create controller", "controller", "KDexStylesheet")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder

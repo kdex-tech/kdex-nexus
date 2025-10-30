@@ -30,7 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var _ = Describe("MicroFrontEndPageBinding Controller", func() {
+var _ = Describe("KDexPageBinding Controller", func() {
 	Context("When reconciling a resource", func() {
 		const namespace = "default"
 		const resourceName = "test-resource"
@@ -39,38 +39,38 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 
 		AfterEach(func() {
 			By("Cleanup all the test resource instances")
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndPageBinding{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageBinding{}, client.InNamespace(namespace))).To(Succeed())
 
 			Eventually(func() error {
 				var err error
-				mfaList := &kdexv1alpha1.MicroFrontEndPageBindingList{}
+				mfaList := &kdexv1alpha1.KDexPageBindingList{}
 				err = k8sClient.List(ctx, mfaList, client.InNamespace(namespace))
 				if err != nil {
 					return err
 				}
 				if len(mfaList.Items) > 0 {
-					return fmt.Errorf("expected 0 MicroFrontEndPageBinding instances, got %d", len(mfaList.Items))
+					return fmt.Errorf("expected 0 KDexPageBinding instances, got %d", len(mfaList.Items))
 				}
 				return nil
 			}).WithTimeout(10 * time.Second).Should(Succeed())
 
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndApp{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndHost{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndPageArchetype{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndPageFooter{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndPageHeader{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndPageNavigation{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndStylesheet{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.MicroFrontEndTranslation{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexApp{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexHost{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageArchetype{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageFooter{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageHeader{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageNavigation{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexStylesheet{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexTranslation{}, client.InNamespace(namespace))).To(Succeed())
 		})
 
 		It("with empty content entries should not succeed", func() {
-			resource := &kdexv1alpha1.MicroFrontEndPageBinding{
+			resource := &kdexv1alpha1.KDexPageBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
 					Namespace: namespace,
 				},
-				Spec: kdexv1alpha1.MicroFrontEndPageBindingSpec{
+				Spec: kdexv1alpha1.KDexPageBindingSpec{
 					ContentEntries: []kdexv1alpha1.ContentEntry{},
 					HostRef: corev1.LocalObjectReference{
 						Name: "non-existent-host",
@@ -89,12 +89,12 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 		})
 
 		It("with content entries should succeed", func() {
-			resource := &kdexv1alpha1.MicroFrontEndPageBinding{
+			resource := &kdexv1alpha1.KDexPageBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
 					Namespace: namespace,
 				},
-				Spec: kdexv1alpha1.MicroFrontEndPageBindingSpec{
+				Spec: kdexv1alpha1.KDexPageBindingSpec{
 					ContentEntries: []kdexv1alpha1.ContentEntry{
 						{
 							RawHTML: "<h1>Hello, World!</h1>",
@@ -118,12 +118,12 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 		})
 
 		It("with missing references should not succeed", func() {
-			resource := &kdexv1alpha1.MicroFrontEndPageBinding{
+			resource := &kdexv1alpha1.KDexPageBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
 					Namespace: namespace,
 				},
-				Spec: kdexv1alpha1.MicroFrontEndPageBindingSpec{
+				Spec: kdexv1alpha1.KDexPageBindingSpec{
 					ContentEntries: []kdexv1alpha1.ContentEntry{
 						{
 							RawHTML: "<h1>Hello, World!</h1>",
@@ -147,17 +147,17 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.MicroFrontEndPageBinding{}, false)
+				&kdexv1alpha1.KDexPageBinding{}, false)
 
 			By("and when Host added should still not become ready")
 			addOrUpdateHost(
 				ctx, k8sClient,
-				kdexv1alpha1.MicroFrontEndHost{
+				kdexv1alpha1.KDexHost{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "non-existent-host",
 						Namespace: namespace,
 					},
-					Spec: kdexv1alpha1.MicroFrontEndHostSpec{
+					Spec: kdexv1alpha1.KDexHostSpec{
 						AppPolicy: kdexv1alpha1.NonStrictAppPolicy,
 						Domains: []string{
 							"example.com",
@@ -168,33 +168,33 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 			)
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.MicroFrontEndPageBinding{}, false)
+				&kdexv1alpha1.KDexPageBinding{}, false)
 
 			By("lastly when PageArchetype added should become ready")
 			addOrUpdatePageArchetype(
 				ctx, k8sClient,
-				kdexv1alpha1.MicroFrontEndPageArchetype{
+				kdexv1alpha1.KDexPageArchetype{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "non-existent-page-archetype",
 						Namespace: namespace,
 					},
-					Spec: kdexv1alpha1.MicroFrontEndPageArchetypeSpec{
+					Spec: kdexv1alpha1.KDexPageArchetypeSpec{
 						Content: "<h1>Hello, World!</h1>",
 					},
 				},
 			)
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.MicroFrontEndPageBinding{}, true)
+				&kdexv1alpha1.KDexPageBinding{}, true)
 		})
 
 		It("with override references", func() {
-			resource := &kdexv1alpha1.MicroFrontEndPageBinding{
+			resource := &kdexv1alpha1.KDexPageBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
 					Namespace: namespace,
 				},
-				Spec: kdexv1alpha1.MicroFrontEndPageBindingSpec{
+				Spec: kdexv1alpha1.KDexPageBindingSpec{
 					ContentEntries: []kdexv1alpha1.ContentEntry{
 						{
 							RawHTML: "<h1>Hello, World!</h1>",
@@ -227,17 +227,17 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.MicroFrontEndPageBinding{}, false)
+				&kdexv1alpha1.KDexPageBinding{}, false)
 
 			By("adding all the missing references")
 			addOrUpdateHost(
 				ctx, k8sClient,
-				kdexv1alpha1.MicroFrontEndHost{
+				kdexv1alpha1.KDexHost{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "non-existent-host",
 						Namespace: namespace,
 					},
-					Spec: kdexv1alpha1.MicroFrontEndHostSpec{
+					Spec: kdexv1alpha1.KDexHostSpec{
 						AppPolicy: kdexv1alpha1.NonStrictAppPolicy,
 						Domains: []string{
 							"example.com",
@@ -248,46 +248,46 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 			)
 			addOrUpdatePageArchetype(
 				ctx, k8sClient,
-				kdexv1alpha1.MicroFrontEndPageArchetype{
+				kdexv1alpha1.KDexPageArchetype{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "non-existent-page-archetype",
 						Namespace: namespace,
 					},
-					Spec: kdexv1alpha1.MicroFrontEndPageArchetypeSpec{
+					Spec: kdexv1alpha1.KDexPageArchetypeSpec{
 						Content: "<h1>Hello, World!</h1>",
 					},
 				},
 			)
 			addOrUpdatePageFooter(ctx, k8sClient,
-				kdexv1alpha1.MicroFrontEndPageFooter{
+				kdexv1alpha1.KDexPageFooter{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "non-existent-footer",
 						Namespace: namespace,
 					},
-					Spec: kdexv1alpha1.MicroFrontEndPageFooterSpec{
+					Spec: kdexv1alpha1.KDexPageFooterSpec{
 						Content: "<h1>Hello, from down under!</h1>",
 					},
 				},
 			)
 			addOrUpdatePageHeader(
 				ctx, k8sClient,
-				kdexv1alpha1.MicroFrontEndPageHeader{
+				kdexv1alpha1.KDexPageHeader{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "non-existent-header",
 						Namespace: namespace,
 					},
-					Spec: kdexv1alpha1.MicroFrontEndPageHeaderSpec{
+					Spec: kdexv1alpha1.KDexPageHeaderSpec{
 						Content: "<h1>Hello, from up north!</h1>",
 					},
 				},
 			)
 			addOrUpdatePageNavigation(ctx, k8sClient,
-				kdexv1alpha1.MicroFrontEndPageNavigation{
+				kdexv1alpha1.KDexPageNavigation{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "non-existent-navigation",
 						Namespace: namespace,
 					},
-					Spec: kdexv1alpha1.MicroFrontEndPageNavigationSpec{
+					Spec: kdexv1alpha1.KDexPageNavigationSpec{
 						Content: "<h1>Hello, from up north!</h1>",
 					},
 				},
@@ -295,16 +295,16 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.MicroFrontEndPageBinding{}, true)
+				&kdexv1alpha1.KDexPageBinding{}, true)
 		})
 
 		It("with parent page reference", func() {
-			resource := &kdexv1alpha1.MicroFrontEndPageBinding{
+			resource := &kdexv1alpha1.KDexPageBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
 					Namespace: namespace,
 				},
-				Spec: kdexv1alpha1.MicroFrontEndPageBindingSpec{
+				Spec: kdexv1alpha1.KDexPageBindingSpec{
 					ContentEntries: []kdexv1alpha1.ContentEntry{
 						{
 							RawHTML: "<h1>Hello, World!</h1>",
@@ -331,12 +331,12 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 
 			addOrUpdateHost(
 				ctx, k8sClient,
-				kdexv1alpha1.MicroFrontEndHost{
+				kdexv1alpha1.KDexHost{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "non-existent-host",
 						Namespace: namespace,
 					},
-					Spec: kdexv1alpha1.MicroFrontEndHostSpec{
+					Spec: kdexv1alpha1.KDexHostSpec{
 						AppPolicy: kdexv1alpha1.NonStrictAppPolicy,
 						Domains: []string{
 							"example.com",
@@ -347,12 +347,12 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 			)
 			addOrUpdatePageArchetype(
 				ctx, k8sClient,
-				kdexv1alpha1.MicroFrontEndPageArchetype{
+				kdexv1alpha1.KDexPageArchetype{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "non-existent-page-archetype",
 						Namespace: namespace,
 					},
-					Spec: kdexv1alpha1.MicroFrontEndPageArchetypeSpec{
+					Spec: kdexv1alpha1.KDexPageArchetypeSpec{
 						Content: "<h1>Hello, World!</h1>",
 					},
 				},
@@ -360,14 +360,14 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.MicroFrontEndPageBinding{}, false)
+				&kdexv1alpha1.KDexPageBinding{}, false)
 
-			referencedPage := &kdexv1alpha1.MicroFrontEndPageBinding{
+			referencedPage := &kdexv1alpha1.KDexPageBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "non-existent-page-binding",
 					Namespace: namespace,
 				},
-				Spec: kdexv1alpha1.MicroFrontEndPageBindingSpec{
+				Spec: kdexv1alpha1.KDexPageBindingSpec{
 					ContentEntries: []kdexv1alpha1.ContentEntry{
 						{
 							RawHTML: "<h1>Hello, World!</h1>",
@@ -391,16 +391,16 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.MicroFrontEndPageBinding{}, true)
+				&kdexv1alpha1.KDexPageBinding{}, true)
 		})
 
 		It("updates when a dependency is updated", func() {
-			resource := &kdexv1alpha1.MicroFrontEndPageBinding{
+			resource := &kdexv1alpha1.KDexPageBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
 					Namespace: namespace,
 				},
-				Spec: kdexv1alpha1.MicroFrontEndPageBindingSpec{
+				Spec: kdexv1alpha1.KDexPageBindingSpec{
 					ContentEntries: []kdexv1alpha1.ContentEntry{
 						{
 							RawHTML: "<h1>Hello, World!</h1>",
@@ -427,17 +427,17 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.MicroFrontEndPageBinding{}, false)
+				&kdexv1alpha1.KDexPageBinding{}, false)
 
 			By("adding missing references")
 			addOrUpdateHost(
 				ctx, k8sClient,
-				kdexv1alpha1.MicroFrontEndHost{
+				kdexv1alpha1.KDexHost{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "non-existent-host",
 						Namespace: namespace,
 					},
-					Spec: kdexv1alpha1.MicroFrontEndHostSpec{
+					Spec: kdexv1alpha1.KDexHostSpec{
 						AppPolicy: kdexv1alpha1.NonStrictAppPolicy,
 						Domains: []string{
 							"example.com",
@@ -448,24 +448,24 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 			)
 			addOrUpdatePageArchetype(
 				ctx, k8sClient,
-				kdexv1alpha1.MicroFrontEndPageArchetype{
+				kdexv1alpha1.KDexPageArchetype{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "non-existent-page-archetype",
 						Namespace: namespace,
 					},
-					Spec: kdexv1alpha1.MicroFrontEndPageArchetypeSpec{
+					Spec: kdexv1alpha1.KDexPageArchetypeSpec{
 						Content: "<h1>Hello, World!</h1>",
 					},
 				},
 			)
 			addOrUpdatePageHeader(
 				ctx, k8sClient,
-				kdexv1alpha1.MicroFrontEndPageHeader{
+				kdexv1alpha1.KDexPageHeader{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "non-existent-header",
 						Namespace: namespace,
 					},
-					Spec: kdexv1alpha1.MicroFrontEndPageHeaderSpec{
+					Spec: kdexv1alpha1.KDexPageHeaderSpec{
 						Content: "<h1>Hello, from up north!</h1>",
 					},
 				},
@@ -473,9 +473,9 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.MicroFrontEndPageBinding{}, true)
+				&kdexv1alpha1.KDexPageBinding{}, true)
 
-			var renderPage kdexv1alpha1.MicroFrontEndRenderPage
+			var renderPage kdexv1alpha1.KDexRenderPage
 			renderPageName := types.NamespacedName{
 				Name:      resourceName,
 				Namespace: namespace,
@@ -491,12 +491,12 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 			By("updating the header references")
 			addOrUpdatePageHeader(
 				ctx, k8sClient,
-				kdexv1alpha1.MicroFrontEndPageHeader{
+				kdexv1alpha1.KDexPageHeader{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "non-existent-header",
 						Namespace: namespace,
 					},
-					Spec: kdexv1alpha1.MicroFrontEndPageHeaderSpec{
+					Spec: kdexv1alpha1.KDexPageHeaderSpec{
 						Content: "CHANGED",
 					},
 				},
@@ -504,7 +504,7 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.MicroFrontEndPageBinding{}, true)
+				&kdexv1alpha1.KDexPageBinding{}, true)
 
 			check := func(g Gomega) {
 				err = k8sClient.Get(ctx, renderPageName, &renderPage)
@@ -520,12 +520,12 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 		})
 
 		It("updates when an indirect dependency is updated", func() {
-			resource := &kdexv1alpha1.MicroFrontEndPageBinding{
+			resource := &kdexv1alpha1.KDexPageBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
 					Namespace: namespace,
 				},
-				Spec: kdexv1alpha1.MicroFrontEndPageBindingSpec{
+				Spec: kdexv1alpha1.KDexPageBindingSpec{
 					ContentEntries: []kdexv1alpha1.ContentEntry{
 						{
 							RawHTML: "<h1>Hello, World!</h1>",
@@ -549,17 +549,17 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.MicroFrontEndPageBinding{}, false)
+				&kdexv1alpha1.KDexPageBinding{}, false)
 
 			By("adding missing references")
 			addOrUpdateHost(
 				ctx, k8sClient,
-				kdexv1alpha1.MicroFrontEndHost{
+				kdexv1alpha1.KDexHost{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "non-existent-host",
 						Namespace: namespace,
 					},
-					Spec: kdexv1alpha1.MicroFrontEndHostSpec{
+					Spec: kdexv1alpha1.KDexHostSpec{
 						AppPolicy: kdexv1alpha1.NonStrictAppPolicy,
 						Domains: []string{
 							"example.com",
@@ -570,12 +570,12 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 			)
 			addOrUpdatePageArchetype(
 				ctx, k8sClient,
-				kdexv1alpha1.MicroFrontEndPageArchetype{
+				kdexv1alpha1.KDexPageArchetype{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "non-existent-page-archetype",
 						Namespace: namespace,
 					},
-					Spec: kdexv1alpha1.MicroFrontEndPageArchetypeSpec{
+					Spec: kdexv1alpha1.KDexPageArchetypeSpec{
 						Content: "<h1>Hello, World!</h1>",
 						DefaultHeaderRef: &corev1.LocalObjectReference{
 							Name: "non-existent-header",
@@ -585,12 +585,12 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 			)
 			addOrUpdatePageHeader(
 				ctx, k8sClient,
-				kdexv1alpha1.MicroFrontEndPageHeader{
+				kdexv1alpha1.KDexPageHeader{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "non-existent-header",
 						Namespace: namespace,
 					},
-					Spec: kdexv1alpha1.MicroFrontEndPageHeaderSpec{
+					Spec: kdexv1alpha1.KDexPageHeaderSpec{
 						Content: "<h1>Hello, from up north!</h1>",
 					},
 				},
@@ -598,9 +598,9 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.MicroFrontEndPageBinding{}, true)
+				&kdexv1alpha1.KDexPageBinding{}, true)
 
-			var renderPage kdexv1alpha1.MicroFrontEndRenderPage
+			var renderPage kdexv1alpha1.KDexRenderPage
 			renderPageName := types.NamespacedName{
 				Name:      resourceName,
 				Namespace: namespace,
@@ -616,12 +616,12 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 			By("updating the header references")
 			addOrUpdatePageHeader(
 				ctx, k8sClient,
-				kdexv1alpha1.MicroFrontEndPageHeader{
+				kdexv1alpha1.KDexPageHeader{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "non-existent-header",
 						Namespace: namespace,
 					},
-					Spec: kdexv1alpha1.MicroFrontEndPageHeaderSpec{
+					Spec: kdexv1alpha1.KDexPageHeaderSpec{
 						Content: "CHANGED",
 					},
 				},
@@ -629,7 +629,7 @@ var _ = Describe("MicroFrontEndPageBinding Controller", func() {
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.MicroFrontEndPageBinding{}, true)
+				&kdexv1alpha1.KDexPageBinding{}, true)
 
 			check := func(g Gomega) {
 				err = k8sClient.Get(ctx, renderPageName, &renderPage)
