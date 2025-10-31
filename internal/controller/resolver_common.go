@@ -311,10 +311,6 @@ func resolvePageNavigations(
 			return nil, response, err
 		}
 
-		if navigations == nil {
-			navigations = make(map[string]string)
-		}
-
 		navigations[navigationName] = navigation.Spec.Content
 	}
 
