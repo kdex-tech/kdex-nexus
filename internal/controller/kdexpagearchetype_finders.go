@@ -115,7 +115,7 @@ func (r *KDexPageArchetypeReconciler) findPageArchetypesForPageNavigations(
 	return requests
 }
 
-func (r *KDexPageArchetypeReconciler) findPageArchetypesForStylesheet(
+func (r *KDexPageArchetypeReconciler) findPageArchetypesForTheme(
 	ctx context.Context,
 	stylesheet client.Object,
 ) []reconcile.Request {
@@ -131,10 +131,10 @@ func (r *KDexPageArchetypeReconciler) findPageArchetypesForStylesheet(
 
 	requests := make([]reconcile.Request, 0, len(pageArchetypesList.Items))
 	for _, pageArchetype := range pageArchetypesList.Items {
-		if pageArchetype.Spec.OverrideStylesheetRef == nil {
+		if pageArchetype.Spec.OverrideThemeRef == nil {
 			continue
 		}
-		if pageArchetype.Spec.OverrideStylesheetRef.Name == stylesheet.GetName() {
+		if pageArchetype.Spec.OverrideThemeRef.Name == stylesheet.GetName() {
 			requests = append(requests, reconcile.Request{
 				NamespacedName: types.NamespacedName{
 					Name:      pageArchetype.Name,

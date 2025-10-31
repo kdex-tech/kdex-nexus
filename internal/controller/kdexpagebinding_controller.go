@@ -135,7 +135,7 @@ func (r *KDexPageBindingReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		return r1, err
 	}
 
-	_, shouldReturn, r1, err = resolveStylesheet(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, pageArchetype.Spec.OverrideStylesheetRef, r.RequeueDelay)
+	_, shouldReturn, r1, err = resolveTheme(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, pageArchetype.Spec.OverrideThemeRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
@@ -165,7 +165,7 @@ func (r *KDexPageBindingReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 				},
 				ParentPageRef: parentPageRef,
 				Paths:         pageBinding.Spec.Paths,
-				StylesheetRef: pageArchetype.Spec.OverrideStylesheetRef,
+				ThemeRef:      pageArchetype.Spec.OverrideThemeRef,
 			}
 			return ctrl.SetControllerReference(&pageBinding, renderPage, r.Scheme)
 		},

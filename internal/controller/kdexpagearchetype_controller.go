@@ -44,7 +44,7 @@ type KDexPageArchetypeReconciler struct {
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagearchetypes,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagearchetypes/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagearchetypes/finalizers,verbs=update
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexstylesheets,verbs=get;list;watch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexthemes,verbs=get;list;watch
 
 func (r *KDexPageArchetypeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx)
@@ -88,7 +88,7 @@ func (r *KDexPageArchetypeReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return response, err
 	}
 
-	_, shouldReturn, r1, err = resolveStylesheet(ctx, r.Client, &pageArchetype, &pageArchetype.Status.Conditions, pageArchetype.Spec.OverrideStylesheetRef, r.RequeueDelay)
+	_, shouldReturn, r1, err = resolveTheme(ctx, r.Client, &pageArchetype, &pageArchetype.Status.Conditions, pageArchetype.Spec.OverrideThemeRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
@@ -125,8 +125,8 @@ func (r *KDexPageArchetypeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			&kdexv1alpha1.KDexPageNavigation{},
 			handler.EnqueueRequestsFromMapFunc(r.findPageArchetypesForPageNavigations)).
 		Watches(
-			&kdexv1alpha1.KDexStylesheet{},
-			handler.EnqueueRequestsFromMapFunc(r.findPageArchetypesForStylesheet)).
+			&kdexv1alpha1.KDexTheme{},
+			handler.EnqueueRequestsFromMapFunc(r.findPageArchetypesForTheme)).
 		Named("kdexpagearchetype").
 		Complete(r)
 }

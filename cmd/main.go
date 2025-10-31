@@ -227,11 +227,11 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "KDexPageNavigation")
 		os.Exit(1)
 	}
-	if err := (&controller.KDexStylesheetReconciler{
+	if err := (&controller.KDexThemeReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "KDexStylesheet")
+		setupLog.Error(err, "unable to create controller", "controller", "KDexTheme")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder

@@ -46,7 +46,7 @@ var _ = Describe("KDexPageArchetype Controller", Ordered, func() {
 			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageFooter{}, client.InNamespace(namespace))).To(Succeed())
 			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageHeader{}, client.InNamespace(namespace))).To(Succeed())
 			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageNavigation{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexStylesheet{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexTheme{}, client.InNamespace(namespace))).To(Succeed())
 			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexTranslation{}, client.InNamespace(namespace))).To(Succeed())
 		})
 
@@ -237,7 +237,7 @@ var _ = Describe("KDexPageArchetype Controller", Ordered, func() {
 				},
 				Spec: kdexv1alpha1.KDexPageArchetypeSpec{
 					Content: "<h1>Hello, World!</h1>",
-					OverrideStylesheetRef: &corev1.LocalObjectReference{
+					OverrideThemeRef: &corev1.LocalObjectReference{
 						Name: "non-existent-stylesheet",
 					},
 				},
@@ -249,15 +249,15 @@ var _ = Describe("KDexPageArchetype Controller", Ordered, func() {
 				ctx, k8sClient, resourceName, namespace,
 				&kdexv1alpha1.KDexPageArchetype{}, false)
 
-			addOrUpdateStylesheet(
+			addOrUpdateTheme(
 				ctx, k8sClient,
-				kdexv1alpha1.KDexStylesheet{
+				kdexv1alpha1.KDexTheme{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "non-existent-stylesheet",
 						Namespace: namespace,
 					},
-					Spec: kdexv1alpha1.KDexStylesheetSpec{
-						StyleItems: []kdexv1alpha1.StyleItem{
+					Spec: kdexv1alpha1.KDexThemeSpec{
+						Assets: []kdexv1alpha1.ThemeAsset{
 							{
 								LinkHref: "style.css",
 								Attributes: map[string]string{

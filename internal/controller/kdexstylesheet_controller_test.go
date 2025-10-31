@@ -26,7 +26,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var _ = Describe("KDexStylesheet Controller", func() {
+var _ = Describe("KDexTheme Controller", func() {
 	Context("When reconciling a resource", func() {
 		const namespace = "default"
 		const resourceName = "test-resource"
@@ -35,17 +35,17 @@ var _ = Describe("KDexStylesheet Controller", func() {
 
 		AfterEach(func() {
 			By("Cleanup all the test resource instances")
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexStylesheet{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexTheme{}, client.InNamespace(namespace))).To(Succeed())
 		})
 
 		It("should successfully reconcile the resource", func() {
-			resource := &kdexv1alpha1.KDexStylesheet{
+			resource := &kdexv1alpha1.KDexTheme{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
 					Namespace: namespace,
 				},
-				Spec: kdexv1alpha1.KDexStylesheetSpec{
-					StyleItems: []kdexv1alpha1.StyleItem{
+				Spec: kdexv1alpha1.KDexThemeSpec{
+					Assets: []kdexv1alpha1.ThemeAsset{
 						{
 							Attributes: map[string]string{
 								"rel": "stylesheet",
@@ -60,19 +60,19 @@ var _ = Describe("KDexStylesheet Controller", func() {
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.KDexStylesheet{}, true)
+				&kdexv1alpha1.KDexTheme{}, true)
 		})
 
 		It("should successfully reconcile after template becomes valid html", func() {
-			addOrUpdateStylesheet(
+			addOrUpdateTheme(
 				ctx, k8sClient,
-				kdexv1alpha1.KDexStylesheet{
+				kdexv1alpha1.KDexTheme{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      resourceName,
 						Namespace: namespace,
 					},
-					Spec: kdexv1alpha1.KDexStylesheetSpec{
-						StyleItems: []kdexv1alpha1.StyleItem{
+					Spec: kdexv1alpha1.KDexThemeSpec{
+						Assets: []kdexv1alpha1.ThemeAsset{
 							{
 								Attributes: map[string]string{
 									"!": `"`,
@@ -86,17 +86,17 @@ var _ = Describe("KDexStylesheet Controller", func() {
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.KDexStylesheet{}, false)
+				&kdexv1alpha1.KDexTheme{}, false)
 
-			addOrUpdateStylesheet(
+			addOrUpdateTheme(
 				ctx, k8sClient,
-				kdexv1alpha1.KDexStylesheet{
+				kdexv1alpha1.KDexTheme{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      resourceName,
 						Namespace: namespace,
 					},
-					Spec: kdexv1alpha1.KDexStylesheetSpec{
-						StyleItems: []kdexv1alpha1.StyleItem{
+					Spec: kdexv1alpha1.KDexThemeSpec{
+						Assets: []kdexv1alpha1.ThemeAsset{
 							{
 								Attributes: map[string]string{
 									"rel": "stylesheet",
@@ -110,7 +110,7 @@ var _ = Describe("KDexStylesheet Controller", func() {
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.KDexStylesheet{}, true)
+				&kdexv1alpha1.KDexTheme{}, true)
 		})
 	})
 })

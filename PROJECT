@@ -35,6 +35,6 @@ resources:
   version: v1alpha1
 - controller: true
   domain: kdex.dev
-  kind: KDexStylesheet
+  kind: KDexTheme
   version: v1alpha1
 version: "3"

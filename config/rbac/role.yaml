@@ -22,7 +22,7 @@ rules:
   - kdexpageheaders
   - kdexpagenavigations
   - kdexrenderpages
-  - kdexstylesheets
+  - kdexthemes
   verbs:
   - create
   - delete
@@ -40,7 +40,7 @@ rules:
   - kdexpagefooters/finalizers
   - kdexpageheaders/finalizers
   - kdexpagenavigations/finalizers
-  - kdexstylesheets/finalizers
+  - kdexthemes/finalizers
   verbs:
   - update
 - apiGroups:
@@ -52,7 +52,7 @@ rules:
   - kdexpagefooters/status
   - kdexpageheaders/status
   - kdexpagenavigations/status
-  - kdexstylesheets/status
+  - kdexthemes/status
   verbs:
   - get
   - patch

@@ -224,7 +224,7 @@ var _ = BeforeSuite(func() {
 	err = pageNavigationReconciler.SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 
-	stylesheetReconciler := &KDexStylesheetReconciler{
+	stylesheetReconciler := &KDexThemeReconciler{
 		Client: k8sClient,
 		Scheme: k8sClient.Scheme(),
 	}

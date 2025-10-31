@@ -113,12 +113,12 @@ func addOrUpdatePageNavigation(
 	}
 }
 
-func addOrUpdateStylesheet(
+func addOrUpdateTheme(
 	ctx context.Context,
 	k8sClient client.Client,
-	stylesheet kdexv1alpha1.KDexStylesheet,
+	stylesheet kdexv1alpha1.KDexTheme,
 ) {
-	list := &kdexv1alpha1.KDexStylesheetList{}
+	list := &kdexv1alpha1.KDexThemeList{}
 	err := k8sClient.List(ctx, list, &client.ListOptions{
 		Namespace:     stylesheet.Namespace,
 		FieldSelector: fields.OneTermEqualSelector("metadata.name", stylesheet.Name),

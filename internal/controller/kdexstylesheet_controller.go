@@ -29,25 +29,25 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-// KDexStylesheetReconciler reconciles a KDexStylesheet object
-type KDexStylesheetReconciler struct {
+// KDexThemeReconciler reconciles a KDexTheme object
+type KDexThemeReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexstylesheets,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexstylesheets/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexstylesheets/finalizers,verbs=update
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexthemes,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexthemes/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexthemes/finalizers,verbs=update
 
-func (r *KDexStylesheetReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *KDexThemeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx)
 
-	var stylesheet kdexv1alpha1.KDexStylesheet
+	var stylesheet kdexv1alpha1.KDexTheme
 	if err := r.Get(ctx, req.NamespacedName, &stylesheet); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	if err := validateItems(stylesheet.Spec.StyleItems); err != nil {
+	if err := validateAssets(stylesheet.Spec.Assets); err != nil {
 		apimeta.SetStatusCondition(
 			&stylesheet.Status.Conditions,
 			*kdexv1alpha1.NewCondition(
@@ -64,7 +64,7 @@ func (r *KDexStylesheetReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return ctrl.Result{}, err
 	}
 
-	log.Info("reconciled KDexStylesheet")
+	log.Info("reconciled KDexTheme")
 
 	apimeta.SetStatusCondition(
 		&stylesheet.Status.Conditions,
@@ -83,21 +83,21 @@ func (r *KDexStylesheetReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *KDexStylesheetReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *KDexThemeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&kdexv1alpha1.KDexStylesheet{}).
-		Named("kdexstylesheet").
+		For(&kdexv1alpha1.KDexTheme{}).
+		Named("kdextheme").
 		Complete(r)
 }
 
-func validateItems(styleItems []kdexv1alpha1.StyleItem) error {
+func validateAssets(styleItems []kdexv1alpha1.ThemeAsset) error {
 	renderer := render.Renderer{
-		StyleItems: styleItems,
+		ThemeAssets: styleItems,
 	}
 
 	_, err := renderer.RenderOne(
 		"style-items",
-		renderer.StyleItemsToString(),
+		renderer.ThemeAssetsToString(),
 		render.DefaultTemplateData(),
 	)
 
