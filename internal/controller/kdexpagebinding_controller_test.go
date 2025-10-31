@@ -163,6 +163,7 @@ var _ = Describe("KDexPageBinding Controller", func() {
 							Domains: []string{
 								"example.com",
 							},
+							Strategy: kdexv1alpha1.IngressRoutingStrategy,
 						},
 						Organization: "KDex Tech",
 					},
@@ -245,6 +246,7 @@ var _ = Describe("KDexPageBinding Controller", func() {
 							Domains: []string{
 								"example.com",
 							},
+							Strategy: kdexv1alpha1.IngressRoutingStrategy,
 						},
 						Organization: "KDex Tech",
 					},
@@ -346,6 +348,7 @@ var _ = Describe("KDexPageBinding Controller", func() {
 							Domains: []string{
 								"example.com",
 							},
+							Strategy: kdexv1alpha1.IngressRoutingStrategy,
 						},
 						Organization: "KDex Tech",
 					},
@@ -449,6 +452,7 @@ var _ = Describe("KDexPageBinding Controller", func() {
 							Domains: []string{
 								"example.com",
 							},
+							Strategy: kdexv1alpha1.IngressRoutingStrategy,
 						},
 						Organization: "KDex Tech",
 					},
@@ -573,6 +577,7 @@ var _ = Describe("KDexPageBinding Controller", func() {
 							Domains: []string{
 								"example.com",
 							},
+							Strategy: kdexv1alpha1.IngressRoutingStrategy,
 						},
 						Organization: "KDex Tech",
 					},

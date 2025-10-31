@@ -286,7 +286,7 @@ func resolvePageNavigations(
 	extraNavigations map[string]*v1.LocalObjectReference,
 	requeueDelay time.Duration,
 ) (map[string]string, ctrl.Result, error) {
-	var navigations map[string]string
+	navigations := map[string]string{}
 	if navigationRef != nil {
 		navigation, response, err := resolvePageNavigation(
 			ctx, c, object, objectConditions, navigationRef, requeueDelay)
