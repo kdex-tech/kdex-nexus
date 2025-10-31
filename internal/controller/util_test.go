@@ -13,6 +13,26 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+func addOrUpdateHost(
+	ctx context.Context,
+	k8sClient client.Client,
+	host kdexv1alpha1.KDexHost,
+) {
+	list := &kdexv1alpha1.KDexHostList{}
+	err := k8sClient.List(ctx, list, &client.ListOptions{
+		Namespace:     host.Namespace,
+		FieldSelector: fields.OneTermEqualSelector("metadata.name", host.Name),
+	})
+	Expect(err).NotTo(HaveOccurred())
+	if len(list.Items) > 0 {
+		existing := list.Items[0]
+		existing.Spec = host.Spec
+		Expect(k8sClient.Update(ctx, &existing)).To(Succeed())
+	} else {
+		Expect(k8sClient.Create(ctx, &host)).To(Succeed())
+	}
+}
+
 func addOrUpdatePageArchetype(
 	ctx context.Context,
 	k8sClient client.Client,
@@ -70,26 +90,6 @@ func addOrUpdatePageFooter(
 		Expect(k8sClient.Update(ctx, &existing)).To(Succeed())
 	} else {
 		Expect(k8sClient.Create(ctx, &pageFooter)).To(Succeed())
-	}
-}
-
-func addOrUpdateHost(
-	ctx context.Context,
-	k8sClient client.Client,
-	host kdexv1alpha1.KDexHost,
-) {
-	list := &kdexv1alpha1.KDexHostList{}
-	err := k8sClient.List(ctx, list, &client.ListOptions{
-		Namespace:     host.Namespace,
-		FieldSelector: fields.OneTermEqualSelector("metadata.name", host.Name),
-	})
-	Expect(err).NotTo(HaveOccurred())
-	if len(list.Items) > 0 {
-		existing := list.Items[0]
-		existing.Spec = host.Spec
-		Expect(k8sClient.Update(ctx, &existing)).To(Succeed())
-	} else {
-		Expect(k8sClient.Create(ctx, &host)).To(Succeed())
 	}
 }
 
