@@ -229,7 +229,7 @@ var _ = Describe("KDexPageArchetype Controller", Ordered, func() {
 				&kdexv1alpha1.KDexPageArchetype{}, true)
 		})
 
-		It("with missing stylesheet reference should not successfully reconcile", func() {
+		It("with missing theme reference should not successfully reconcile", func() {
 			resource := &kdexv1alpha1.KDexPageArchetype{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
@@ -238,7 +238,7 @@ var _ = Describe("KDexPageArchetype Controller", Ordered, func() {
 				Spec: kdexv1alpha1.KDexPageArchetypeSpec{
 					Content: "<h1>Hello, World!</h1>",
 					OverrideThemeRef: &corev1.LocalObjectReference{
-						Name: "non-existent-stylesheet",
+						Name: "non-existent-theme",
 					},
 				},
 			}
@@ -253,7 +253,7 @@ var _ = Describe("KDexPageArchetype Controller", Ordered, func() {
 				ctx, k8sClient,
 				kdexv1alpha1.KDexTheme{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "non-existent-stylesheet",
+						Name:      "non-existent-theme",
 						Namespace: namespace,
 					},
 					Spec: kdexv1alpha1.KDexThemeSpec{
@@ -261,7 +261,7 @@ var _ = Describe("KDexPageArchetype Controller", Ordered, func() {
 							{
 								LinkHref: "style.css",
 								Attributes: map[string]string{
-									"rel": "stylesheet",
+									"rel": "theme",
 								},
 							},
 						},

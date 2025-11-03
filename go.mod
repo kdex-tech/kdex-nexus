@@ -2,7 +2,7 @@ module kdex.dev/nexus
 
 go 1.24.5
 
-replace kdex.dev/crds => github.com/kdex-tech/kdex-crds v0.9.6
+replace kdex.dev/crds => github.com/kdex-tech/kdex-crds v0.9.7
 
 require (
 	github.com/onsi/ginkgo/v2 v2.27.2
@@ -14,7 +14,7 @@ require (
 	k8s.io/apimachinery v0.34.1
 	k8s.io/client-go v0.34.1
 	kdex.dev/crds v0.0.0-00010101000000-000000000000
-	sigs.k8s.io/controller-runtime v0.22.3
+	sigs.k8s.io/controller-runtime v0.22.4
 )
 
 require (
@@ -79,7 +79,7 @@ require (
 	go.opentelemetry.io/otel/metric v1.38.0 // indirect
 	go.opentelemetry.io/otel/sdk v1.38.0 // indirect
 	go.opentelemetry.io/otel/trace v1.38.0 // indirect
-	go.opentelemetry.io/proto/otlp v1.8.0 // indirect
+	go.opentelemetry.io/proto/otlp v1.9.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect

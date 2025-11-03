@@ -42,14 +42,14 @@ type KDexThemeReconciler struct {
 func (r *KDexThemeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx)
 
-	var stylesheet kdexv1alpha1.KDexTheme
-	if err := r.Get(ctx, req.NamespacedName, &stylesheet); err != nil {
+	var theme kdexv1alpha1.KDexTheme
+	if err := r.Get(ctx, req.NamespacedName, &theme); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	if err := validateAssets(stylesheet.Spec.Assets); err != nil {
+	if err := validateAssets(theme.Spec.Assets); err != nil {
 		apimeta.SetStatusCondition(
-			&stylesheet.Status.Conditions,
+			&theme.Status.Conditions,
 			*kdexv1alpha1.NewCondition(
 				kdexv1alpha1.ConditionTypeReady,
 				metav1.ConditionFalse,
@@ -57,7 +57,7 @@ func (r *KDexThemeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 				err.Error(),
 			),
 		)
-		if err := r.Status().Update(ctx, &stylesheet); err != nil {
+		if err := r.Status().Update(ctx, &theme); err != nil {
 			return ctrl.Result{}, err
 		}
 
@@ -67,7 +67,7 @@ func (r *KDexThemeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	log.Info("reconciled KDexTheme")
 
 	apimeta.SetStatusCondition(
-		&stylesheet.Status.Conditions,
+		&theme.Status.Conditions,
 		*kdexv1alpha1.NewCondition(
 			kdexv1alpha1.ConditionTypeReady,
 			metav1.ConditionTrue,
@@ -75,7 +75,7 @@ func (r *KDexThemeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			"content template is valid",
 		),
 	)
-	if err := r.Status().Update(ctx, &stylesheet); err != nil {
+	if err := r.Status().Update(ctx, &theme); err != nil {
 		return ctrl.Result{}, err
 	}
 

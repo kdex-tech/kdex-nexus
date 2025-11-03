@@ -117,15 +117,15 @@ func (r *KDexPageArchetypeReconciler) findPageArchetypesForPageNavigations(
 
 func (r *KDexPageArchetypeReconciler) findPageArchetypesForTheme(
 	ctx context.Context,
-	stylesheet client.Object,
+	theme client.Object,
 ) []reconcile.Request {
 	log := logf.FromContext(ctx)
 
 	var pageArchetypesList kdexv1alpha1.KDexPageArchetypeList
 	if err := r.List(ctx, &pageArchetypesList, &client.ListOptions{
-		Namespace: stylesheet.GetNamespace(),
+		Namespace: theme.GetNamespace(),
 	}); err != nil {
-		log.Error(err, "unable to list KDexPageArchetypes for stylesheet", "name", stylesheet.GetName())
+		log.Error(err, "unable to list KDexPageArchetypes for theme", "name", theme.GetName())
 		return []reconcile.Request{}
 	}
 
@@ -134,7 +134,7 @@ func (r *KDexPageArchetypeReconciler) findPageArchetypesForTheme(
 		if pageArchetype.Spec.OverrideThemeRef == nil {
 			continue
 		}
-		if pageArchetype.Spec.OverrideThemeRef.Name == stylesheet.GetName() {
+		if pageArchetype.Spec.OverrideThemeRef.Name == theme.GetName() {
 			requests = append(requests, reconcile.Request{
 				NamespacedName: types.NamespacedName{
 					Name:      pageArchetype.Name,

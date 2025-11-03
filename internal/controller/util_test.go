@@ -116,20 +116,20 @@ func addOrUpdatePageNavigation(
 func addOrUpdateTheme(
 	ctx context.Context,
 	k8sClient client.Client,
-	stylesheet kdexv1alpha1.KDexTheme,
+	theme kdexv1alpha1.KDexTheme,
 ) {
 	list := &kdexv1alpha1.KDexThemeList{}
 	err := k8sClient.List(ctx, list, &client.ListOptions{
-		Namespace:     stylesheet.Namespace,
-		FieldSelector: fields.OneTermEqualSelector("metadata.name", stylesheet.Name),
+		Namespace:     theme.Namespace,
+		FieldSelector: fields.OneTermEqualSelector("metadata.name", theme.Name),
 	})
 	Expect(err).NotTo(HaveOccurred())
 	if len(list.Items) > 0 {
 		existing := list.Items[0]
-		existing.Spec = stylesheet.Spec
+		existing.Spec = theme.Spec
 		Expect(k8sClient.Update(ctx, &existing)).To(Succeed())
 	} else {
-		Expect(k8sClient.Create(ctx, &stylesheet)).To(Succeed())
+		Expect(k8sClient.Create(ctx, &theme)).To(Succeed())
 	}
 }
 
