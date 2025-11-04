@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -73,7 +73,7 @@ func resolveHost(
 	c client.Client,
 	object client.Object,
 	objectConditions *[]metav1.Condition,
-	hostRef *v1.LocalObjectReference,
+	hostRef *corev1.LocalObjectReference,
 	requeueDelay time.Duration,
 ) (*kdexv1alpha1.KDexHost, bool, ctrl.Result, error) {
 	var host kdexv1alpha1.KDexHost
@@ -153,7 +153,7 @@ func resolvePageFooter(
 	c client.Client,
 	object client.Object,
 	objectConditions *[]metav1.Condition,
-	footerRef *v1.LocalObjectReference,
+	footerRef *corev1.LocalObjectReference,
 	requeueDelay time.Duration,
 ) (*kdexv1alpha1.KDexPageFooter, bool, ctrl.Result, error) {
 	var footer kdexv1alpha1.KDexPageFooter
@@ -197,7 +197,7 @@ func resolvePageHeader(
 	c client.Client,
 	object client.Object,
 	objectConditions *[]metav1.Condition,
-	headerRef *v1.LocalObjectReference,
+	headerRef *corev1.LocalObjectReference,
 	requeueDelay time.Duration,
 ) (*kdexv1alpha1.KDexPageHeader, bool, ctrl.Result, error) {
 	var header kdexv1alpha1.KDexPageHeader
@@ -241,7 +241,7 @@ func resolvePageNavigation(
 	c client.Client,
 	object client.Object,
 	objectConditions *[]metav1.Condition,
-	navigationRef *v1.LocalObjectReference,
+	navigationRef *corev1.LocalObjectReference,
 	requeueDelay time.Duration,
 ) (*kdexv1alpha1.KDexPageNavigation, ctrl.Result, error) {
 	var navigation kdexv1alpha1.KDexPageNavigation
@@ -282,8 +282,8 @@ func resolvePageNavigations(
 	c client.Client,
 	object client.Object,
 	objectConditions *[]metav1.Condition,
-	navigationRef *v1.LocalObjectReference,
-	extraNavigations map[string]*v1.LocalObjectReference,
+	navigationRef *corev1.LocalObjectReference,
+	extraNavigations map[string]*corev1.LocalObjectReference,
 	requeueDelay time.Duration,
 ) (map[string]string, ctrl.Result, error) {
 	navigations := map[string]string{}
@@ -300,7 +300,7 @@ func resolvePageNavigations(
 	}
 
 	if extraNavigations == nil {
-		extraNavigations = map[string]*v1.LocalObjectReference{}
+		extraNavigations = map[string]*corev1.LocalObjectReference{}
 	}
 
 	for navigationName, navigationRef := range extraNavigations {
@@ -322,9 +322,9 @@ func resolvePageBinding(
 	c client.Client,
 	object client.Object,
 	objectConditions *[]metav1.Condition,
-	pageBindingRef *v1.LocalObjectReference,
+	pageBindingRef *corev1.LocalObjectReference,
 	requeueDelay time.Duration,
-) (*v1.LocalObjectReference, bool, ctrl.Result, error) {
+) (*corev1.LocalObjectReference, bool, ctrl.Result, error) {
 	if pageBindingRef != nil {
 		var pageBinding kdexv1alpha1.KDexPageBinding
 		pageBindingName := types.NamespacedName{
@@ -365,7 +365,7 @@ func resolveTheme(
 	c client.Client,
 	object client.Object,
 	objectConditions *[]metav1.Condition,
-	themeRef *v1.LocalObjectReference,
+	themeRef *corev1.LocalObjectReference,
 	requeueDelay time.Duration,
 ) (*kdexv1alpha1.KDexTheme, bool, ctrl.Result, error) {
 	var theme kdexv1alpha1.KDexTheme

@@ -24,6 +24,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
@@ -158,7 +159,6 @@ var _ = Describe("KDexPageBinding Controller", func() {
 						Namespace: namespace,
 					},
 					Spec: kdexv1alpha1.KDexHostSpec{
-						AppPolicy: kdexv1alpha1.NonStrictAppPolicy,
 						Routing: kdexv1alpha1.Routing{
 							Domains: []string{
 								"example.com",
@@ -241,7 +241,6 @@ var _ = Describe("KDexPageBinding Controller", func() {
 						Namespace: namespace,
 					},
 					Spec: kdexv1alpha1.KDexHostSpec{
-						AppPolicy: kdexv1alpha1.NonStrictAppPolicy,
 						Routing: kdexv1alpha1.Routing{
 							Domains: []string{
 								"example.com",
@@ -343,7 +342,6 @@ var _ = Describe("KDexPageBinding Controller", func() {
 						Namespace: namespace,
 					},
 					Spec: kdexv1alpha1.KDexHostSpec{
-						AppPolicy: kdexv1alpha1.NonStrictAppPolicy,
 						Routing: kdexv1alpha1.Routing{
 							Domains: []string{
 								"example.com",
@@ -383,11 +381,11 @@ var _ = Describe("KDexPageBinding Controller", func() {
 							Slot:    "main",
 						},
 					},
-					HostRef: corev1.LocalObjectReference{
+					HostRef: v1.LocalObjectReference{
 						Name: "non-existent-host",
 					},
 					Label: "foo",
-					PageArchetypeRef: corev1.LocalObjectReference{
+					PageArchetypeRef: v1.LocalObjectReference{
 						Name: "non-existent-page-archetype",
 					},
 					Paths: kdexv1alpha1.Paths{
@@ -416,14 +414,14 @@ var _ = Describe("KDexPageBinding Controller", func() {
 							Slot:    "main",
 						},
 					},
-					HostRef: corev1.LocalObjectReference{
+					HostRef: v1.LocalObjectReference{
 						Name: "non-existent-host",
 					},
 					Label: "foo",
-					OverrideHeaderRef: &corev1.LocalObjectReference{
+					OverrideHeaderRef: &v1.LocalObjectReference{
 						Name: "non-existent-header",
 					},
-					PageArchetypeRef: corev1.LocalObjectReference{
+					PageArchetypeRef: v1.LocalObjectReference{
 						Name: "non-existent-page-archetype",
 					},
 					Paths: kdexv1alpha1.Paths{
@@ -447,7 +445,6 @@ var _ = Describe("KDexPageBinding Controller", func() {
 						Namespace: namespace,
 					},
 					Spec: kdexv1alpha1.KDexHostSpec{
-						AppPolicy: kdexv1alpha1.NonStrictAppPolicy,
 						Routing: kdexv1alpha1.Routing{
 							Domains: []string{
 								"example.com",
@@ -544,11 +541,11 @@ var _ = Describe("KDexPageBinding Controller", func() {
 							Slot:    "main",
 						},
 					},
-					HostRef: corev1.LocalObjectReference{
+					HostRef: v1.LocalObjectReference{
 						Name: "non-existent-host",
 					},
 					Label: "foo",
-					PageArchetypeRef: corev1.LocalObjectReference{
+					PageArchetypeRef: v1.LocalObjectReference{
 						Name: "non-existent-page-archetype",
 					},
 					Paths: kdexv1alpha1.Paths{
@@ -572,7 +569,6 @@ var _ = Describe("KDexPageBinding Controller", func() {
 						Namespace: namespace,
 					},
 					Spec: kdexv1alpha1.KDexHostSpec{
-						AppPolicy: kdexv1alpha1.NonStrictAppPolicy,
 						Routing: kdexv1alpha1.Routing{
 							Domains: []string{
 								"example.com",
@@ -592,7 +588,7 @@ var _ = Describe("KDexPageBinding Controller", func() {
 					},
 					Spec: kdexv1alpha1.KDexPageArchetypeSpec{
 						Content: "<h1>Hello, World!</h1>",
-						DefaultHeaderRef: &corev1.LocalObjectReference{
+						DefaultHeaderRef: &v1.LocalObjectReference{
 							Name: "non-existent-header",
 						},
 					},
