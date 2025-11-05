@@ -27,7 +27,7 @@ func addOrUpdateHost(
 	if len(list.Items) > 0 {
 		existing := list.Items[0]
 		existing.Spec = host.Spec
-		Expect(k8sClient.Update(ctx, &existing)).To(Succeed())
+		Eventually(k8sClient.Update(ctx, &existing)).Should(Succeed())
 	} else {
 		Expect(k8sClient.Create(ctx, &host)).To(Succeed())
 	}
@@ -47,7 +47,7 @@ func addOrUpdatePageArchetype(
 	if len(list.Items) > 0 {
 		existing := list.Items[0]
 		existing.Spec = pageArchetype.Spec
-		Expect(k8sClient.Update(ctx, &existing)).To(Succeed())
+		Eventually(k8sClient.Update(ctx, &existing)).Should(Succeed())
 	} else {
 		Expect(k8sClient.Create(ctx, &pageArchetype)).To(Succeed())
 	}
@@ -67,7 +67,7 @@ func addOrUpdatePageHeader(
 	if len(list.Items) > 0 {
 		existing := list.Items[0]
 		existing.Spec = pageHeader.Spec
-		Expect(k8sClient.Update(ctx, &existing)).To(Succeed())
+		Eventually(k8sClient.Update(ctx, &existing)).Should(Succeed())
 	} else {
 		Expect(k8sClient.Create(ctx, &pageHeader)).To(Succeed())
 	}
@@ -87,7 +87,7 @@ func addOrUpdatePageFooter(
 	if len(list.Items) > 0 {
 		existing := list.Items[0]
 		existing.Spec = pageFooter.Spec
-		Expect(k8sClient.Update(ctx, &existing)).To(Succeed())
+		Eventually(k8sClient.Update(ctx, &existing)).Should(Succeed())
 	} else {
 		Expect(k8sClient.Create(ctx, &pageFooter)).To(Succeed())
 	}
@@ -107,7 +107,7 @@ func addOrUpdatePageNavigation(
 	if len(list.Items) > 0 {
 		existing := list.Items[0]
 		existing.Spec = pageNavigation.Spec
-		Expect(k8sClient.Update(ctx, &existing)).To(Succeed())
+		Eventually(k8sClient.Update(ctx, &existing)).Should(Succeed())
 	} else {
 		Expect(k8sClient.Create(ctx, &pageNavigation)).To(Succeed())
 	}
@@ -127,7 +127,7 @@ func addOrUpdateTheme(
 	if len(list.Items) > 0 {
 		existing := list.Items[0]
 		existing.Spec = theme.Spec
-		Expect(k8sClient.Update(ctx, &existing)).To(Succeed())
+		Eventually(k8sClient.Update(ctx, &existing)).Should(Succeed())
 	} else {
 		Expect(k8sClient.Create(ctx, &theme)).To(Succeed())
 	}

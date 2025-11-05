@@ -18,8 +18,9 @@ package controller
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
-	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
@@ -47,37 +48,90 @@ func (r *KDexThemeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	if err := validateAssets(theme.Spec.Assets); err != nil {
-		apimeta.SetStatusCondition(
-			&theme.Status.Conditions,
-			*kdexv1alpha1.NewCondition(
-				kdexv1alpha1.ConditionTypeReady,
-				metav1.ConditionFalse,
-				kdexv1alpha1.ConditionReasonReconcileError,
-				err.Error(),
-			),
-		)
-		if err := r.Status().Update(ctx, &theme); err != nil {
-			return ctrl.Result{}, err
-		}
-
-		return ctrl.Result{}, err
-	}
-
-	log.Info("reconciled KDexTheme")
-
-	apimeta.SetStatusCondition(
+	kdexv1alpha1.SetConditions(
 		&theme.Status.Conditions,
-		*kdexv1alpha1.NewCondition(
-			kdexv1alpha1.ConditionTypeReady,
-			metav1.ConditionTrue,
-			kdexv1alpha1.ConditionReasonReconcileSuccess,
-			"content template is valid",
-		),
+		kdexv1alpha1.ConditionArgs{
+			Degraded: &kdexv1alpha1.ConditionFields{
+				Status:  metav1.ConditionFalse,
+				Reason:  kdexv1alpha1.ConditionReasonReconciling,
+				Message: "Reconciling",
+			},
+			Progressing: &kdexv1alpha1.ConditionFields{
+				Status:  metav1.ConditionTrue,
+				Reason:  kdexv1alpha1.ConditionReasonReconciling,
+				Message: "Reconciling",
+			},
+			Ready: &kdexv1alpha1.ConditionFields{
+				Status:  metav1.ConditionUnknown,
+				Reason:  kdexv1alpha1.ConditionReasonReconciling,
+				Message: "Reconciling",
+			},
+		},
 	)
 	if err := r.Status().Update(ctx, &theme); err != nil {
 		return ctrl.Result{}, err
 	}
+
+	// Defer status update
+	defer func() {
+		theme.Status.ObservedGeneration = theme.Generation
+		if err := r.Status().Update(ctx, &theme); err != nil {
+			log.Error(err, "failed to update theme status")
+		}
+	}()
+
+	if err := validateSpec(theme.Spec); err != nil {
+		kdexv1alpha1.SetConditions(
+			&theme.Status.Conditions,
+			kdexv1alpha1.ConditionArgs{
+				Degraded: &kdexv1alpha1.ConditionFields{
+					Status:  metav1.ConditionTrue,
+					Reason:  "SpecValidationFailed",
+					Message: err.Error(),
+				},
+				Progressing: &kdexv1alpha1.ConditionFields{
+					Status:  metav1.ConditionFalse,
+					Reason:  "SpecValidationFailed",
+					Message: "Spec invalid",
+				},
+				Ready: &kdexv1alpha1.ConditionFields{
+					Status:  metav1.ConditionFalse,
+					Reason:  "SpecValidationFailed",
+					Message: "Spec invalid",
+				},
+			},
+		)
+		if err := r.Status().Update(ctx, &theme); err != nil {
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{}, err
+	}
+
+	kdexv1alpha1.SetConditions(
+		&theme.Status.Conditions,
+		kdexv1alpha1.ConditionArgs{
+			Degraded: &kdexv1alpha1.ConditionFields{
+				Status:  metav1.ConditionFalse,
+				Reason:  kdexv1alpha1.ConditionReasonReconcileSuccess,
+				Message: "Reconciliation successful",
+			},
+			Progressing: &kdexv1alpha1.ConditionFields{
+				Status:  metav1.ConditionFalse,
+				Reason:  kdexv1alpha1.ConditionReasonReconcileSuccess,
+				Message: "Reconciliation successful",
+			},
+			Ready: &kdexv1alpha1.ConditionFields{
+				Status:  metav1.ConditionTrue,
+				Reason:  kdexv1alpha1.ConditionReasonReconcileSuccess,
+				Message: "Reconciliation successful",
+			},
+		},
+	)
+	if err := r.Status().Update(ctx, &theme); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	log.Info("reconciled KDexTheme")
 
 	return ctrl.Result{}, nil
 }
@@ -90,12 +144,43 @@ func (r *KDexThemeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func validateAssets(assets kdexv1alpha1.Assets) error {
+func validateSpec(spec kdexv1alpha1.KDexThemeSpec) error {
+	if spec.Image == "" || spec.RoutePath == "" {
+		for _, asset := range spec.Assets {
+			if asset.LinkHref == "" && asset.Style != "" {
+				continue
+			}
+
+			if asset.LinkHref != "" && !strings.Contains(asset.LinkHref, "://") {
+				return fmt.Errorf("linkHref %s contains relative url but no theme image was provided", asset.LinkHref)
+			}
+		}
+	}
+
+	if spec.Image != "" && spec.RoutePath == "" {
+		return fmt.Errorf("routePath must be specified when an image is specified")
+	}
+
+	if spec.Image != "" && spec.RoutePath != "" {
+		for _, asset := range spec.Assets {
+			if asset.LinkHref == "" && asset.Style != "" {
+				continue
+			}
+
+			if asset.LinkHref != "" &&
+				!strings.Contains(asset.LinkHref, "://") &&
+				!strings.HasPrefix(asset.LinkHref, spec.RoutePath) {
+
+				return fmt.Errorf("linkHref %s is not prefixed by %s", asset.LinkHref, spec.RoutePath)
+			}
+		}
+	}
+
 	renderer := render.Renderer{}
 
 	_, err := renderer.RenderOne(
 		"theme-assets",
-		assets.String(),
+		spec.String(),
 		render.DefaultTemplateData(),
 	)
 

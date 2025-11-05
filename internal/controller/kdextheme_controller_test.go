@@ -38,21 +38,31 @@ var _ = Describe("KDexTheme Controller", func() {
 			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexTheme{}, client.InNamespace(namespace))).To(Succeed())
 		})
 
-		It("should successfully reconcile the resource", func() {
+		It("should not reconcile without assets", func() {
+			resource := &kdexv1alpha1.KDexTheme{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.KDexThemeSpec{},
+			}
+
+			Expect(k8sClient.Create(ctx, resource)).NotTo(Succeed())
+		})
+
+		It("should reconcile with only absolute assets references", func() {
 			resource := &kdexv1alpha1.KDexTheme{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
 					Namespace: namespace,
 				},
 				Spec: kdexv1alpha1.KDexThemeSpec{
-					Assets: kdexv1alpha1.Assets{
-						Assets: []kdexv1alpha1.Asset{
-							{
-								Attributes: map[string]string{
-									"rel": "stylesheet",
-								},
-								LinkHref: "style.css",
+					Assets: []kdexv1alpha1.Asset{
+						{
+							Attributes: map[string]string{
+								"rel": "stylesheet",
 							},
+							LinkHref: "http://kdex.dev/style.css",
 						},
 					},
 				},
@@ -65,7 +75,32 @@ var _ = Describe("KDexTheme Controller", func() {
 				&kdexv1alpha1.KDexTheme{}, true)
 		})
 
-		It("should successfully reconcile after template becomes valid html", func() {
+		It("should not reconcile with relative assets but no image specified", func() {
+			resource := &kdexv1alpha1.KDexTheme{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.KDexThemeSpec{
+					Assets: []kdexv1alpha1.Asset{
+						{
+							Attributes: map[string]string{
+								"rel": "stylesheet",
+							},
+							LinkHref: "/style.css",
+						},
+					},
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.KDexTheme{}, false)
+		})
+
+		It("should successfully reconcile after assets becomes valid", func() {
 			addOrUpdateTheme(
 				ctx, k8sClient,
 				kdexv1alpha1.KDexTheme{
@@ -74,14 +109,12 @@ var _ = Describe("KDexTheme Controller", func() {
 						Namespace: namespace,
 					},
 					Spec: kdexv1alpha1.KDexThemeSpec{
-						Assets: kdexv1alpha1.Assets{
-							Assets: []kdexv1alpha1.Asset{
-								{
-									Attributes: map[string]string{
-										"!": `"`,
-									},
-									LinkHref: `"`,
+						Assets: []kdexv1alpha1.Asset{
+							{
+								Attributes: map[string]string{
+									"!": `"`,
 								},
+								LinkHref: `"`,
 							},
 						},
 					},
@@ -100,14 +133,12 @@ var _ = Describe("KDexTheme Controller", func() {
 						Namespace: namespace,
 					},
 					Spec: kdexv1alpha1.KDexThemeSpec{
-						Assets: kdexv1alpha1.Assets{
-							Assets: []kdexv1alpha1.Asset{
-								{
-									Attributes: map[string]string{
-										"rel": "stylesheet",
-									},
-									LinkHref: "style.css",
+						Assets: []kdexv1alpha1.Asset{
+							{
+								Attributes: map[string]string{
+									"rel": "stylesheet",
 								},
+								LinkHref: "http://kdex.dev/style.css",
 							},
 						},
 					},
@@ -117,6 +148,85 @@ var _ = Describe("KDexTheme Controller", func() {
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
 				&kdexv1alpha1.KDexTheme{}, true)
+		})
+
+		It("should not reconcile with image but no routePath", func() {
+			resource := &kdexv1alpha1.KDexTheme{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.KDexThemeSpec{
+					Assets: []kdexv1alpha1.Asset{
+						{
+							Attributes: map[string]string{
+								"rel": "stylesheet",
+							},
+							LinkHref: "/style.css",
+						},
+					},
+					Image: "foo/bar",
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.KDexTheme{}, false)
+		})
+
+		It("should not reconcile with no image but routePath", func() {
+			resource := &kdexv1alpha1.KDexTheme{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.KDexThemeSpec{
+					Assets: []kdexv1alpha1.Asset{
+						{
+							Attributes: map[string]string{
+								"rel": "stylesheet",
+							},
+							LinkHref: "/style.css",
+						},
+					},
+					RoutePath: "/theme",
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.KDexTheme{}, false)
+		})
+
+		It("should not reconcile with image, routePath and relative assets that are not prefixed by routePath", func() {
+			resource := &kdexv1alpha1.KDexTheme{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.KDexThemeSpec{
+					Assets: []kdexv1alpha1.Asset{
+						{
+							Attributes: map[string]string{
+								"rel": "stylesheet",
+							},
+							LinkHref: "/style.css",
+						},
+					},
+					Image:     "foo/bar",
+					RoutePath: "/theme",
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.KDexTheme{}, false)
 		})
 	})
 })
