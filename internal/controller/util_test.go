@@ -113,6 +113,26 @@ func addOrUpdatePageNavigation(
 	}
 }
 
+func addOrUpdateScriptLibrary(
+	ctx context.Context,
+	k8sClient client.Client,
+	scriptLibrary kdexv1alpha1.KDexScriptLibrary,
+) {
+	list := &kdexv1alpha1.KDexScriptLibraryList{}
+	err := k8sClient.List(ctx, list, &client.ListOptions{
+		Namespace:     scriptLibrary.Namespace,
+		FieldSelector: fields.OneTermEqualSelector("metadata.name", scriptLibrary.Name),
+	})
+	Expect(err).NotTo(HaveOccurred())
+	if len(list.Items) > 0 {
+		existing := list.Items[0]
+		existing.Spec = scriptLibrary.Spec
+		Eventually(k8sClient.Update(ctx, &existing)).Should(Succeed())
+	} else {
+		Expect(k8sClient.Create(ctx, &scriptLibrary)).To(Succeed())
+	}
+}
+
 func addOrUpdateTheme(
 	ctx context.Context,
 	k8sClient client.Client,

@@ -360,6 +360,60 @@ func resolvePageBinding(
 	return pageBindingRef, false, ctrl.Result{}, nil
 }
 
+func resolveScriptLibrary(
+	ctx context.Context,
+	c client.Client,
+	object client.Object,
+	objectConditions *[]metav1.Condition,
+	scriptLibraryRef *corev1.LocalObjectReference,
+	requeueDelay time.Duration,
+) (*kdexv1alpha1.KDexScriptLibrary, bool, ctrl.Result, error) {
+	var scriptLibrary kdexv1alpha1.KDexScriptLibrary
+	if scriptLibraryRef != nil {
+		scriptLibraryName := types.NamespacedName{
+			Name:      scriptLibraryRef.Name,
+			Namespace: object.GetNamespace(),
+		}
+		if err := c.Get(ctx, scriptLibraryName, &scriptLibrary); err != nil {
+			if errors.IsNotFound(err) {
+				kdexv1alpha1.SetConditions(
+					objectConditions,
+					kdexv1alpha1.ConditionArgs{
+						Degraded: &kdexv1alpha1.ConditionFields{
+							Status:  metav1.ConditionTrue,
+							Reason:  "ScriptLibraryNotFound",
+							Message: fmt.Sprintf("referenced KDexScriptLibrary %s not found", scriptLibraryName.Name),
+						},
+						Progressing: &kdexv1alpha1.ConditionFields{
+							Status:  metav1.ConditionFalse,
+							Reason:  "ScriptLibraryNotFound",
+							Message: "Reconciliation failed",
+						},
+						Ready: &kdexv1alpha1.ConditionFields{
+							Status:  metav1.ConditionFalse,
+							Reason:  "ScriptLibraryNotFound",
+							Message: "Reconciliation failed",
+						},
+					},
+				)
+				if err := c.Status().Update(ctx, object); err != nil {
+					return nil, true, ctrl.Result{}, err
+				}
+
+				return nil, true, ctrl.Result{RequeueAfter: requeueDelay}, nil
+			}
+
+			return nil, true, ctrl.Result{}, err
+		}
+
+		if isReady, r1, err := isReady(ctx, c, object, &scriptLibrary, &scriptLibrary.Status.Conditions, requeueDelay); !isReady {
+			return nil, true, r1, err
+		}
+	}
+
+	return &scriptLibrary, false, ctrl.Result{}, nil
+}
+
 func resolveSecret(
 	ctx context.Context,
 	c client.Client,
@@ -396,7 +450,9 @@ func resolveSecret(
 						},
 					},
 				)
-
+				if err := c.Status().Update(ctx, object); err != nil {
+					return nil, true, ctrl.Result{}, err
+				}
 				return nil, true, ctrl.Result{RequeueAfter: requeueDelay}, nil
 			}
 		}
