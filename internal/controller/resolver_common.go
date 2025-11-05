@@ -360,6 +360,51 @@ func resolvePageBinding(
 	return pageBindingRef, false, ctrl.Result{}, nil
 }
 
+func resolveSecret(
+	ctx context.Context,
+	c client.Client,
+	object client.Object,
+	objectConditions *[]metav1.Condition,
+	secretRef *corev1.LocalObjectReference,
+	requeueDelay time.Duration,
+) (*corev1.Secret, bool, ctrl.Result, error) {
+	secret := corev1.Secret{}
+	if secretRef != nil {
+		secretName := types.NamespacedName{
+			Name:      secretRef.Name,
+			Namespace: object.GetNamespace(),
+		}
+		if err := c.Get(ctx, secretName, &secret); err != nil {
+			if errors.IsNotFound(err) {
+				kdexv1alpha1.SetConditions(
+					objectConditions,
+					kdexv1alpha1.ConditionArgs{
+						Degraded: &kdexv1alpha1.ConditionFields{
+							Status:  metav1.ConditionTrue,
+							Reason:  "SecretNotFound",
+							Message: fmt.Sprintf("referenced Secret %s not found", secretName.Name),
+						},
+						Progressing: &kdexv1alpha1.ConditionFields{
+							Status:  metav1.ConditionFalse,
+							Reason:  "SecretNotFound",
+							Message: "Reconciliation failed",
+						},
+						Ready: &kdexv1alpha1.ConditionFields{
+							Status:  metav1.ConditionFalse,
+							Reason:  "SecretNotFound",
+							Message: "Reconciliation failed",
+						},
+					},
+				)
+
+				return nil, true, ctrl.Result{RequeueAfter: requeueDelay}, nil
+			}
+		}
+	}
+
+	return &secret, false, ctrl.Result{}, nil
+}
+
 func resolveTheme(
 	ctx context.Context,
 	c client.Client,

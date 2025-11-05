@@ -18,16 +18,11 @@ package controller
 
 import (
 	"context"
-	"fmt"
-	"strings"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	"kdex.dev/nexus/internal/npm"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -57,39 +52,92 @@ func (r *KDexAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	secret := corev1.Secret{}
-	if app.Spec.PackageReference.SecretRef != nil {
-		secretName := types.NamespacedName{
-			Name:      app.Spec.PackageReference.SecretRef.Name,
-			Namespace: app.Namespace,
-		}
-		if err := r.Get(ctx, secretName, &secret); err != nil {
-			if errors.IsNotFound(err) {
-				apimeta.SetStatusCondition(
-					&app.Status.Conditions,
-					*kdexv1alpha1.NewCondition(
-						kdexv1alpha1.ConditionTypeReady,
-						metav1.ConditionFalse,
-						kdexv1alpha1.ConditionReasonReconcileError,
-						fmt.Sprintf("referenced Secret %s not found", secretName.Name),
-					),
-				)
-				if err := r.Status().Update(ctx, &app); err != nil {
-					return ctrl.Result{}, err
-				}
-
-				return ctrl.Result{RequeueAfter: r.RequeueDelay}, nil
-			}
-		}
+	kdexv1alpha1.SetConditions(
+		&app.Status.Conditions,
+		kdexv1alpha1.ConditionArgs{
+			Degraded: &kdexv1alpha1.ConditionFields{
+				Status:  metav1.ConditionFalse,
+				Reason:  kdexv1alpha1.ConditionReasonReconciling,
+				Message: "Reconciling",
+			},
+			Progressing: &kdexv1alpha1.ConditionFields{
+				Status:  metav1.ConditionTrue,
+				Reason:  kdexv1alpha1.ConditionReasonReconciling,
+				Message: "Reconciling",
+			},
+			Ready: &kdexv1alpha1.ConditionFields{
+				Status:  metav1.ConditionUnknown,
+				Reason:  kdexv1alpha1.ConditionReasonReconciling,
+				Message: "Reconciling",
+			},
+		},
+	)
+	if err := r.Status().Update(ctx, &app); err != nil {
+		return ctrl.Result{}, err
 	}
 
-	if err := r.validatePackageReference(ctx, &app, &secret); err != nil {
-		if apimeta.IsStatusConditionFalse(app.Status.Conditions, kdexv1alpha1.ConditionTypeReady.String()) {
-			condition := apimeta.FindStatusCondition(app.Status.Conditions, kdexv1alpha1.ConditionTypeReady.String())
-			if condition.Reason == "PackageValidationFailed" {
-				return ctrl.Result{}, err
-			}
+	// Defer status update
+	defer func() {
+		app.Status.ObservedGeneration = app.Generation
+		if err := r.Status().Update(ctx, &app); err != nil {
+			log.Error(err, "failed to update app status")
 		}
+	}()
+
+	secret, shouldReturn, r1, err := resolveSecret(ctx, r.Client, &app, &app.Status.Conditions, app.Spec.PackageReference.SecretRef, r.RequeueDelay)
+	if shouldReturn {
+		return r1, err
+	}
+
+	if err := validatePackageReference(ctx, &app.Spec.PackageReference, secret, r.RegistryFactory); err != nil {
+		kdexv1alpha1.SetConditions(
+			&app.Status.Conditions,
+			kdexv1alpha1.ConditionArgs{
+				Degraded: &kdexv1alpha1.ConditionFields{
+					Status:  metav1.ConditionTrue,
+					Reason:  "PackageValidationFailed",
+					Message: err.Error(),
+				},
+				Progressing: &kdexv1alpha1.ConditionFields{
+					Status:  metav1.ConditionFalse,
+					Reason:  "PackageValidationFailed",
+					Message: "Reconciliation failed",
+				},
+				Ready: &kdexv1alpha1.ConditionFields{
+					Status:  metav1.ConditionFalse,
+					Reason:  "PackageValidationFailed",
+					Message: "Reconciliation failed",
+				},
+			},
+		)
+		if err := r.Status().Update(ctx, &app); err != nil {
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{}, err
+	}
+
+	kdexv1alpha1.SetConditions(
+		&app.Status.Conditions,
+		kdexv1alpha1.ConditionArgs{
+			Degraded: &kdexv1alpha1.ConditionFields{
+				Status:  metav1.ConditionFalse,
+				Reason:  kdexv1alpha1.ConditionReasonReconcileSuccess,
+				Message: "Reconciliation successful",
+			},
+			Progressing: &kdexv1alpha1.ConditionFields{
+				Status:  metav1.ConditionFalse,
+				Reason:  kdexv1alpha1.ConditionReasonReconcileSuccess,
+				Message: "Reconciliation successful",
+			},
+			Ready: &kdexv1alpha1.ConditionFields{
+				Status:  metav1.ConditionTrue,
+				Reason:  kdexv1alpha1.ConditionReasonReconcileSuccess,
+				Message: "Reconciliation successful",
+			},
+		},
+	)
+	if err := r.Status().Update(ctx, &app); err != nil {
+		return ctrl.Result{}, err
 	}
 
 	log.Info("reconciled KDexApp")
@@ -107,66 +155,4 @@ func (r *KDexAppReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		).
 		Named("kdexapp").
 		Complete(r)
-}
-
-func (r *KDexAppReconciler) validatePackageReference(
-	ctx context.Context, app *kdexv1alpha1.KDexApp, secret *corev1.Secret,
-) error {
-	log := logf.FromContext(ctx)
-
-	if apimeta.IsStatusConditionTrue(app.Status.Conditions, kdexv1alpha1.ConditionTypeReady.String()) {
-		return nil
-	}
-
-	log.Info("validating package reference for KDexApp", "app", app.Name)
-
-	if !strings.HasPrefix(app.Spec.PackageReference.Name, "@") || !strings.Contains(app.Spec.PackageReference.Name, "/") {
-		apimeta.SetStatusCondition(&app.Status.Conditions, *kdexv1alpha1.NewCondition(
-			kdexv1alpha1.ConditionTypeReady,
-			metav1.ConditionFalse,
-			"PackageValidationFailed",
-			fmt.Sprintf("invalid package name, must be scoped with @scope/name: %s", app.Spec.PackageReference.Name),
-		))
-		if err := r.Status().Update(ctx, app); err != nil {
-			return err
-		}
-		return fmt.Errorf("invalid package name, must be scoped with @scope/name: %s", app.Spec.PackageReference.Name)
-	}
-
-	registry := r.RegistryFactory(secret, log.Error)
-
-	var condition metav1.Condition
-
-	if err := registry.ValidatePackage(
-		app.Spec.PackageReference.Name,
-		app.Spec.PackageReference.Version,
-	); err != nil {
-		condition = *kdexv1alpha1.NewCondition(
-			kdexv1alpha1.ConditionTypeReady,
-			metav1.ConditionFalse,
-			"PackageValidationFailed",
-			err.Error(),
-		)
-	} else {
-		condition = *kdexv1alpha1.NewCondition(
-			kdexv1alpha1.ConditionTypeReady,
-			metav1.ConditionTrue,
-			kdexv1alpha1.ConditionReasonReconcileSuccess,
-			"all references resolved successfully",
-		)
-	}
-
-	appName := types.NamespacedName{
-		Name:      app.Name,
-		Namespace: app.Namespace,
-	}
-
-	if err := r.Get(ctx, appName, app); err != nil {
-		return err
-	}
-	apimeta.SetStatusCondition(
-		&app.Status.Conditions,
-		condition,
-	)
-	return r.Status().Update(ctx, app)
 }

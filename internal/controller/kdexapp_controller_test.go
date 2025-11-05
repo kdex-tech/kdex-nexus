@@ -22,9 +22,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
-	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -39,15 +37,6 @@ var _ = Describe("KDexApp Controller", func() {
 		AfterEach(func() {
 			By("Cleanup all the test resource instances")
 			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexApp{}, client.InNamespace(namespace))).To(Succeed())
-
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexHost{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageArchetype{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageBinding{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageFooter{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageHeader{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageNavigation{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexTheme{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexTranslation{}, client.InNamespace(namespace))).To(Succeed())
 		})
 
 		It("it must not become ready if it has missing package reference", func() {
@@ -68,41 +57,9 @@ var _ = Describe("KDexApp Controller", func() {
 
 			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 
-			typeNamespacedName := types.NamespacedName{
-				Name:      resourceName,
-				Namespace: namespace,
-			}
-
-			check := func(g Gomega) {
-				checkResource := &kdexv1alpha1.KDexApp{}
-				err := k8sClient.Get(ctx, typeNamespacedName, checkResource)
-
-				g.Expect(err).NotTo(HaveOccurred())
-
-				condition := apimeta.FindStatusCondition(
-					checkResource.Status.Conditions,
-					string(kdexv1alpha1.ConditionTypeReady),
-				)
-
-				g.Expect(condition).ToNot(BeNil())
-				g.Expect(
-					condition.Status,
-				).To(
-					Equal(metav1.ConditionFalse),
-				)
-				g.Expect(
-					condition.Reason,
-				).To(
-					Equal("PackageValidationFailed"),
-				)
-				g.Expect(
-					condition.Message,
-				).To(
-					ContainSubstring("invalid package name, must be scoped with @scope/name:"),
-				)
-			}
-
-			Eventually(check).Should(Succeed())
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.KDexApp{}, false)
 		})
 
 		It("it should become ready if it has a valid package reference", func() {
@@ -127,41 +84,9 @@ var _ = Describe("KDexApp Controller", func() {
 
 			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 
-			typeNamespacedName := types.NamespacedName{
-				Name:      resourceName,
-				Namespace: namespace,
-			}
-
-			check := func(g Gomega) {
-				checkResource := &kdexv1alpha1.KDexApp{}
-				err := k8sClient.Get(ctx, typeNamespacedName, checkResource)
-
-				g.Expect(err).NotTo(HaveOccurred())
-
-				condition := apimeta.FindStatusCondition(
-					checkResource.Status.Conditions,
-					string(kdexv1alpha1.ConditionTypeReady),
-				)
-
-				g.Expect(condition).ToNot(BeNil())
-				g.Expect(
-					condition.Status,
-				).To(
-					Equal(metav1.ConditionTrue),
-				)
-				g.Expect(
-					condition.Reason,
-				).To(
-					Equal(string(kdexv1alpha1.ConditionReasonReconcileSuccess)),
-				)
-				g.Expect(
-					condition.Message,
-				).To(
-					Equal("all references resolved successfully"),
-				)
-			}
-
-			Eventually(check).Should(Succeed())
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.KDexApp{}, true)
 		})
 
 		It("should not become ready if it has a unscoped package reference", func() {
@@ -186,40 +111,9 @@ var _ = Describe("KDexApp Controller", func() {
 
 			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 
-			typeNamespacedName := types.NamespacedName{
-				Name:      resourceName,
-				Namespace: namespace,
-			}
-
-			check := func(g Gomega) {
-				checkResource := &kdexv1alpha1.KDexApp{}
-				err := k8sClient.Get(ctx, typeNamespacedName, checkResource)
-				g.Expect(err).NotTo(HaveOccurred())
-
-				condition := apimeta.FindStatusCondition(
-					checkResource.Status.Conditions,
-					string(kdexv1alpha1.ConditionTypeReady),
-				)
-
-				g.Expect(condition).ToNot(BeNil())
-				g.Expect(
-					condition.Status,
-				).To(
-					Equal(metav1.ConditionFalse),
-				)
-				g.Expect(
-					condition.Reason,
-				).To(
-					Equal("PackageValidationFailed"),
-				)
-				g.Expect(
-					condition.Message,
-				).To(
-					ContainSubstring("invalid package name, must be scoped with @scope/name:"),
-				)
-			}
-
-			Eventually(check).Should(Succeed())
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.KDexApp{}, false)
 		})
 
 		It("it must not become ready if it has a valid package reference but the package is missing", func() {
@@ -244,41 +138,9 @@ var _ = Describe("KDexApp Controller", func() {
 
 			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 
-			typeNamespacedName := types.NamespacedName{
-				Name:      resourceName,
-				Namespace: namespace,
-			}
-
-			check := func(g Gomega) {
-				checkResource := &kdexv1alpha1.KDexApp{}
-				err := k8sClient.Get(ctx, typeNamespacedName, checkResource)
-
-				g.Expect(err).NotTo(HaveOccurred())
-
-				condition := apimeta.FindStatusCondition(
-					checkResource.Status.Conditions,
-					string(kdexv1alpha1.ConditionTypeReady),
-				)
-
-				g.Expect(condition).ToNot(BeNil())
-				g.Expect(
-					condition.Status,
-				).To(
-					Equal(metav1.ConditionFalse),
-				)
-				g.Expect(
-					condition.Reason,
-				).To(
-					Equal("PackageValidationFailed"),
-				)
-				g.Expect(
-					condition.Message,
-				).To(
-					Equal("package not found: @my-scope/missing"),
-				)
-			}
-
-			Eventually(check).Should(Succeed())
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.KDexApp{}, false)
 		})
 
 		It("should not become ready when referenced secret is not found", func() {
@@ -306,40 +168,9 @@ var _ = Describe("KDexApp Controller", func() {
 
 			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 
-			typeNamespacedName := types.NamespacedName{
-				Name:      resourceName,
-				Namespace: namespace,
-			}
-
-			check := func(g Gomega) {
-				checkResource := &kdexv1alpha1.KDexApp{}
-				err := k8sClient.Get(ctx, typeNamespacedName, checkResource)
-				g.Expect(err).NotTo(HaveOccurred())
-
-				condition := apimeta.FindStatusCondition(
-					checkResource.Status.Conditions,
-					string(kdexv1alpha1.ConditionTypeReady),
-				)
-
-				g.Expect(condition).ToNot(BeNil())
-				g.Expect(
-					condition.Status,
-				).To(
-					Equal(metav1.ConditionFalse),
-				)
-				g.Expect(
-					condition.Reason,
-				).To(
-					Equal("ReconcileError"),
-				)
-				g.Expect(
-					condition.Message,
-				).To(
-					Equal("referenced Secret non-existent-secret not found"),
-				)
-			}
-
-			Eventually(check).Should(Succeed())
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.KDexApp{}, false)
 		})
 
 		It("should become ready when referenced secret is found", func() {
@@ -367,40 +198,9 @@ var _ = Describe("KDexApp Controller", func() {
 
 			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 
-			typeNamespacedName := types.NamespacedName{
-				Name:      resourceName,
-				Namespace: namespace,
-			}
-
-			check := func(g Gomega) {
-				checkResource := &kdexv1alpha1.KDexApp{}
-				err := k8sClient.Get(ctx, typeNamespacedName, checkResource)
-				g.Expect(err).NotTo(HaveOccurred())
-
-				condition := apimeta.FindStatusCondition(
-					checkResource.Status.Conditions,
-					string(kdexv1alpha1.ConditionTypeReady),
-				)
-
-				g.Expect(condition).ToNot(BeNil())
-				g.Expect(
-					condition.Status,
-				).To(
-					Equal(metav1.ConditionFalse),
-				)
-				g.Expect(
-					condition.Reason,
-				).To(
-					Equal("ReconcileError"),
-				)
-				g.Expect(
-					condition.Message,
-				).To(
-					Equal("referenced Secret existent-secret not found"),
-				)
-			}
-
-			Eventually(check).Should(Succeed())
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.KDexApp{}, false)
 
 			secret := &corev1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
@@ -418,35 +218,9 @@ var _ = Describe("KDexApp Controller", func() {
 
 			Expect(k8sClient.Create(ctx, secret)).To(Succeed())
 
-			check = func(g Gomega) {
-				checkResource := &kdexv1alpha1.KDexApp{}
-				err := k8sClient.Get(ctx, typeNamespacedName, checkResource)
-				g.Expect(err).NotTo(HaveOccurred())
-
-				condition := apimeta.FindStatusCondition(
-					checkResource.Status.Conditions,
-					string(kdexv1alpha1.ConditionTypeReady),
-				)
-
-				g.Expect(condition).ToNot(BeNil())
-				g.Expect(
-					condition.Status,
-				).To(
-					Equal(metav1.ConditionTrue),
-				)
-				g.Expect(
-					condition.Reason,
-				).To(
-					Equal(string(kdexv1alpha1.ConditionReasonReconcileSuccess)),
-				)
-				g.Expect(
-					condition.Message,
-				).To(
-					Equal("all references resolved successfully"),
-				)
-			}
-
-			Eventually(check).Should(Succeed())
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.KDexApp{}, true)
 		})
 	})
 })
