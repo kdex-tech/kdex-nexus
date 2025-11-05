@@ -45,12 +45,14 @@ var _ = Describe("KDexTheme Controller", func() {
 					Namespace: namespace,
 				},
 				Spec: kdexv1alpha1.KDexThemeSpec{
-					Assets: []kdexv1alpha1.ThemeAsset{
-						{
-							Attributes: map[string]string{
-								"rel": "stylesheet",
+					Assets: kdexv1alpha1.Assets{
+						Assets: []kdexv1alpha1.Asset{
+							{
+								Attributes: map[string]string{
+									"rel": "stylesheet",
+								},
+								LinkHref: "style.css",
 							},
-							LinkHref: "style.css",
 						},
 					},
 				},
@@ -72,12 +74,14 @@ var _ = Describe("KDexTheme Controller", func() {
 						Namespace: namespace,
 					},
 					Spec: kdexv1alpha1.KDexThemeSpec{
-						Assets: []kdexv1alpha1.ThemeAsset{
-							{
-								Attributes: map[string]string{
-									"!": `"`,
+						Assets: kdexv1alpha1.Assets{
+							Assets: []kdexv1alpha1.Asset{
+								{
+									Attributes: map[string]string{
+										"!": `"`,
+									},
+									LinkHref: `"`,
 								},
-								LinkHref: `"`,
 							},
 						},
 					},
@@ -96,12 +100,14 @@ var _ = Describe("KDexTheme Controller", func() {
 						Namespace: namespace,
 					},
 					Spec: kdexv1alpha1.KDexThemeSpec{
-						Assets: []kdexv1alpha1.ThemeAsset{
-							{
-								Attributes: map[string]string{
-									"rel": "stylesheet",
+						Assets: kdexv1alpha1.Assets{
+							Assets: []kdexv1alpha1.Asset{
+								{
+									Attributes: map[string]string{
+										"rel": "stylesheet",
+									},
+									LinkHref: "style.css",
 								},
-								LinkHref: "style.css",
 							},
 						},
 					},

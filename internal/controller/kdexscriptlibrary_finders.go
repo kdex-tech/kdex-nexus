@@ -10,7 +10,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-func (r *KDexAppReconciler) findAppsForSecret(
+func (r *KDexScriptLibraryReconciler) findScriptLibrariesForSecret(
 	ctx context.Context,
 	secret client.Object,
 ) []reconcile.Request {
@@ -20,17 +20,17 @@ func (r *KDexAppReconciler) findAppsForSecret(
 		return []reconcile.Request{}
 	}
 
-	var appList kdexv1alpha1.KDexAppList
-	if err := r.List(ctx, &appList, &client.ListOptions{
+	var scriptLibraryList kdexv1alpha1.KDexScriptLibraryList
+	if err := r.List(ctx, &scriptLibraryList, &client.ListOptions{
 		Namespace: secret.GetNamespace(),
 	}); err != nil {
-		log.Error(err, "unable to list KDexApps for secret", "name", secret.GetName())
+		log.Error(err, "unable to list KDexScriptLibraries for secret", "name", secret.GetName())
 		return []reconcile.Request{}
 	}
 
-	requests := make([]reconcile.Request, 0, len(appList.Items))
-	for _, app := range appList.Items {
-		if app.Spec.PackageReference.SecretRef == nil {
+	requests := make([]reconcile.Request, 0, len(scriptLibraryList.Items))
+	for _, app := range scriptLibraryList.Items {
+		if app.Spec.PackageReference == nil || app.Spec.PackageReference.SecretRef == nil {
 			continue
 		}
 		if app.Spec.PackageReference.SecretRef.Name == secret.GetName() {

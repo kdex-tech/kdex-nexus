@@ -1,0 +1,229 @@
+/*
+Copyright 2025.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package controller
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
+	"kdex.dev/crds/render"
+	"kdex.dev/nexus/internal/npm"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
+)
+
+// KDexScriptLibraryReconciler reconciles a KDexScriptLibrary object
+type KDexScriptLibraryReconciler struct {
+	client.Client
+	RegistryFactory func(secret *corev1.Secret, error func(err error, msg string, keysAndValues ...any)) npm.Registry
+	RequeueDelay    time.Duration
+	Scheme          *runtime.Scheme
+}
+
+// +kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexscriptlibraries,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexscriptlibraries/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexscriptlibraries/finalizers,verbs=update
+
+// Reconcile is part of the main kubernetes reconciliation loop which aims to
+// move the current state of the cluster closer to the desired state.
+// TODO(user): Modify the Reconcile function to compare the state specified by
+// the KDexScriptLibrary object against the actual cluster state, and then
+// perform operations to make the cluster state reflect the state specified by
+// the user.
+//
+// For more details, check Reconcile and its Result here:
+// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.22.1/pkg/reconcile
+func (r *KDexScriptLibraryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	log := logf.FromContext(ctx)
+
+	var scriptLibrary kdexv1alpha1.KDexScriptLibrary
+	if err := r.Get(ctx, req.NamespacedName, &scriptLibrary); err != nil {
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	kdexv1alpha1.SetConditions(
+		&scriptLibrary.Status.Conditions,
+		kdexv1alpha1.ConditionArgs{
+			Degraded: &kdexv1alpha1.ConditionFields{
+				Status:  metav1.ConditionFalse,
+				Reason:  kdexv1alpha1.ConditionReasonReconciling,
+				Message: "Reconciling",
+			},
+			Progressing: &kdexv1alpha1.ConditionFields{
+				Status:  metav1.ConditionTrue,
+				Reason:  kdexv1alpha1.ConditionReasonReconciling,
+				Message: "Reconciling",
+			},
+			Ready: &kdexv1alpha1.ConditionFields{
+				Status:  metav1.ConditionUnknown,
+				Reason:  kdexv1alpha1.ConditionReasonReconciling,
+				Message: "Reconciling",
+			},
+		},
+	)
+	if err := r.Status().Update(ctx, &scriptLibrary); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	// Defer status update
+	defer func() {
+		scriptLibrary.Status.ObservedGeneration = scriptLibrary.Generation
+		if err := r.Status().Update(ctx, &scriptLibrary); err != nil {
+			log.Error(err, "failed to update app status")
+		}
+	}()
+
+	if scriptLibrary.Spec.PackageReference != nil {
+		secret, shouldReturn, r1, err := resolveSecret(ctx, r.Client, &scriptLibrary, &scriptLibrary.Status.Conditions, scriptLibrary.Spec.PackageReference.SecretRef, r.RequeueDelay)
+		if shouldReturn {
+			return r1, err
+		}
+
+		if err := validatePackageReference(ctx, scriptLibrary.Spec.PackageReference, secret, r.RegistryFactory); err != nil {
+			kdexv1alpha1.SetConditions(
+				&scriptLibrary.Status.Conditions,
+				kdexv1alpha1.ConditionArgs{
+					Degraded: &kdexv1alpha1.ConditionFields{
+						Status:  metav1.ConditionTrue,
+						Reason:  "PackageValidationFailed",
+						Message: err.Error(),
+					},
+					Progressing: &kdexv1alpha1.ConditionFields{
+						Status:  metav1.ConditionFalse,
+						Reason:  "PackageValidationFailed",
+						Message: "Reconciliation failed",
+					},
+					Ready: &kdexv1alpha1.ConditionFields{
+						Status:  metav1.ConditionFalse,
+						Reason:  "PackageValidationFailed",
+						Message: "Reconciliation failed",
+					},
+				},
+			)
+			if err := r.Status().Update(ctx, &scriptLibrary); err != nil {
+				return ctrl.Result{}, err
+			}
+			return ctrl.Result{}, err
+		}
+	}
+
+	if scriptLibrary.Spec.Scripts != nil {
+		if err := validateScripts(&scriptLibrary.Spec); err != nil {
+			kdexv1alpha1.SetConditions(
+				&scriptLibrary.Status.Conditions,
+				kdexv1alpha1.ConditionArgs{
+					Degraded: &kdexv1alpha1.ConditionFields{
+						Status:  metav1.ConditionTrue,
+						Reason:  "ScriptValidationFailed",
+						Message: err.Error(),
+					},
+					Progressing: &kdexv1alpha1.ConditionFields{
+						Status:  metav1.ConditionFalse,
+						Reason:  "ScriptValidationFailed",
+						Message: "Validation failed",
+					},
+					Ready: &kdexv1alpha1.ConditionFields{
+						Status:  metav1.ConditionFalse,
+						Reason:  "ScriptValidationFailed",
+						Message: "Validation failed",
+					},
+				},
+			)
+			if err := r.Status().Update(ctx, &scriptLibrary); err != nil {
+				return ctrl.Result{}, err
+			}
+
+			return ctrl.Result{}, err
+		}
+	}
+
+	kdexv1alpha1.SetConditions(
+		&scriptLibrary.Status.Conditions,
+		kdexv1alpha1.ConditionArgs{
+			Degraded: &kdexv1alpha1.ConditionFields{
+				Status:  metav1.ConditionFalse,
+				Reason:  kdexv1alpha1.ConditionReasonReconcileSuccess,
+				Message: "Reconciliation successful",
+			},
+			Progressing: &kdexv1alpha1.ConditionFields{
+				Status:  metav1.ConditionFalse,
+				Reason:  kdexv1alpha1.ConditionReasonReconcileSuccess,
+				Message: "Reconciliation successful",
+			},
+			Ready: &kdexv1alpha1.ConditionFields{
+				Status:  metav1.ConditionTrue,
+				Reason:  kdexv1alpha1.ConditionReasonReconcileSuccess,
+				Message: "Reconciliation successful",
+			},
+		},
+	)
+	if err := r.Status().Update(ctx, &scriptLibrary); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	log.Info("reconciled KDexScriptLibrary")
+
+	return ctrl.Result{}, nil
+}
+
+// SetupWithManager sets up the controller with the Manager.
+func (r *KDexScriptLibraryReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&kdexv1alpha1.KDexScriptLibrary{}).
+		Watches(
+			&corev1.Secret{},
+			handler.EnqueueRequestsFromMapFunc(r.findScriptLibrariesForSecret),
+		).
+		Named("kdexscriptlibrary").
+		Complete(r)
+}
+
+func validateScripts(scriptReference *kdexv1alpha1.KDexScriptLibrarySpec) error {
+	renderer := render.Renderer{}
+
+	// validate head scripts
+	_, err := renderer.RenderOne(
+		"head-scripts",
+		scriptReference.String(false),
+		render.DefaultTemplateData(),
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to validate head scripts: %w", err)
+	}
+
+	// validate foot scripts
+	_, err = renderer.RenderOne(
+		"foot-scripts",
+		scriptReference.String(true),
+		render.DefaultTemplateData(),
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to validate foot scripts: %w", err)
+	}
+
+	return nil
+}

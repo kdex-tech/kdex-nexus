@@ -257,11 +257,13 @@ var _ = Describe("KDexPageArchetype Controller", Ordered, func() {
 						Namespace: namespace,
 					},
 					Spec: kdexv1alpha1.KDexThemeSpec{
-						Assets: []kdexv1alpha1.ThemeAsset{
-							{
-								LinkHref: "style.css",
-								Attributes: map[string]string{
-									"rel": "theme",
+						Assets: kdexv1alpha1.Assets{
+							Assets: []kdexv1alpha1.Asset{
+								{
+									LinkHref: "style.css",
+									Attributes: map[string]string{
+										"rel": "theme",
+									},
 								},
 							},
 						},

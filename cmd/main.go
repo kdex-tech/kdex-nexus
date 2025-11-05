@@ -181,10 +181,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	requeueDelay := time.Duration(requeueDelaySeconds) * time.Second
+
 	if err := (&controller.KDexAppReconciler{
 		Client:          mgr.GetClient(),
 		RegistryFactory: npm.NewRegistry,
-		RequeueDelay:    time.Duration(requeueDelaySeconds) * time.Second,
+		RequeueDelay:    requeueDelay,
 		Scheme:          mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "KDexApp")
@@ -192,16 +194,16 @@ func main() {
 	}
 	if err := (&controller.KDexPageArchetypeReconciler{
 		Client:       mgr.GetClient(),
+		RequeueDelay: requeueDelay,
 		Scheme:       mgr.GetScheme(),
-		RequeueDelay: time.Duration(requeueDelaySeconds) * time.Second,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "KDexPageArchetype")
 		os.Exit(1)
 	}
 	if err := (&controller.KDexPageBindingReconciler{
 		Client:       mgr.GetClient(),
+		RequeueDelay: requeueDelay,
 		Scheme:       mgr.GetScheme(),
-		RequeueDelay: time.Duration(requeueDelaySeconds) * time.Second,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "KDexPageBinding")
 		os.Exit(1)
@@ -232,6 +234,15 @@ func main() {
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "KDexTheme")
+		os.Exit(1)
+	}
+	if err := (&controller.KDexScriptLibraryReconciler{
+		Client:          mgr.GetClient(),
+		RegistryFactory: npm.NewRegistry,
+		RequeueDelay:    requeueDelay,
+		Scheme:          mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "KDexScriptLibrary")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder

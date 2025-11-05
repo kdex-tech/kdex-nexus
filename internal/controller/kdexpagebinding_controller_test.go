@@ -24,7 +24,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
@@ -381,11 +380,11 @@ var _ = Describe("KDexPageBinding Controller", func() {
 							Slot:    "main",
 						},
 					},
-					HostRef: v1.LocalObjectReference{
+					HostRef: corev1.LocalObjectReference{
 						Name: "non-existent-host",
 					},
 					Label: "foo",
-					PageArchetypeRef: v1.LocalObjectReference{
+					PageArchetypeRef: corev1.LocalObjectReference{
 						Name: "non-existent-page-archetype",
 					},
 					Paths: kdexv1alpha1.Paths{
@@ -414,14 +413,14 @@ var _ = Describe("KDexPageBinding Controller", func() {
 							Slot:    "main",
 						},
 					},
-					HostRef: v1.LocalObjectReference{
+					HostRef: corev1.LocalObjectReference{
 						Name: "non-existent-host",
 					},
 					Label: "foo",
-					OverrideHeaderRef: &v1.LocalObjectReference{
+					OverrideHeaderRef: &corev1.LocalObjectReference{
 						Name: "non-existent-header",
 					},
-					PageArchetypeRef: v1.LocalObjectReference{
+					PageArchetypeRef: corev1.LocalObjectReference{
 						Name: "non-existent-page-archetype",
 					},
 					Paths: kdexv1alpha1.Paths{
@@ -541,11 +540,11 @@ var _ = Describe("KDexPageBinding Controller", func() {
 							Slot:    "main",
 						},
 					},
-					HostRef: v1.LocalObjectReference{
+					HostRef: corev1.LocalObjectReference{
 						Name: "non-existent-host",
 					},
 					Label: "foo",
-					PageArchetypeRef: v1.LocalObjectReference{
+					PageArchetypeRef: corev1.LocalObjectReference{
 						Name: "non-existent-page-archetype",
 					},
 					Paths: kdexv1alpha1.Paths{
@@ -588,7 +587,7 @@ var _ = Describe("KDexPageBinding Controller", func() {
 					},
 					Spec: kdexv1alpha1.KDexPageArchetypeSpec{
 						Content: "<h1>Hello, World!</h1>",
-						DefaultHeaderRef: &v1.LocalObjectReference{
+						DefaultHeaderRef: &corev1.LocalObjectReference{
 							Name: "non-existent-header",
 						},
 					},

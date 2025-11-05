@@ -173,32 +173,34 @@ var _ = BeforeSuite(func() {
 	err = mockHostReconciler.SetupWithManager(k8sManager)
 	Expect(err).NotTo(HaveOccurred())
 
+	registryFactory := func(
+		secret *corev1.Secret,
+		error func(err error, msg string, keysAndValues ...any),
+	) npm.Registry {
+		return &MockRegistry{}
+	}
+
 	pageReconciler := &KDexAppReconciler{
-		Client: k8sManager.GetClient(),
-		RegistryFactory: func(
-			secret *corev1.Secret,
-			error func(err error, msg string, keysAndValues ...any),
-		) npm.Registry {
-			return &MockRegistry{}
-		},
-		RequeueDelay: 0,
-		Scheme:       k8sManager.GetScheme(),
+		Client:          k8sManager.GetClient(),
+		RegistryFactory: registryFactory,
+		RequeueDelay:    0,
+		Scheme:          k8sManager.GetScheme(),
 	}
 	err = pageReconciler.SetupWithManager(k8sManager)
 	Expect(err).NotTo(HaveOccurred())
 
 	pageArchetypeReconciler := &KDexPageArchetypeReconciler{
 		Client:       k8sClient,
-		Scheme:       k8sClient.Scheme(),
 		RequeueDelay: 0,
+		Scheme:       k8sClient.Scheme(),
 	}
 	err = pageArchetypeReconciler.SetupWithManager(k8sManager)
 	Expect(err).NotTo(HaveOccurred())
 
 	pageBindingReconciler := &KDexPageBindingReconciler{
 		Client:       k8sClient,
-		Scheme:       k8sClient.Scheme(),
 		RequeueDelay: 0,
+		Scheme:       k8sClient.Scheme(),
 	}
 	err = pageBindingReconciler.SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
@@ -222,6 +224,15 @@ var _ = BeforeSuite(func() {
 		Scheme: k8sClient.Scheme(),
 	}
 	err = pageNavigationReconciler.SetupWithManager(k8sManager)
+	Expect(err).ToNot(HaveOccurred())
+
+	scriptLibraryReconciler := &KDexScriptLibraryReconciler{
+		Client:          k8sClient,
+		RegistryFactory: registryFactory,
+		RequeueDelay:    0,
+		Scheme:          k8sClient.Scheme(),
+	}
+	err = scriptLibraryReconciler.SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 
 	themeReconciler := &KDexThemeReconciler{

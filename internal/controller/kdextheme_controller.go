@@ -90,14 +90,12 @@ func (r *KDexThemeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func validateAssets(styleItems []kdexv1alpha1.ThemeAsset) error {
-	renderer := render.Renderer{
-		ThemeAssets: styleItems,
-	}
+func validateAssets(assets kdexv1alpha1.Assets) error {
+	renderer := render.Renderer{}
 
 	_, err := renderer.RenderOne(
-		"style-items",
-		renderer.ThemeAssetsToString(),
+		"theme-assets",
+		assets.String(),
 		render.DefaultTemplateData(),
 	)
 

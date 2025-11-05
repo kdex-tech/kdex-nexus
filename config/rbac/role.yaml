@@ -22,6 +22,7 @@ rules:
   - kdexpageheaders
   - kdexpagenavigations
   - kdexrenderpages
+  - kdexscriptlibraries
   - kdexthemes
   verbs:
   - create
@@ -40,6 +41,7 @@ rules:
   - kdexpagefooters/finalizers
   - kdexpageheaders/finalizers
   - kdexpagenavigations/finalizers
+  - kdexscriptlibraries/finalizers
   - kdexthemes/finalizers
   verbs:
   - update
@@ -52,6 +54,7 @@ rules:
   - kdexpagefooters/status
   - kdexpageheaders/status
   - kdexpagenavigations/status
+  - kdexscriptlibraries/status
   - kdexthemes/status
   verbs:
   - get
