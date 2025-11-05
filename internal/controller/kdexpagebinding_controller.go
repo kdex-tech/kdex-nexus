@@ -36,8 +36,8 @@ const pageBindingFinalizerName = "kdex.dev/kdex-nexus-page-binding-finalizer"
 // KDexPageBindingReconciler reconciles a KDexPageBinding object
 type KDexPageBindingReconciler struct {
 	client.Client
-	Scheme       *runtime.Scheme
 	RequeueDelay time.Duration
+	Scheme       *runtime.Scheme
 }
 
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexapps,verbs=get;list;watch
