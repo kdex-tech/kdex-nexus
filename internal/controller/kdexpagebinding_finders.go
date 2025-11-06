@@ -321,3 +321,34 @@ func (r *KDexPageBindingReconciler) findPageBindingsForPageNavigations(
 
 	return requests
 }
+
+func (r *KDexPageBindingReconciler) findPageBindingsForScriptLibrary(
+	ctx context.Context,
+	scriptLibrary client.Object,
+) []reconcile.Request {
+	log := logf.FromContext(ctx)
+
+	var pageBindingList kdexv1alpha1.KDexPageBindingList
+	if err := r.List(ctx, &pageBindingList, &client.ListOptions{
+		Namespace: scriptLibrary.GetNamespace(),
+	}); err != nil {
+		log.Error(err, "unable to list KDexPageBindings for scriptLibrary", "name", scriptLibrary.GetName())
+		return []reconcile.Request{}
+	}
+
+	requests := make([]reconcile.Request, 0, len(pageBindingList.Items))
+	for _, pageBinding := range pageBindingList.Items {
+		if pageBinding.Spec.ScriptLibraryRef == nil {
+			continue
+		}
+		if pageBinding.Spec.ScriptLibraryRef.Name == scriptLibrary.GetName() {
+			requests = append(requests, reconcile.Request{
+				NamespacedName: types.NamespacedName{
+					Name:      pageBinding.Name,
+					Namespace: pageBinding.Namespace,
+				},
+			})
+		}
+	}
+	return requests
+}

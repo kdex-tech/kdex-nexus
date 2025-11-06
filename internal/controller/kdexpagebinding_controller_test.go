@@ -148,7 +148,6 @@ var _ = Describe("KDexPageBinding Controller", func() {
 				ctx, k8sClient, resourceName, namespace,
 				&kdexv1alpha1.KDexPageBinding{}, false)
 
-			By("and when Host added should still not become ready")
 			addOrUpdateHost(
 				ctx, k8sClient,
 				kdexv1alpha1.KDexHost{
@@ -157,21 +156,22 @@ var _ = Describe("KDexPageBinding Controller", func() {
 						Namespace: namespace,
 					},
 					Spec: kdexv1alpha1.KDexHostSpec{
+						ModulePolicy: kdexv1alpha1.LooseModulePolicy,
+						Organization: "KDex Tech",
 						Routing: kdexv1alpha1.Routing{
 							Domains: []string{
 								"example.com",
 							},
 							Strategy: kdexv1alpha1.IngressRoutingStrategy,
 						},
-						Organization: "KDex Tech",
 					},
 				},
 			)
+
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
 				&kdexv1alpha1.KDexPageBinding{}, false)
 
-			By("lastly when PageArchetype added should become ready")
 			addOrUpdatePageArchetype(
 				ctx, k8sClient,
 				kdexv1alpha1.KDexPageArchetype{
@@ -184,6 +184,7 @@ var _ = Describe("KDexPageBinding Controller", func() {
 					},
 				},
 			)
+
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
 				&kdexv1alpha1.KDexPageBinding{}, true)
@@ -230,7 +231,6 @@ var _ = Describe("KDexPageBinding Controller", func() {
 				ctx, k8sClient, resourceName, namespace,
 				&kdexv1alpha1.KDexPageBinding{}, false)
 
-			By("adding all the missing references")
 			addOrUpdateHost(
 				ctx, k8sClient,
 				kdexv1alpha1.KDexHost{
@@ -239,16 +239,18 @@ var _ = Describe("KDexPageBinding Controller", func() {
 						Namespace: namespace,
 					},
 					Spec: kdexv1alpha1.KDexHostSpec{
+						ModulePolicy: kdexv1alpha1.LooseModulePolicy,
+						Organization: "KDex Tech",
 						Routing: kdexv1alpha1.Routing{
 							Domains: []string{
 								"example.com",
 							},
 							Strategy: kdexv1alpha1.IngressRoutingStrategy,
 						},
-						Organization: "KDex Tech",
 					},
 				},
 			)
+
 			addOrUpdatePageArchetype(
 				ctx, k8sClient,
 				kdexv1alpha1.KDexPageArchetype{
@@ -261,6 +263,7 @@ var _ = Describe("KDexPageBinding Controller", func() {
 					},
 				},
 			)
+
 			addOrUpdatePageFooter(ctx, k8sClient,
 				kdexv1alpha1.KDexPageFooter{
 					ObjectMeta: metav1.ObjectMeta{
@@ -272,6 +275,7 @@ var _ = Describe("KDexPageBinding Controller", func() {
 					},
 				},
 			)
+
 			addOrUpdatePageHeader(
 				ctx, k8sClient,
 				kdexv1alpha1.KDexPageHeader{
@@ -284,6 +288,7 @@ var _ = Describe("KDexPageBinding Controller", func() {
 					},
 				},
 			)
+
 			addOrUpdatePageNavigation(ctx, k8sClient,
 				kdexv1alpha1.KDexPageNavigation{
 					ObjectMeta: metav1.ObjectMeta{
@@ -340,16 +345,18 @@ var _ = Describe("KDexPageBinding Controller", func() {
 						Namespace: namespace,
 					},
 					Spec: kdexv1alpha1.KDexHostSpec{
+						ModulePolicy: kdexv1alpha1.LooseModulePolicy,
+						Organization: "KDex Tech",
 						Routing: kdexv1alpha1.Routing{
 							Domains: []string{
 								"example.com",
 							},
 							Strategy: kdexv1alpha1.IngressRoutingStrategy,
 						},
-						Organization: "KDex Tech",
 					},
 				},
 			)
+
 			addOrUpdatePageArchetype(
 				ctx, k8sClient,
 				kdexv1alpha1.KDexPageArchetype{
@@ -434,7 +441,6 @@ var _ = Describe("KDexPageBinding Controller", func() {
 				ctx, k8sClient, resourceName, namespace,
 				&kdexv1alpha1.KDexPageBinding{}, false)
 
-			By("adding missing references")
 			addOrUpdateHost(
 				ctx, k8sClient,
 				kdexv1alpha1.KDexHost{
@@ -443,16 +449,18 @@ var _ = Describe("KDexPageBinding Controller", func() {
 						Namespace: namespace,
 					},
 					Spec: kdexv1alpha1.KDexHostSpec{
+						ModulePolicy: kdexv1alpha1.LooseModulePolicy,
+						Organization: "KDex Tech",
 						Routing: kdexv1alpha1.Routing{
 							Domains: []string{
 								"example.com",
 							},
 							Strategy: kdexv1alpha1.IngressRoutingStrategy,
 						},
-						Organization: "KDex Tech",
 					},
 				},
 			)
+
 			addOrUpdatePageArchetype(
 				ctx, k8sClient,
 				kdexv1alpha1.KDexPageArchetype{
@@ -465,6 +473,7 @@ var _ = Describe("KDexPageBinding Controller", func() {
 					},
 				},
 			)
+
 			addOrUpdatePageHeader(
 				ctx, k8sClient,
 				kdexv1alpha1.KDexPageHeader{
@@ -473,7 +482,7 @@ var _ = Describe("KDexPageBinding Controller", func() {
 						Namespace: namespace,
 					},
 					Spec: kdexv1alpha1.KDexPageHeaderSpec{
-						Content: "<h1>Hello, from up north!</h1>",
+						Content: "BEFORE",
 					},
 				},
 			)
@@ -482,20 +491,16 @@ var _ = Describe("KDexPageBinding Controller", func() {
 				ctx, k8sClient, resourceName, namespace,
 				&kdexv1alpha1.KDexPageBinding{}, true)
 
-			var renderPage kdexv1alpha1.KDexRenderPage
-			renderPageName := types.NamespacedName{
+			var checkPageBinding kdexv1alpha1.KDexPageBinding
+			pageBindingName := types.NamespacedName{
 				Name:      resourceName,
 				Namespace: namespace,
 			}
-			err := k8sClient.Get(ctx, renderPageName, &renderPage)
+			err := k8sClient.Get(ctx, pageBindingName, &checkPageBinding)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(
-				renderPage.Spec.PageComponents.Header,
-			).To(Equal(
-				"<h1>Hello, from up north!</h1>",
-			))
 
-			By("updating the header references")
+			resourceVersion := checkPageBinding.ResourceVersion
+
 			addOrUpdatePageHeader(
 				ctx, k8sClient,
 				kdexv1alpha1.KDexPageHeader{
@@ -504,26 +509,27 @@ var _ = Describe("KDexPageBinding Controller", func() {
 						Namespace: namespace,
 					},
 					Spec: kdexv1alpha1.KDexPageHeaderSpec{
-						Content: "CHANGED",
+						Content: "AFTER",
 					},
 				},
 			)
 
-			assertResourceReady(
-				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.KDexPageBinding{}, true)
-
 			check := func(g Gomega) {
-				err = k8sClient.Get(ctx, renderPageName, &renderPage)
+				var checkPageBinding kdexv1alpha1.KDexPageBinding
+				pageBindingName := types.NamespacedName{
+					Name:      resourceName,
+					Namespace: namespace,
+				}
+				err := k8sClient.Get(ctx, pageBindingName, &checkPageBinding)
 				g.Expect(err).NotTo(HaveOccurred())
-				g.Expect(
-					renderPage.Spec.PageComponents.Header,
-				).To(Equal(
-					"CHANGED",
-				))
+				g.Expect(checkPageBinding.ResourceVersion).NotTo(Equal(resourceVersion))
 			}
 
 			Eventually(check).Should(Succeed())
+
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.KDexPageBinding{}, true)
 		})
 
 		It("updates when an indirect dependency is updated", func() {
@@ -558,7 +564,6 @@ var _ = Describe("KDexPageBinding Controller", func() {
 				ctx, k8sClient, resourceName, namespace,
 				&kdexv1alpha1.KDexPageBinding{}, false)
 
-			By("adding missing references")
 			addOrUpdateHost(
 				ctx, k8sClient,
 				kdexv1alpha1.KDexHost{
@@ -567,16 +572,18 @@ var _ = Describe("KDexPageBinding Controller", func() {
 						Namespace: namespace,
 					},
 					Spec: kdexv1alpha1.KDexHostSpec{
+						ModulePolicy: kdexv1alpha1.LooseModulePolicy,
+						Organization: "KDex Tech",
 						Routing: kdexv1alpha1.Routing{
 							Domains: []string{
 								"example.com",
 							},
 							Strategy: kdexv1alpha1.IngressRoutingStrategy,
 						},
-						Organization: "KDex Tech",
 					},
 				},
 			)
+
 			addOrUpdatePageArchetype(
 				ctx, k8sClient,
 				kdexv1alpha1.KDexPageArchetype{
@@ -592,6 +599,7 @@ var _ = Describe("KDexPageBinding Controller", func() {
 					},
 				},
 			)
+
 			addOrUpdatePageHeader(
 				ctx, k8sClient,
 				kdexv1alpha1.KDexPageHeader{
@@ -600,7 +608,7 @@ var _ = Describe("KDexPageBinding Controller", func() {
 						Namespace: namespace,
 					},
 					Spec: kdexv1alpha1.KDexPageHeaderSpec{
-						Content: "<h1>Hello, from up north!</h1>",
+						Content: "BEFORE",
 					},
 				},
 			)
@@ -609,20 +617,16 @@ var _ = Describe("KDexPageBinding Controller", func() {
 				ctx, k8sClient, resourceName, namespace,
 				&kdexv1alpha1.KDexPageBinding{}, true)
 
-			var renderPage kdexv1alpha1.KDexRenderPage
-			renderPageName := types.NamespacedName{
+			var checkPageBinding kdexv1alpha1.KDexPageBinding
+			pageBindingName := types.NamespacedName{
 				Name:      resourceName,
 				Namespace: namespace,
 			}
-			err := k8sClient.Get(ctx, renderPageName, &renderPage)
+			err := k8sClient.Get(ctx, pageBindingName, &checkPageBinding)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(
-				renderPage.Spec.PageComponents.Header,
-			).To(Equal(
-				"<h1>Hello, from up north!</h1>",
-			))
 
-			By("updating the header references")
+			resourceVersion := checkPageBinding.ResourceVersion
+
 			addOrUpdatePageHeader(
 				ctx, k8sClient,
 				kdexv1alpha1.KDexPageHeader{
@@ -631,26 +635,27 @@ var _ = Describe("KDexPageBinding Controller", func() {
 						Namespace: namespace,
 					},
 					Spec: kdexv1alpha1.KDexPageHeaderSpec{
-						Content: "CHANGED",
+						Content: "AFTER",
 					},
 				},
 			)
 
-			assertResourceReady(
-				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.KDexPageBinding{}, true)
-
 			check := func(g Gomega) {
-				err = k8sClient.Get(ctx, renderPageName, &renderPage)
+				var checkPageBinding kdexv1alpha1.KDexPageBinding
+				pageBindingName := types.NamespacedName{
+					Name:      resourceName,
+					Namespace: namespace,
+				}
+				err := k8sClient.Get(ctx, pageBindingName, &checkPageBinding)
 				g.Expect(err).NotTo(HaveOccurred())
-				g.Expect(
-					renderPage.Spec.PageComponents.Header,
-				).To(Equal(
-					"CHANGED",
-				))
+				g.Expect(checkPageBinding.ResourceVersion).NotTo(Equal(resourceVersion))
 			}
 
 			Eventually(check).Should(Succeed())
+
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.KDexPageBinding{}, true)
 		})
 	})
 })

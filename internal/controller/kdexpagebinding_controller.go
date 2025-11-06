@@ -18,9 +18,10 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"time"
 
-	apimeta "k8s.io/apimachinery/pkg/api/meta"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
@@ -50,6 +51,7 @@ type KDexPageBindingReconciler struct {
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexpageheaders,verbs=get;list;watch
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagenavigations,verbs=get;list;watch
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexrenderpages,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexscriptlibraries,verbs=get;list;watch
 
 func (r *KDexPageBindingReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx)
@@ -70,15 +72,15 @@ func (r *KDexPageBindingReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		}
 	} else {
 		if controllerutil.ContainsFinalizer(&pageBinding, pageBindingFinalizerName) {
-			renderPage := &kdexv1alpha1.KDexRenderPage{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      pageBinding.Name,
-					Namespace: pageBinding.Namespace,
-				},
-			}
-			if err := r.Delete(ctx, renderPage); client.IgnoreNotFound(err) != nil {
-				return ctrl.Result{}, err
-			}
+			// renderPage := &kdexv1alpha1.KDexRenderPage{
+			// 	ObjectMeta: metav1.ObjectMeta{
+			// 		Name:      pageBinding.Name,
+			// 		Namespace: pageBinding.Namespace,
+			// 	},
+			// }
+			// if err := r.Delete(ctx, renderPage); client.IgnoreNotFound(err) != nil {
+			// 	return ctrl.Result{}, err
+			// }
 
 			controllerutil.RemoveFinalizer(&pageBinding, pageBindingFinalizerName)
 			if err := r.Update(ctx, &pageBinding); err != nil {
@@ -87,6 +89,38 @@ func (r *KDexPageBindingReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		}
 		return ctrl.Result{}, nil
 	}
+
+	kdexv1alpha1.SetConditions(
+		&pageBinding.Status.Conditions,
+		kdexv1alpha1.ConditionArgs{
+			Degraded: &kdexv1alpha1.ConditionFields{
+				Status:  metav1.ConditionFalse,
+				Reason:  kdexv1alpha1.ConditionReasonReconciling,
+				Message: "Reconciling",
+			},
+			Progressing: &kdexv1alpha1.ConditionFields{
+				Status:  metav1.ConditionTrue,
+				Reason:  kdexv1alpha1.ConditionReasonReconciling,
+				Message: "Reconciling",
+			},
+			Ready: &kdexv1alpha1.ConditionFields{
+				Status:  metav1.ConditionUnknown,
+				Reason:  kdexv1alpha1.ConditionReasonReconciling,
+				Message: "Reconciling",
+			},
+		},
+	)
+	if err := r.Status().Update(ctx, &pageBinding); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	// Defer status update
+	defer func() {
+		pageBinding.Status.ObservedGeneration = pageBinding.Generation
+		if err := r.Status().Update(ctx, &pageBinding); err != nil {
+			log.Error(err, "failed to update pageBinding status")
+		}
+	}()
 
 	_, shouldReturn, r1, err := resolveHost(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, &pageBinding.Spec.HostRef, r.RequeueDelay)
 	if shouldReturn {
@@ -112,7 +146,7 @@ func (r *KDexPageBindingReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		return response, err
 	}
 
-	parentPageRef, shouldReturn, r1, err := resolvePageBinding(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, pageBinding.Spec.ParentPageRef, r.RequeueDelay)
+	_, shouldReturn, r1, err = resolvePageBinding(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, pageBinding.Spec.ParentPageRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
@@ -135,59 +169,133 @@ func (r *KDexPageBindingReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		return r1, err
 	}
 
+	_, shouldReturn, r1, err = resolveScriptLibrary(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, pageBinding.Spec.ScriptLibraryRef, r.RequeueDelay)
+	if shouldReturn {
+		return r1, err
+	}
+
 	_, shouldReturn, r1, err = resolveTheme(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, pageArchetype.Spec.OverrideThemeRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
 
-	renderPage := &kdexv1alpha1.KDexRenderPage{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      pageBinding.Name,
-			Namespace: pageBinding.Namespace,
-		},
-	}
+	if pageBinding.Spec.BasePath == "/" && pageBinding.Spec.ParentPageRef != nil {
+		err := fmt.Errorf("a page binding with basePath set to '/' must not specify a parent page binding")
 
-	if _, err := ctrl.CreateOrUpdate(
-		ctx,
-		r.Client,
-		renderPage,
-		func() error {
-			renderPage.Spec = kdexv1alpha1.KDexRenderPageSpec{
-				HostRef:         pageBinding.Spec.HostRef,
-				NavigationHints: pageBinding.Spec.NavigationHints,
-				PageComponents: kdexv1alpha1.PageComponents{
-					Contents:        contents,
-					Footer:          footer.Spec.Content,
-					Header:          header.Spec.Content,
-					Navigations:     navigations,
-					PrimaryTemplate: pageArchetype.Spec.Content,
-					Title:           pageBinding.Spec.Label,
+		kdexv1alpha1.SetConditions(
+			&pageBinding.Status.Conditions,
+			kdexv1alpha1.ConditionArgs{
+				Degraded: &kdexv1alpha1.ConditionFields{
+					Status:  metav1.ConditionTrue,
+					Reason:  "SpecValidationFailed",
+					Message: err.Error(),
 				},
-				ParentPageRef: parentPageRef,
-				Paths:         pageBinding.Spec.Paths,
-				ThemeRef:      pageArchetype.Spec.OverrideThemeRef,
-			}
-			return ctrl.SetControllerReference(&pageBinding, renderPage, r.Scheme)
-		},
-	); err != nil {
-		log.Error(err, "unable to create or update KDexRenderPage")
+				Progressing: &kdexv1alpha1.ConditionFields{
+					Status:  metav1.ConditionFalse,
+					Reason:  "SpecValidationFailed",
+					Message: err.Error(),
+				},
+				Ready: &kdexv1alpha1.ConditionFields{
+					Status:  metav1.ConditionFalse,
+					Reason:  "SpecValidationFailed",
+					Message: err.Error(),
+				},
+			},
+		)
+		if err := r.Status().Update(ctx, &pageBinding); err != nil {
+			return ctrl.Result{}, err
+		}
+
 		return ctrl.Result{}, err
 	}
 
-	log.Info("reconciled KDexPageBinding")
+	scriptLibraryRefs := []corev1.LocalObjectReference{}
 
-	apimeta.SetStatusCondition(
+	if pageArchetype.Spec.ScriptLibraryRef != nil {
+		scriptLibraryRefs = append(scriptLibraryRefs, *pageArchetype.Spec.ScriptLibraryRef)
+	}
+
+	// contents
+	log.Info("contents", "contents", contents)
+
+	// navigations
+	log.Info("navigations", "navigations", navigations)
+
+	if header != nil && header.Spec.ScriptLibraryRef != nil {
+		scriptLibraryRefs = append(scriptLibraryRefs, *header.Spec.ScriptLibraryRef)
+	}
+
+	if footer != nil && footer.Spec.ScriptLibraryRef != nil {
+		scriptLibraryRefs = append(scriptLibraryRefs, *footer.Spec.ScriptLibraryRef)
+	}
+
+	if pageBinding.Spec.ScriptLibraryRef != nil {
+		scriptLibraryRefs = append(scriptLibraryRefs, *pageBinding.Spec.ScriptLibraryRef)
+	}
+
+	log.Info("scriptLibraryRefs", "scriptLibraryRefs", scriptLibraryRefs)
+
+	// renderPage := &kdexv1alpha1.KDexRenderPage{
+	// 	ObjectMeta: metav1.ObjectMeta{
+	// 		Name:      pageBinding.Name,
+	// 		Namespace: pageBinding.Namespace,
+	// 	},
+	// }
+
+	// if _, err := ctrl.CreateOrUpdate(
+	// 	ctx,
+	// 	r.Client,
+	// 	renderPage,
+	// 	func() error {
+
+	// 		renderPage.Spec = kdexv1alpha1.KDexRenderPageSpec{
+	// 			HostRef:         pageBinding.Spec.HostRef,
+	// 			NavigationHints: pageBinding.Spec.NavigationHints,
+	// 			PageComponents: kdexv1alpha1.PageComponents{
+	// 				// Contents:        contents,
+	// 				Footer: footer.Spec.Content,
+	// 				Header: header.Spec.Content,
+	// 				// Navigations:     navigations,
+	// 				PrimaryTemplate: pageArchetype.Spec.Content,
+	// 				Title:           pageBinding.Spec.Label,
+	// 			},
+	// 			ParentPageRef:     pageBinding.Spec.ParentPageRef,
+	// 			Paths:             pageBinding.Spec.Paths,
+	// 			ScriptLibraryRefs: scriptLibraryRefs,
+	// 			ThemeRef:          pageArchetype.Spec.OverrideThemeRef,
+	// 		}
+	// 		return ctrl.SetControllerReference(&pageBinding, renderPage, r.Scheme)
+	// 	},
+	// ); err != nil {
+	// 	log.Error(err, "unable to create or update KDexRenderPage")
+	// 	return ctrl.Result{}, err
+	// }
+
+	kdexv1alpha1.SetConditions(
 		&pageBinding.Status.Conditions,
-		*kdexv1alpha1.NewCondition(
-			kdexv1alpha1.ConditionTypeReady,
-			metav1.ConditionTrue,
-			kdexv1alpha1.ConditionReasonReconcileSuccess,
-			"all references resolved successfully",
-		),
+		kdexv1alpha1.ConditionArgs{
+			Degraded: &kdexv1alpha1.ConditionFields{
+				Status:  metav1.ConditionFalse,
+				Reason:  kdexv1alpha1.ConditionReasonReconcileSuccess,
+				Message: "Reconciliation successful",
+			},
+			Progressing: &kdexv1alpha1.ConditionFields{
+				Status:  metav1.ConditionFalse,
+				Reason:  kdexv1alpha1.ConditionReasonReconcileSuccess,
+				Message: "Reconciliation successful",
+			},
+			Ready: &kdexv1alpha1.ConditionFields{
+				Status:  metav1.ConditionTrue,
+				Reason:  kdexv1alpha1.ConditionReasonReconcileSuccess,
+				Message: "Reconciliation successful",
+			},
+		},
 	)
 	if err := r.Status().Update(ctx, &pageBinding); err != nil {
 		return ctrl.Result{}, err
 	}
+
+	log.Info("reconciled KDexPageBinding")
 
 	return ctrl.Result{}, nil
 }
@@ -218,6 +326,9 @@ func (r *KDexPageBindingReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Watches(
 			&kdexv1alpha1.KDexPageNavigation{},
 			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForPageNavigations)).
+		Watches(
+			&kdexv1alpha1.KDexScriptLibrary{},
+			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForScriptLibrary)).
 		Named("kdexpagebinding").
 		Complete(r)
 }
