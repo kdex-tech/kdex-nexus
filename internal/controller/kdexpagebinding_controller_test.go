@@ -18,7 +18,6 @@ package controller
 
 import (
 	"context"
-	"fmt"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -40,27 +39,11 @@ var _ = Describe("KDexPageBinding Controller", func() {
 			By("Cleanup all the test resource instances")
 			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageBinding{}, client.InNamespace(namespace))).To(Succeed())
 
-			Eventually(func() error {
-				var err error
-				mfaList := &kdexv1alpha1.KDexPageBindingList{}
-				err = k8sClient.List(ctx, mfaList, client.InNamespace(namespace))
-				if err != nil {
-					return err
-				}
-				if len(mfaList.Items) > 0 {
-					return fmt.Errorf("expected 0 KDexPageBinding instances, got %d", len(mfaList.Items))
-				}
-				return nil
-			}).Should(Succeed())
-
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexApp{}, client.InNamespace(namespace))).To(Succeed())
 			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexHost{}, client.InNamespace(namespace))).To(Succeed())
 			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageArchetype{}, client.InNamespace(namespace))).To(Succeed())
 			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageFooter{}, client.InNamespace(namespace))).To(Succeed())
 			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageHeader{}, client.InNamespace(namespace))).To(Succeed())
 			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageNavigation{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexTheme{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexTranslation{}, client.InNamespace(namespace))).To(Succeed())
 		})
 
 		It("with empty content entries should not succeed", func() {

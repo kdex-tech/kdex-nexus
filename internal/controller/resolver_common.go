@@ -23,7 +23,7 @@ func resolveContents(
 	c client.Client,
 	pageBinding *kdexv1alpha1.KDexPageBinding,
 	requeueDelay time.Duration,
-) (map[string]ResolvedContentEntry, ctrl.Result, error) {
+) (map[string]ResolvedContentEntry, bool, ctrl.Result, error) {
 	contents := make(map[string]ResolvedContentEntry)
 
 	for _, contentEntry := range pageBinding.Spec.ContentEntries {
@@ -65,23 +65,23 @@ func resolveContents(
 				)
 
 				if err := c.Status().Update(ctx, pageBinding); err != nil {
-					return nil, ctrl.Result{}, err
+					return nil, true, ctrl.Result{}, err
 				}
 
-				return nil, ctrl.Result{RequeueAfter: requeueDelay}, nil
+				return nil, true, ctrl.Result{RequeueAfter: requeueDelay}, nil
 			}
 
-			return nil, ctrl.Result{}, err
+			return nil, true, ctrl.Result{}, err
 		}
 
 		if isReady, r1, err := isReady(ctx, c, pageBinding, &app, &app.Status.Conditions, requeueDelay); !isReady {
-			return nil, r1, err
+			return nil, true, r1, err
 		}
 
 		contents[contentEntry.Slot] = ResolvedContentEntry{App: &app}
 	}
 
-	return contents, ctrl.Result{}, nil
+	return contents, false, ctrl.Result{}, nil
 }
 
 func resolveHost(

@@ -38,9 +38,6 @@ var _ = Describe("KDexPageArchetype Controller", func() {
 			By("Cleanup all the test resource instances")
 			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageArchetype{}, client.InNamespace(namespace))).To(Succeed())
 
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexApp{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexHost{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageBinding{}, client.InNamespace(namespace))).To(Succeed())
 			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageFooter{}, client.InNamespace(namespace))).To(Succeed())
 			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageHeader{}, client.InNamespace(namespace))).To(Succeed())
 			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageNavigation{}, client.InNamespace(namespace))).To(Succeed())

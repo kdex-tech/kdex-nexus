@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"time"
 
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
@@ -122,38 +121,38 @@ func (r *KDexPageBindingReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		}
 	}()
 
-	_, shouldReturn, r1, err := resolveHost(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, &pageBinding.Spec.HostRef, r.RequeueDelay)
+	host, shouldReturn, r1, err := resolveHost(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, &pageBinding.Spec.HostRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
 
-	pageArchetype, shouldReturn, r1, err := resolvePageArchetype(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, &pageBinding.Spec.PageArchetypeRef, r.RequeueDelay)
+	archetype, shouldReturn, r1, err := resolvePageArchetype(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, &pageBinding.Spec.PageArchetypeRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
 
-	contents, response, err := resolveContents(ctx, r.Client, &pageBinding, r.RequeueDelay)
-	if err != nil {
+	contents, shouldReturn, response, err := resolveContents(ctx, r.Client, &pageBinding, r.RequeueDelay)
+	if shouldReturn {
 		return response, err
 	}
 
 	navigationRef := pageBinding.Spec.OverrideMainNavigationRef
 	if navigationRef == nil {
-		navigationRef = pageArchetype.Spec.DefaultMainNavigationRef
+		navigationRef = archetype.Spec.DefaultMainNavigationRef
 	}
-	navigations, shouldReturn, response, err := resolvePageNavigations(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, navigationRef, pageArchetype.Spec.ExtraNavigations, r.RequeueDelay)
+	navigations, shouldReturn, response, err := resolvePageNavigations(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, navigationRef, archetype.Spec.ExtraNavigations, r.RequeueDelay)
 	if shouldReturn {
 		return response, err
 	}
 
-	_, shouldReturn, r1, err = resolvePageBinding(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, pageBinding.Spec.ParentPageRef, r.RequeueDelay)
+	parentBinding, shouldReturn, r1, err := resolvePageBinding(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, pageBinding.Spec.ParentPageRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
 
 	headerRef := pageBinding.Spec.OverrideHeaderRef
 	if headerRef == nil {
-		headerRef = pageArchetype.Spec.DefaultHeaderRef
+		headerRef = archetype.Spec.DefaultHeaderRef
 	}
 	header, shouldReturn, r1, err := resolvePageHeader(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, headerRef, r.RequeueDelay)
 	if shouldReturn {
@@ -162,19 +161,19 @@ func (r *KDexPageBindingReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 
 	footerRef := pageBinding.Spec.OverrideFooterRef
 	if footerRef == nil {
-		footerRef = pageArchetype.Spec.DefaultFooterRef
+		footerRef = archetype.Spec.DefaultFooterRef
 	}
 	footer, shouldReturn, r1, err := resolvePageFooter(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, footerRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
 
-	_, shouldReturn, r1, err = resolveScriptLibrary(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, pageBinding.Spec.ScriptLibraryRef, r.RequeueDelay)
+	scriptLibrary, shouldReturn, r1, err := resolveScriptLibrary(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, pageBinding.Spec.ScriptLibraryRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
 
-	_, shouldReturn, r1, err = resolveTheme(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, pageArchetype.Spec.OverrideThemeRef, r.RequeueDelay)
+	theme, shouldReturn, r1, err := resolveTheme(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, archetype.Spec.OverrideThemeRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
@@ -209,31 +208,110 @@ func (r *KDexPageBindingReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		return ctrl.Result{}, err
 	}
 
-	scriptLibraryRefs := []corev1.LocalObjectReference{}
-
-	if pageArchetype.Spec.ScriptLibraryRef != nil {
-		scriptLibraryRefs = append(scriptLibraryRefs, *pageArchetype.Spec.ScriptLibraryRef)
+	resolved := ResolvedPageBinding{
+		Archetype:     *archetype,
+		Contents:      contents,
+		Footer:        footer,
+		Header:        header,
+		Host:          *host,
+		Navigations:   navigations,
+		PageBinding:   &pageBinding,
+		ParentBinding: parentBinding,
+		ScriptLibrary: scriptLibrary,
+		Theme:         theme,
 	}
 
-	// contents
-	log.Info("contents", "contents", contents)
+	err = r._reconcile(ctx, resolved)
 
-	// navigations
-	log.Info("navigations", "navigations", navigations)
+	return ctrl.Result{}, err
+}
 
-	if header != nil && header.Spec.ScriptLibraryRef != nil {
-		scriptLibraryRefs = append(scriptLibraryRefs, *header.Spec.ScriptLibraryRef)
-	}
+// SetupWithManager sets up the controller with the Manager.
+func (r *KDexPageBindingReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&kdexv1alpha1.KDexPageBinding{}).
+		Owns(&kdexv1alpha1.KDexRenderPage{}).
+		Watches(
+			&kdexv1alpha1.KDexApp{},
+			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForApp)).
+		Watches(
+			&kdexv1alpha1.KDexHost{},
+			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForHost)).
+		Watches(
+			&kdexv1alpha1.KDexPageArchetype{},
+			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForPageArchetype)).
+		Watches(
+			&kdexv1alpha1.KDexPageBinding{},
+			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForPageBindings)).
+		Watches(
+			&kdexv1alpha1.KDexPageFooter{},
+			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForPageFooter)).
+		Watches(
+			&kdexv1alpha1.KDexPageHeader{},
+			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForPageHeader)).
+		Watches(
+			&kdexv1alpha1.KDexPageNavigation{},
+			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForPageNavigations)).
+		Watches(
+			&kdexv1alpha1.KDexScriptLibrary{},
+			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForScriptLibrary)).
+		Named("kdexpagebinding").
+		Complete(r)
+}
 
-	if footer != nil && footer.Spec.ScriptLibraryRef != nil {
-		scriptLibraryRefs = append(scriptLibraryRefs, *footer.Spec.ScriptLibraryRef)
-	}
+type ResolvedPageBinding struct {
+	Archetype     kdexv1alpha1.KDexPageArchetype
+	Contents      map[string]ResolvedContentEntry
+	Footer        *kdexv1alpha1.KDexPageFooter
+	Header        *kdexv1alpha1.KDexPageHeader
+	Host          kdexv1alpha1.KDexHost
+	Navigations   map[string]*kdexv1alpha1.KDexPageNavigation
+	PageBinding   *kdexv1alpha1.KDexPageBinding
+	ParentBinding *kdexv1alpha1.KDexPageBinding
+	ScriptLibrary *kdexv1alpha1.KDexScriptLibrary
+	Theme         *kdexv1alpha1.KDexTheme
+}
 
-	if pageBinding.Spec.ScriptLibraryRef != nil {
-		scriptLibraryRefs = append(scriptLibraryRefs, *pageBinding.Spec.ScriptLibraryRef)
-	}
+func (r *KDexPageBindingReconciler) _reconcile(ctx context.Context, resolved ResolvedPageBinding) error {
+	log := logf.FromContext(ctx)
 
-	log.Info("scriptLibraryRefs", "scriptLibraryRefs", scriptLibraryRefs)
+	log.Info("host", "host", resolved.Host)
+
+	log.Info("archetype", "archetype", resolved.Archetype)
+
+	log.Info("contents", "contents", resolved.Contents)
+
+	log.Info("navigations", "navigations", resolved.Navigations)
+
+	log.Info("parentBinding", "parentBinding", resolved.ParentBinding)
+
+	log.Info("header", "header", resolved.Header)
+
+	log.Info("footer", "footer", resolved.Footer)
+
+	log.Info("scriptLibrary", "scriptLibrary", resolved.ScriptLibrary)
+
+	log.Info("theme", "theme", resolved.Theme)
+
+	// scriptLibraryRefs := []corev1.LocalObjectReference{}
+
+	// if pageArchetype.Spec.ScriptLibraryRef != nil {
+	// 	scriptLibraryRefs = append(scriptLibraryRefs, *pageArchetype.Spec.ScriptLibraryRef)
+	// }
+
+	// if header != nil && header.Spec.ScriptLibraryRef != nil {
+	// 	scriptLibraryRefs = append(scriptLibraryRefs, *header.Spec.ScriptLibraryRef)
+	// }
+
+	// if footer != nil && footer.Spec.ScriptLibraryRef != nil {
+	// 	scriptLibraryRefs = append(scriptLibraryRefs, *footer.Spec.ScriptLibraryRef)
+	// }
+
+	// if pageBinding.Spec.ScriptLibraryRef != nil {
+	// 	scriptLibraryRefs = append(scriptLibraryRefs, *pageBinding.Spec.ScriptLibraryRef)
+	// }
+
+	// log.Info("scriptLibraryRefs", "scriptLibraryRefs", scriptLibraryRefs)
 
 	// renderPage := &kdexv1alpha1.KDexRenderPage{
 	// 	ObjectMeta: metav1.ObjectMeta{
@@ -272,7 +350,7 @@ func (r *KDexPageBindingReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	// }
 
 	kdexv1alpha1.SetConditions(
-		&pageBinding.Status.Conditions,
+		&resolved.PageBinding.Status.Conditions,
 		kdexv1alpha1.ConditionArgs{
 			Degraded: &kdexv1alpha1.ConditionFields{
 				Status:  metav1.ConditionFalse,
@@ -291,44 +369,11 @@ func (r *KDexPageBindingReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 			},
 		},
 	)
-	if err := r.Status().Update(ctx, &pageBinding); err != nil {
-		return ctrl.Result{}, err
+	if err := r.Status().Update(ctx, resolved.PageBinding); err != nil {
+		return err
 	}
 
 	log.Info("reconciled KDexPageBinding")
 
-	return ctrl.Result{}, nil
-}
-
-// SetupWithManager sets up the controller with the Manager.
-func (r *KDexPageBindingReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&kdexv1alpha1.KDexPageBinding{}).
-		Owns(&kdexv1alpha1.KDexRenderPage{}).
-		Watches(
-			&kdexv1alpha1.KDexApp{},
-			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForApp)).
-		Watches(
-			&kdexv1alpha1.KDexHost{},
-			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForHost)).
-		Watches(
-			&kdexv1alpha1.KDexPageArchetype{},
-			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForPageArchetype)).
-		Watches(
-			&kdexv1alpha1.KDexPageBinding{},
-			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForPageBindings)).
-		Watches(
-			&kdexv1alpha1.KDexPageFooter{},
-			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForPageFooter)).
-		Watches(
-			&kdexv1alpha1.KDexPageHeader{},
-			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForPageHeader)).
-		Watches(
-			&kdexv1alpha1.KDexPageNavigation{},
-			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForPageNavigations)).
-		Watches(
-			&kdexv1alpha1.KDexScriptLibrary{},
-			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForScriptLibrary)).
-		Named("kdexpagebinding").
-		Complete(r)
+	return nil
 }
