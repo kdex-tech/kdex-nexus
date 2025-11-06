@@ -206,8 +206,9 @@ var _ = BeforeSuite(func() {
 	Expect(err).ToNot(HaveOccurred())
 
 	pageHeaderReconciler := &KDexPageHeaderReconciler{
-		Client: k8sClient,
-		Scheme: k8sClient.Scheme(),
+		Client:       k8sClient,
+		RequeueDelay: 0,
+		Scheme:       k8sClient.Scheme(),
 	}
 	err = pageHeaderReconciler.SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())

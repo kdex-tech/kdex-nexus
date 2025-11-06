@@ -21,6 +21,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -36,6 +37,7 @@ var _ = Describe("KDexPageHeader Controller", func() {
 		AfterEach(func() {
 			By("Cleanup all the test resource instances")
 			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageHeader{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexScriptLibrary{}, client.InNamespace(namespace))).To(Succeed())
 		})
 
 		It("should successfully reconcile the resource", func() {
@@ -83,6 +85,49 @@ var _ = Describe("KDexPageHeader Controller", func() {
 					},
 					Spec: kdexv1alpha1.KDexPageHeaderSpec{
 						Content: "<h1>Hello, World!</h1>",
+					},
+				},
+			)
+
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.KDexPageHeader{}, true)
+		})
+
+		It("should successfully reconcile after script library becomes available", func() {
+			addOrUpdatePageHeader(
+				ctx, k8sClient,
+				kdexv1alpha1.KDexPageHeader{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      resourceName,
+						Namespace: namespace,
+					},
+					Spec: kdexv1alpha1.KDexPageHeaderSpec{
+						Content: "<h1>Hello, World!</h1>",
+						ScriptLibraryRef: &corev1.LocalObjectReference{
+							Name: "none-existent-script-library",
+						},
+					},
+				},
+			)
+
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.KDexPageHeader{}, false)
+
+			addOrUpdateScriptLibrary(
+				ctx, k8sClient,
+				kdexv1alpha1.KDexScriptLibrary{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "none-existent-script-library",
+						Namespace: namespace,
+					},
+					Spec: kdexv1alpha1.KDexScriptLibrarySpec{
+						Scripts: []kdexv1alpha1.Script{
+							{
+								Script: "console.log('test');",
+							},
+						},
 					},
 				},
 			)
