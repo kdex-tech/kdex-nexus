@@ -214,8 +214,9 @@ var _ = BeforeSuite(func() {
 	Expect(err).ToNot(HaveOccurred())
 
 	pageFooterReconciler := &KDexPageFooterReconciler{
-		Client: k8sClient,
-		Scheme: k8sClient.Scheme(),
+		Client:       k8sClient,
+		RequeueDelay: 0,
+		Scheme:       k8sClient.Scheme(),
 	}
 	err = pageFooterReconciler.SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
