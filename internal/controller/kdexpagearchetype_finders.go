@@ -115,6 +115,37 @@ func (r *KDexPageArchetypeReconciler) findPageArchetypesForPageNavigations(
 	return requests
 }
 
+func (r *KDexPageArchetypeReconciler) findPageArchetypesForScriptLibrary(
+	ctx context.Context,
+	scriptLibrary client.Object,
+) []reconcile.Request {
+	log := logf.FromContext(ctx)
+
+	var pageArchetypeList kdexv1alpha1.KDexPageArchetypeList
+	if err := r.List(ctx, &pageArchetypeList, &client.ListOptions{
+		Namespace: scriptLibrary.GetNamespace(),
+	}); err != nil {
+		log.Error(err, "unable to list KDexPageArchetypes for scriptLibrary", "name", scriptLibrary.GetName())
+		return []reconcile.Request{}
+	}
+
+	requests := make([]reconcile.Request, 0, len(pageArchetypeList.Items))
+	for _, pageArchetype := range pageArchetypeList.Items {
+		if pageArchetype.Spec.ScriptLibraryRef == nil {
+			continue
+		}
+		if pageArchetype.Spec.ScriptLibraryRef.Name == scriptLibrary.GetName() {
+			requests = append(requests, reconcile.Request{
+				NamespacedName: types.NamespacedName{
+					Name:      pageArchetype.Name,
+					Namespace: pageArchetype.Namespace,
+				},
+			})
+		}
+	}
+	return requests
+}
+
 func (r *KDexPageArchetypeReconciler) findPageArchetypesForTheme(
 	ctx context.Context,
 	theme client.Object,

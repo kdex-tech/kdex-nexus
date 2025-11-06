@@ -22,14 +22,12 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
-	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var _ = Describe("KDexPageArchetype Controller", Ordered, func() {
+var _ = Describe("KDexPageArchetype Controller", func() {
 	Context("When reconciling a resource", func() {
 		const namespace = "default"
 		const resourceName = "test-resource"
@@ -47,7 +45,6 @@ var _ = Describe("KDexPageArchetype Controller", Ordered, func() {
 			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageHeader{}, client.InNamespace(namespace))).To(Succeed())
 			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageNavigation{}, client.InNamespace(namespace))).To(Succeed())
 			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexTheme{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexTranslation{}, client.InNamespace(namespace))).To(Succeed())
 		})
 
 		It("with invalid content will not reconcile the resource", func() {
@@ -66,17 +63,6 @@ var _ = Describe("KDexPageArchetype Controller", Ordered, func() {
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
 				&kdexv1alpha1.KDexPageArchetype{}, false)
-
-			resourceName := types.NamespacedName{
-				Name:      resourceName,
-				Namespace: namespace,
-			}
-			err := k8sClient.Get(ctx, resourceName, resource)
-			Expect(err).NotTo(HaveOccurred())
-			condition := apimeta.FindStatusCondition(resource.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady))
-			Expect(condition.Message).To(Equal(
-				`template: test-resource:1: unexpected "!" in command`,
-			))
 		})
 
 		It("with missing extra navigation reference should not successfully reconcile the resource", func() {
@@ -259,9 +245,9 @@ var _ = Describe("KDexPageArchetype Controller", Ordered, func() {
 					Spec: kdexv1alpha1.KDexThemeSpec{
 						Assets: []kdexv1alpha1.Asset{
 							{
-								LinkHref: "style.css",
+								LinkHref: "http://foo.bar/style.css",
 								Attributes: map[string]string{
-									"rel": "theme",
+									"rel": "stylesheet",
 								},
 							},
 						},
@@ -286,6 +272,48 @@ var _ = Describe("KDexPageArchetype Controller", Ordered, func() {
 			}
 
 			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.KDexPageArchetype{}, true)
+		})
+
+		It("should successfully reconcile after script library becomes available", func() {
+			resource := &kdexv1alpha1.KDexPageArchetype{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.KDexPageArchetypeSpec{
+					Content: "<h1>Hello, World!</h1>",
+					ScriptLibraryRef: &corev1.LocalObjectReference{
+						Name: "none-existent-script-library",
+					},
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.KDexPageArchetype{}, false)
+
+			addOrUpdateScriptLibrary(
+				ctx, k8sClient,
+				kdexv1alpha1.KDexScriptLibrary{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "none-existent-script-library",
+						Namespace: namespace,
+					},
+					Spec: kdexv1alpha1.KDexScriptLibrarySpec{
+						Scripts: []kdexv1alpha1.Script{
+							{
+								Script: "console.log('test');",
+							},
+						},
+					},
+				},
+			)
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,

@@ -19,7 +19,6 @@ package controller
 import (
 	"context"
 	"fmt"
-	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -52,7 +51,7 @@ var _ = Describe("KDexPageBinding Controller", func() {
 					return fmt.Errorf("expected 0 KDexPageBinding instances, got %d", len(mfaList.Items))
 				}
 				return nil
-			}).WithTimeout(10 * time.Second).Should(Succeed())
+			}).Should(Succeed())
 
 			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexApp{}, client.InNamespace(namespace))).To(Succeed())
 			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexHost{}, client.InNamespace(namespace))).To(Succeed())

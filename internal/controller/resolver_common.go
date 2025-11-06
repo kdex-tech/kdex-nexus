@@ -112,26 +112,39 @@ func resolveHost(
 func resolvePageArchetype(
 	ctx context.Context,
 	c client.Client,
-	pageBinding *kdexv1alpha1.KDexPageBinding,
+	object client.Object,
+	objectConditions *[]metav1.Condition,
+	pageArchetypeRef *corev1.LocalObjectReference,
 	requeueDelay time.Duration,
 ) (*kdexv1alpha1.KDexPageArchetype, bool, ctrl.Result, error) {
 	var pageArchetype kdexv1alpha1.KDexPageArchetype
 	pageArchetypeName := types.NamespacedName{
-		Name:      pageBinding.Spec.PageArchetypeRef.Name,
-		Namespace: pageBinding.Namespace,
+		Name:      pageArchetypeRef.Name,
+		Namespace: object.GetNamespace(),
 	}
 	if err := c.Get(ctx, pageArchetypeName, &pageArchetype); err != nil {
 		if errors.IsNotFound(err) {
-			apimeta.SetStatusCondition(
-				&pageBinding.Status.Conditions,
-				*kdexv1alpha1.NewCondition(
-					kdexv1alpha1.ConditionTypeReady,
-					metav1.ConditionFalse,
-					kdexv1alpha1.ConditionReasonReconcileError,
-					fmt.Sprintf("referenced KDexPageArchetype %s not found", pageBinding.Spec.PageArchetypeRef.Name),
-				),
+			kdexv1alpha1.SetConditions(
+				objectConditions,
+				kdexv1alpha1.ConditionArgs{
+					Degraded: &kdexv1alpha1.ConditionFields{
+						Status:  metav1.ConditionTrue,
+						Reason:  kdexv1alpha1.ConditionReasonReconcileError,
+						Message: err.Error(),
+					},
+					Progressing: &kdexv1alpha1.ConditionFields{
+						Status:  metav1.ConditionFalse,
+						Reason:  kdexv1alpha1.ConditionReasonReconcileError,
+						Message: err.Error(),
+					},
+					Ready: &kdexv1alpha1.ConditionFields{
+						Status:  metav1.ConditionFalse,
+						Reason:  kdexv1alpha1.ConditionReasonReconcileError,
+						Message: err.Error(),
+					},
+				},
 			)
-			if err := c.Status().Update(ctx, pageBinding); err != nil {
+			if err := c.Status().Update(ctx, object); err != nil {
 				return nil, true, ctrl.Result{}, err
 			}
 
@@ -141,7 +154,7 @@ func resolvePageArchetype(
 		return nil, true, ctrl.Result{}, err
 	}
 
-	if isReady, r1, err := isReady(ctx, c, pageBinding, &pageArchetype, &pageArchetype.Status.Conditions, requeueDelay); !isReady {
+	if isReady, r1, err := isReady(ctx, c, object, &pageArchetype, &pageArchetype.Status.Conditions, requeueDelay); !isReady {
 		return nil, true, r1, err
 	}
 
@@ -165,14 +178,25 @@ func resolvePageFooter(
 
 		if err := c.Get(ctx, footerName, &footer); err != nil {
 			if errors.IsNotFound(err) {
-				apimeta.SetStatusCondition(
+				kdexv1alpha1.SetConditions(
 					objectConditions,
-					*kdexv1alpha1.NewCondition(
-						kdexv1alpha1.ConditionTypeReady,
-						metav1.ConditionFalse,
-						kdexv1alpha1.ConditionReasonReconcileError,
-						fmt.Sprintf("referenced KDexPageFooter %s not found", footerRef.Name),
-					),
+					kdexv1alpha1.ConditionArgs{
+						Degraded: &kdexv1alpha1.ConditionFields{
+							Status:  metav1.ConditionTrue,
+							Reason:  kdexv1alpha1.ConditionReasonReconcileError,
+							Message: err.Error(),
+						},
+						Progressing: &kdexv1alpha1.ConditionFields{
+							Status:  metav1.ConditionFalse,
+							Reason:  kdexv1alpha1.ConditionReasonReconcileError,
+							Message: err.Error(),
+						},
+						Ready: &kdexv1alpha1.ConditionFields{
+							Status:  metav1.ConditionFalse,
+							Reason:  kdexv1alpha1.ConditionReasonReconcileError,
+							Message: err.Error(),
+						},
+					},
 				)
 				if err := c.Status().Update(ctx, object); err != nil {
 					return nil, true, ctrl.Result{}, err
@@ -209,14 +233,25 @@ func resolvePageHeader(
 
 		if err := c.Get(ctx, headerName, &header); err != nil {
 			if errors.IsNotFound(err) {
-				apimeta.SetStatusCondition(
+				kdexv1alpha1.SetConditions(
 					objectConditions,
-					*kdexv1alpha1.NewCondition(
-						kdexv1alpha1.ConditionTypeReady,
-						metav1.ConditionFalse,
-						kdexv1alpha1.ConditionReasonReconcileError,
-						fmt.Sprintf("referenced KDexPageHeader %s not found", headerRef.Name),
-					),
+					kdexv1alpha1.ConditionArgs{
+						Degraded: &kdexv1alpha1.ConditionFields{
+							Status:  metav1.ConditionTrue,
+							Reason:  kdexv1alpha1.ConditionReasonReconcileError,
+							Message: err.Error(),
+						},
+						Progressing: &kdexv1alpha1.ConditionFields{
+							Status:  metav1.ConditionFalse,
+							Reason:  kdexv1alpha1.ConditionReasonReconcileError,
+							Message: err.Error(),
+						},
+						Ready: &kdexv1alpha1.ConditionFields{
+							Status:  metav1.ConditionFalse,
+							Reason:  kdexv1alpha1.ConditionReasonReconcileError,
+							Message: err.Error(),
+						},
+					},
 				)
 				if err := c.Status().Update(ctx, object); err != nil {
 					return nil, true, ctrl.Result{}, err
@@ -243,7 +278,10 @@ func resolvePageNavigation(
 	objectConditions *[]metav1.Condition,
 	navigationRef *corev1.LocalObjectReference,
 	requeueDelay time.Duration,
-) (*kdexv1alpha1.KDexPageNavigation, ctrl.Result, error) {
+) (*kdexv1alpha1.KDexPageNavigation, bool, ctrl.Result, error) {
+	if navigationRef == nil {
+		return nil, false, ctrl.Result{}, nil
+	}
 	var navigation kdexv1alpha1.KDexPageNavigation
 	navigationName := types.NamespacedName{
 		Name:      navigationRef.Name,
@@ -251,30 +289,41 @@ func resolvePageNavigation(
 	}
 	if err := c.Get(ctx, navigationName, &navigation); err != nil {
 		if errors.IsNotFound(err) {
-			apimeta.SetStatusCondition(
+			kdexv1alpha1.SetConditions(
 				objectConditions,
-				*kdexv1alpha1.NewCondition(
-					kdexv1alpha1.ConditionTypeReady,
-					metav1.ConditionFalse,
-					kdexv1alpha1.ConditionReasonReconcileError,
-					fmt.Sprintf("referenced KDexPageNavigation %s not found", navigationRef.Name),
-				),
+				kdexv1alpha1.ConditionArgs{
+					Degraded: &kdexv1alpha1.ConditionFields{
+						Status:  metav1.ConditionTrue,
+						Reason:  kdexv1alpha1.ConditionReasonReconcileError,
+						Message: err.Error(),
+					},
+					Progressing: &kdexv1alpha1.ConditionFields{
+						Status:  metav1.ConditionFalse,
+						Reason:  kdexv1alpha1.ConditionReasonReconcileError,
+						Message: err.Error(),
+					},
+					Ready: &kdexv1alpha1.ConditionFields{
+						Status:  metav1.ConditionFalse,
+						Reason:  kdexv1alpha1.ConditionReasonReconcileError,
+						Message: err.Error(),
+					},
+				},
 			)
 			if err := c.Status().Update(ctx, object); err != nil {
-				return nil, ctrl.Result{}, err
+				return nil, true, ctrl.Result{}, err
 			}
 
-			return nil, ctrl.Result{RequeueAfter: requeueDelay}, nil
+			return nil, true, ctrl.Result{RequeueAfter: requeueDelay}, nil
 		}
 
-		return nil, ctrl.Result{}, err
+		return nil, true, ctrl.Result{}, err
 	}
 
 	if isReady, r1, err := isReady(ctx, c, object, &navigation, &navigation.Status.Conditions, requeueDelay); !isReady {
-		return nil, r1, err
+		return nil, true, r1, err
 	}
 
-	return &navigation, ctrl.Result{}, nil
+	return &navigation, false, ctrl.Result{}, nil
 }
 
 func resolvePageNavigations(
@@ -285,17 +334,17 @@ func resolvePageNavigations(
 	navigationRef *corev1.LocalObjectReference,
 	extraNavigations map[string]*corev1.LocalObjectReference,
 	requeueDelay time.Duration,
-) (map[string]string, ctrl.Result, error) {
-	navigations := map[string]string{}
-	if navigationRef != nil {
-		navigation, response, err := resolvePageNavigation(
-			ctx, c, object, objectConditions, navigationRef, requeueDelay)
+) (map[string]string, bool, ctrl.Result, error) {
+	navigations := make(map[string]string)
 
-		if navigation == nil {
-			return nil, response, err
-		}
+	navigation, shouldReturn, response, err := resolvePageNavigation(
+		ctx, c, object, objectConditions, navigationRef, requeueDelay)
 
-		navigations = make(map[string]string)
+	if shouldReturn {
+		return nil, true, response, err
+	}
+
+	if navigation != nil {
 		navigations["main"] = navigation.Spec.Content
 	}
 
@@ -304,17 +353,19 @@ func resolvePageNavigations(
 	}
 
 	for navigationName, navigationRef := range extraNavigations {
-		navigation, response, err := resolvePageNavigation(
+		navigation, shouldReturn, response, err := resolvePageNavigation(
 			ctx, c, object, objectConditions, navigationRef, requeueDelay)
 
-		if navigation == nil {
-			return nil, response, err
+		if shouldReturn {
+			return nil, true, response, err
 		}
 
-		navigations[navigationName] = navigation.Spec.Content
+		if navigation != nil {
+			navigations[navigationName] = navigation.Spec.Content
+		}
 	}
 
-	return navigations, ctrl.Result{}, nil
+	return navigations, false, ctrl.Result{}, nil
 }
 
 func resolvePageBinding(
@@ -333,14 +384,25 @@ func resolvePageBinding(
 		}
 		if err := c.Get(ctx, pageBindingName, &pageBinding); err != nil {
 			if errors.IsNotFound(err) {
-				apimeta.SetStatusCondition(
+				kdexv1alpha1.SetConditions(
 					objectConditions,
-					*kdexv1alpha1.NewCondition(
-						kdexv1alpha1.ConditionTypeReady,
-						metav1.ConditionFalse,
-						kdexv1alpha1.ConditionReasonReconcileError,
-						fmt.Sprintf("referenced KDexPageBinding %s not found", pageBindingName.Name),
-					),
+					kdexv1alpha1.ConditionArgs{
+						Degraded: &kdexv1alpha1.ConditionFields{
+							Status:  metav1.ConditionTrue,
+							Reason:  kdexv1alpha1.ConditionReasonReconcileError,
+							Message: err.Error(),
+						},
+						Progressing: &kdexv1alpha1.ConditionFields{
+							Status:  metav1.ConditionFalse,
+							Reason:  kdexv1alpha1.ConditionReasonReconcileError,
+							Message: err.Error(),
+						},
+						Ready: &kdexv1alpha1.ConditionFields{
+							Status:  metav1.ConditionFalse,
+							Reason:  kdexv1alpha1.ConditionReasonReconcileError,
+							Message: err.Error(),
+						},
+					},
 				)
 				if err := c.Status().Update(ctx, object); err != nil {
 					return nil, true, ctrl.Result{}, err
@@ -381,18 +443,18 @@ func resolveScriptLibrary(
 					kdexv1alpha1.ConditionArgs{
 						Degraded: &kdexv1alpha1.ConditionFields{
 							Status:  metav1.ConditionTrue,
-							Reason:  "ScriptLibraryNotFound",
-							Message: fmt.Sprintf("referenced KDexScriptLibrary %s not found", scriptLibraryName.Name),
+							Reason:  kdexv1alpha1.ConditionReasonReconcileError,
+							Message: err.Error(),
 						},
 						Progressing: &kdexv1alpha1.ConditionFields{
 							Status:  metav1.ConditionFalse,
-							Reason:  "ScriptLibraryNotFound",
-							Message: "Reconciliation failed",
+							Reason:  kdexv1alpha1.ConditionReasonReconcileError,
+							Message: err.Error(),
 						},
 						Ready: &kdexv1alpha1.ConditionFields{
 							Status:  metav1.ConditionFalse,
-							Reason:  "ScriptLibraryNotFound",
-							Message: "Reconciliation failed",
+							Reason:  kdexv1alpha1.ConditionReasonReconcileError,
+							Message: err.Error(),
 						},
 					},
 				)
@@ -435,18 +497,18 @@ func resolveSecret(
 					kdexv1alpha1.ConditionArgs{
 						Degraded: &kdexv1alpha1.ConditionFields{
 							Status:  metav1.ConditionTrue,
-							Reason:  "SecretNotFound",
-							Message: fmt.Sprintf("referenced Secret %s not found", secretName.Name),
+							Reason:  kdexv1alpha1.ConditionReasonReconcileError,
+							Message: err.Error(),
 						},
 						Progressing: &kdexv1alpha1.ConditionFields{
 							Status:  metav1.ConditionFalse,
-							Reason:  "SecretNotFound",
-							Message: "Reconciliation failed",
+							Reason:  kdexv1alpha1.ConditionReasonReconcileError,
+							Message: err.Error(),
 						},
 						Ready: &kdexv1alpha1.ConditionFields{
 							Status:  metav1.ConditionFalse,
-							Reason:  "SecretNotFound",
-							Message: "Reconciliation failed",
+							Reason:  kdexv1alpha1.ConditionReasonReconcileError,
+							Message: err.Error(),
 						},
 					},
 				)
@@ -477,14 +539,25 @@ func resolveTheme(
 		}
 		if err := c.Get(ctx, themeName, &theme); err != nil {
 			if errors.IsNotFound(err) {
-				apimeta.SetStatusCondition(
+				kdexv1alpha1.SetConditions(
 					objectConditions,
-					*kdexv1alpha1.NewCondition(
-						kdexv1alpha1.ConditionTypeReady,
-						metav1.ConditionFalse,
-						kdexv1alpha1.ConditionReasonReconcileError,
-						fmt.Sprintf("referenced KDexTheme %s not found", themeName.Name),
-					),
+					kdexv1alpha1.ConditionArgs{
+						Degraded: &kdexv1alpha1.ConditionFields{
+							Status:  metav1.ConditionTrue,
+							Reason:  kdexv1alpha1.ConditionReasonReconcileError,
+							Message: err.Error(),
+						},
+						Progressing: &kdexv1alpha1.ConditionFields{
+							Status:  metav1.ConditionFalse,
+							Reason:  kdexv1alpha1.ConditionReasonReconcileError,
+							Message: err.Error(),
+						},
+						Ready: &kdexv1alpha1.ConditionFields{
+							Status:  metav1.ConditionFalse,
+							Reason:  kdexv1alpha1.ConditionReasonReconcileError,
+							Message: err.Error(),
+						},
+					},
 				)
 				if err := c.Status().Update(ctx, object); err != nil {
 					return nil, true, ctrl.Result{}, err

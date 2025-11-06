@@ -93,7 +93,7 @@ func (r *KDexPageBindingReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		return r1, err
 	}
 
-	pageArchetype, shouldReturn, r1, err := resolvePageArchetype(ctx, r.Client, &pageBinding, r.RequeueDelay)
+	pageArchetype, shouldReturn, r1, err := resolvePageArchetype(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, &pageBinding.Spec.PageArchetypeRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
@@ -107,8 +107,8 @@ func (r *KDexPageBindingReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	if navigationRef == nil {
 		navigationRef = pageArchetype.Spec.DefaultMainNavigationRef
 	}
-	navigations, response, err := resolvePageNavigations(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, navigationRef, pageArchetype.Spec.ExtraNavigations, r.RequeueDelay)
-	if err != nil {
+	navigations, shouldReturn, response, err := resolvePageNavigations(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, navigationRef, pageArchetype.Spec.ExtraNavigations, r.RequeueDelay)
+	if shouldReturn {
 		return response, err
 	}
 

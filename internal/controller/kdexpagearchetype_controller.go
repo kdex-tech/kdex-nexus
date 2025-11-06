@@ -20,7 +20,6 @@ import (
 	"context"
 	"time"
 
-	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
@@ -38,12 +37,13 @@ type KDexPageArchetypeReconciler struct {
 	RequeueDelay time.Duration
 }
 
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagefooters,verbs=get;list;watch
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpageheaders,verbs=get;list;watch
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagenavigations,verbs=get;list;watch
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagearchetypes,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagearchetypes/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagearchetypes/finalizers,verbs=update
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagefooters,verbs=get;list;watch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpageheaders,verbs=get;list;watch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagenavigations,verbs=get;list;watch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexscriptlibraries,verbs=get;list;watch
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexthemes,verbs=get;list;watch
 
 func (r *KDexPageArchetypeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -54,24 +54,37 @@ func (r *KDexPageArchetypeReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	if err := render.ValidateContent(
-		pageArchetype.Name, pageArchetype.Spec.Content,
-	); err != nil {
-		apimeta.SetStatusCondition(
-			&pageArchetype.Status.Conditions,
-			*kdexv1alpha1.NewCondition(
-				kdexv1alpha1.ConditionTypeReady,
-				metav1.ConditionFalse,
-				kdexv1alpha1.ConditionReasonReconcileError,
-				err.Error(),
-			),
-		)
-		if err := r.Status().Update(ctx, &pageArchetype); err != nil {
-			return ctrl.Result{}, err
-		}
-
+	kdexv1alpha1.SetConditions(
+		&pageArchetype.Status.Conditions,
+		kdexv1alpha1.ConditionArgs{
+			Degraded: &kdexv1alpha1.ConditionFields{
+				Status:  metav1.ConditionFalse,
+				Reason:  kdexv1alpha1.ConditionReasonReconciling,
+				Message: "Reconciling",
+			},
+			Progressing: &kdexv1alpha1.ConditionFields{
+				Status:  metav1.ConditionTrue,
+				Reason:  kdexv1alpha1.ConditionReasonReconciling,
+				Message: "Reconciling",
+			},
+			Ready: &kdexv1alpha1.ConditionFields{
+				Status:  metav1.ConditionUnknown,
+				Reason:  kdexv1alpha1.ConditionReasonReconciling,
+				Message: "Reconciling",
+			},
+		},
+	)
+	if err := r.Status().Update(ctx, &pageArchetype); err != nil {
 		return ctrl.Result{}, err
 	}
+
+	// Defer status update
+	defer func() {
+		pageArchetype.Status.ObservedGeneration = pageArchetype.Generation
+		if err := r.Status().Update(ctx, &pageArchetype); err != nil {
+			log.Error(err, "failed to update pageArchetype status")
+		}
+	}()
 
 	_, shouldReturn, r1, err := resolvePageFooter(ctx, r.Client, &pageArchetype, &pageArchetype.Status.Conditions, pageArchetype.Spec.DefaultFooterRef, r.RequeueDelay)
 	if shouldReturn {
@@ -83,9 +96,14 @@ func (r *KDexPageArchetypeReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return r1, err
 	}
 
-	_, response, err := resolvePageNavigations(ctx, r.Client, &pageArchetype, &pageArchetype.Status.Conditions, pageArchetype.Spec.DefaultMainNavigationRef, pageArchetype.Spec.ExtraNavigations, r.RequeueDelay)
-	if err != nil {
+	_, shouldReturn, response, err := resolvePageNavigations(ctx, r.Client, &pageArchetype, &pageArchetype.Status.Conditions, pageArchetype.Spec.DefaultMainNavigationRef, pageArchetype.Spec.ExtraNavigations, r.RequeueDelay)
+	if shouldReturn {
 		return response, err
+	}
+
+	_, shouldReturn, r1, err = resolveScriptLibrary(ctx, r.Client, &pageArchetype, &pageArchetype.Status.Conditions, pageArchetype.Spec.ScriptLibraryRef, r.RequeueDelay)
+	if shouldReturn {
+		return r1, err
 	}
 
 	_, shouldReturn, r1, err = resolveTheme(ctx, r.Client, &pageArchetype, &pageArchetype.Status.Conditions, pageArchetype.Spec.OverrideThemeRef, r.RequeueDelay)
@@ -93,20 +111,61 @@ func (r *KDexPageArchetypeReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return r1, err
 	}
 
-	log.Info("reconciled KDexPageArchetype")
+	if err := render.ValidateContent(
+		pageArchetype.Name, pageArchetype.Spec.Content,
+	); err != nil {
+		kdexv1alpha1.SetConditions(
+			&pageArchetype.Status.Conditions,
+			kdexv1alpha1.ConditionArgs{
+				Degraded: &kdexv1alpha1.ConditionFields{
+					Status:  metav1.ConditionTrue,
+					Reason:  "ContentValidationFailed",
+					Message: err.Error(),
+				},
+				Progressing: &kdexv1alpha1.ConditionFields{
+					Status:  metav1.ConditionFalse,
+					Reason:  "ContentValidationFailed",
+					Message: "Content invalid",
+				},
+				Ready: &kdexv1alpha1.ConditionFields{
+					Status:  metav1.ConditionFalse,
+					Reason:  "ContentValidationFailed",
+					Message: "Content invalid",
+				},
+			},
+		)
+		if err := r.Status().Update(ctx, &pageArchetype); err != nil {
+			return ctrl.Result{}, err
+		}
 
-	apimeta.SetStatusCondition(
+		return ctrl.Result{}, err
+	}
+
+	kdexv1alpha1.SetConditions(
 		&pageArchetype.Status.Conditions,
-		*kdexv1alpha1.NewCondition(
-			kdexv1alpha1.ConditionTypeReady,
-			metav1.ConditionTrue,
-			kdexv1alpha1.ConditionReasonReconcileSuccess,
-			"all references resolved successfully",
-		),
+		kdexv1alpha1.ConditionArgs{
+			Degraded: &kdexv1alpha1.ConditionFields{
+				Status:  metav1.ConditionFalse,
+				Reason:  kdexv1alpha1.ConditionReasonReconcileSuccess,
+				Message: "Reconciliation successful",
+			},
+			Progressing: &kdexv1alpha1.ConditionFields{
+				Status:  metav1.ConditionFalse,
+				Reason:  kdexv1alpha1.ConditionReasonReconcileSuccess,
+				Message: "Reconciliation successful",
+			},
+			Ready: &kdexv1alpha1.ConditionFields{
+				Status:  metav1.ConditionTrue,
+				Reason:  kdexv1alpha1.ConditionReasonReconcileSuccess,
+				Message: "Reconciliation successful",
+			},
+		},
 	)
 	if err := r.Status().Update(ctx, &pageArchetype); err != nil {
 		return ctrl.Result{}, err
 	}
+
+	log.Info("reconciled KDexPageArchetype")
 
 	return ctrl.Result{}, nil
 }
@@ -124,6 +183,9 @@ func (r *KDexPageArchetypeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Watches(
 			&kdexv1alpha1.KDexPageNavigation{},
 			handler.EnqueueRequestsFromMapFunc(r.findPageArchetypesForPageNavigations)).
+		Watches(
+			&kdexv1alpha1.KDexScriptLibrary{},
+			handler.EnqueueRequestsFromMapFunc(r.findPageArchetypesForScriptLibrary)).
 		Watches(
 			&kdexv1alpha1.KDexTheme{},
 			handler.EnqueueRequestsFromMapFunc(r.findPageArchetypesForTheme)).
