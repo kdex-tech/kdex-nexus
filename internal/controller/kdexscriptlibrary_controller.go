@@ -18,14 +18,12 @@ package controller
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
-	"kdex.dev/crds/render"
 	"kdex.dev/nexus/internal/npm"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -189,32 +187,4 @@ func (r *KDexScriptLibraryReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		).
 		Named("kdexscriptlibrary").
 		Complete(r)
-}
-
-func validateScripts(scriptReference *kdexv1alpha1.KDexScriptLibrarySpec) error {
-	renderer := render.Renderer{}
-
-	// validate head scripts
-	_, err := renderer.RenderOne(
-		"head-scripts",
-		scriptReference.String(false),
-		render.DefaultTemplateData(),
-	)
-
-	if err != nil {
-		return fmt.Errorf("failed to validate head scripts: %w", err)
-	}
-
-	// validate foot scripts
-	_, err = renderer.RenderOne(
-		"foot-scripts",
-		scriptReference.String(true),
-		render.DefaultTemplateData(),
-	)
-
-	if err != nil {
-		return fmt.Errorf("failed to validate foot scripts: %w", err)
-	}
-
-	return nil
 }
