@@ -21,7 +21,6 @@ rules:
   - kdexpagefooters
   - kdexpageheaders
   - kdexpagenavigations
-  - kdexrenderpages
   - kdexscriptlibraries
   - kdexthemes
   verbs:

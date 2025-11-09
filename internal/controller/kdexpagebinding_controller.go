@@ -49,7 +49,6 @@ type KDexPageBindingReconciler struct {
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagefooters,verbs=get;list;watch
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexpageheaders,verbs=get;list;watch
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagenavigations,verbs=get;list;watch
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexrenderpages,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexscriptlibraries,verbs=get;list;watch
 
 func (r *KDexPageBindingReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -71,15 +70,7 @@ func (r *KDexPageBindingReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		}
 	} else {
 		if controllerutil.ContainsFinalizer(&pageBinding, pageBindingFinalizerName) {
-			// renderPage := &kdexv1alpha1.KDexRenderPage{
-			// 	ObjectMeta: metav1.ObjectMeta{
-			// 		Name:      pageBinding.Name,
-			// 		Namespace: pageBinding.Namespace,
-			// 	},
-			// }
-			// if err := r.Delete(ctx, renderPage); client.IgnoreNotFound(err) != nil {
-			// 	return ctrl.Result{}, err
-			// }
+			// TODO
 
 			controllerutil.RemoveFinalizer(&pageBinding, pageBindingFinalizerName)
 			if err := r.Update(ctx, &pageBinding); err != nil {
@@ -230,7 +221,6 @@ func (r *KDexPageBindingReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 func (r *KDexPageBindingReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&kdexv1alpha1.KDexPageBinding{}).
-		Owns(&kdexv1alpha1.KDexRenderPage{}).
 		Watches(
 			&kdexv1alpha1.KDexApp{},
 			handler.EnqueueRequestsFromMapFunc(r.findPageBindingsForApp)).
