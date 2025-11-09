@@ -32,13 +32,9 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
-	apimeta "k8s.io/apimachinery/pkg/api/meta"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	"kdex.dev/nexus/internal/npm"
-	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -57,40 +53,6 @@ var (
 	cfg       *rest.Config
 	k8sClient client.Client
 )
-
-type MockHostReconciler struct {
-	client.Client
-	Scheme *runtime.Scheme
-}
-
-func (r *MockHostReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	var host kdexv1alpha1.KDexHost
-	if err := r.Get(ctx, req.NamespacedName, &host); err != nil {
-		return ctrl.Result{}, client.IgnoreNotFound(err)
-	}
-
-	apimeta.SetStatusCondition(
-		&host.Status.Conditions,
-		*kdexv1alpha1.NewCondition(
-			kdexv1alpha1.ConditionTypeReady,
-			metav1.ConditionTrue,
-			kdexv1alpha1.ConditionReasonReconcileSuccess,
-			"ready",
-		),
-	)
-	if err := r.Status().Update(ctx, &host); err != nil {
-		return ctrl.Result{}, err
-	}
-
-	return ctrl.Result{}, nil
-}
-
-func (r *MockHostReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&kdexv1alpha1.KDexHost{}).
-		Named("mockhostreconciler").
-		Complete(r)
-}
 
 type MockRegistry struct{}
 
@@ -166,11 +128,12 @@ var _ = BeforeSuite(func() {
 	})
 	Expect(err).NotTo(HaveOccurred())
 
-	mockHostReconciler := &MockHostReconciler{
-		Client: k8sManager.GetClient(),
-		Scheme: k8sManager.GetScheme(),
+	hostReconciler := &KDexHostReconciler{
+		Client:       k8sManager.GetClient(),
+		RequeueDelay: 0,
+		Scheme:       k8sManager.GetScheme(),
 	}
-	err = mockHostReconciler.SetupWithManager(k8sManager)
+	err = hostReconciler.SetupWithManager(k8sManager)
 	Expect(err).NotTo(HaveOccurred())
 
 	registryFactory := func(

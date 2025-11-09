@@ -101,12 +101,12 @@ func (r *KDexPageNavigationReconciler) Reconcile(ctx context.Context, req ctrl.R
 				Progressing: &kdexv1alpha1.ConditionFields{
 					Status:  metav1.ConditionFalse,
 					Reason:  "ContentValidationFailed",
-					Message: "Content invalid",
+					Message: err.Error(),
 				},
 				Ready: &kdexv1alpha1.ConditionFields{
 					Status:  metav1.ConditionFalse,
 					Reason:  "ContentValidationFailed",
-					Message: "Content invalid",
+					Message: err.Error(),
 				},
 			},
 		)

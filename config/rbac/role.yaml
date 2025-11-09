@@ -16,6 +16,7 @@ rules:
   - kdex.dev
   resources:
   - kdexapps
+  - kdexhosts
   - kdexpagearchetypes
   - kdexpagebindings
   - kdexpagefooters
@@ -35,6 +36,7 @@ rules:
   - kdex.dev
   resources:
   - kdexapps/finalizers
+  - kdexhosts/finalizers
   - kdexpagearchetypes/finalizers
   - kdexpagebindings/finalizers
   - kdexpagefooters/finalizers
@@ -48,6 +50,7 @@ rules:
   - kdex.dev
   resources:
   - kdexapps/status
+  - kdexhosts/status
   - kdexpagearchetypes/status
   - kdexpagebindings/status
   - kdexpagefooters/status
@@ -59,11 +62,3 @@ rules:
   - get
   - patch
   - update
-- apiGroups:
-  - kdex.dev
-  resources:
-  - kdexhosts
-  verbs:
-  - get
-  - list
-  - watch

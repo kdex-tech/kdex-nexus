@@ -101,12 +101,12 @@ func (r *KDexAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 				Progressing: &kdexv1alpha1.ConditionFields{
 					Status:  metav1.ConditionFalse,
 					Reason:  "PackageValidationFailed",
-					Message: "Reconciliation failed",
+					Message: err.Error(),
 				},
 				Ready: &kdexv1alpha1.ConditionFields{
 					Status:  metav1.ConditionFalse,
 					Reason:  "PackageValidationFailed",
-					Message: "Reconciliation failed",
+					Message: err.Error(),
 				},
 			},
 		)

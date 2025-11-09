@@ -17,16 +17,227 @@ limitations under the License.
 package controller
 
 import (
+	"context"
+
 	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var _ = Describe("KDexHost Controller", func() {
 	Context("When reconciling a resource", func() {
+		const namespace = "default"
+		const resourceName = "host-resource"
 
-		It("should successfully reconcile the resource", func() {
+		ctx := context.Background()
 
-			// TODO(user): Add more specific assertions depending on your controller's reconciliation logic.
-			// Example: If you expect a certain status condition after reconciliation, verify it here.
+		AfterEach(func() {
+			By("Cleanup all the test resource instances")
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexHost{}, client.InNamespace(namespace))).To(Succeed())
+			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexTheme{}, client.InNamespace(namespace))).To(Succeed())
+
+			// When resources have finalizers we need to wait for them to complete like this:
+			Eventually(func(g Gomega) error {
+				list := &kdexv1alpha1.KDexHostList{}
+				err := k8sClient.List(ctx, list, client.InNamespace(namespace))
+				g.Expect(err).NotTo(HaveOccurred())
+				g.Expect(list.Items).To(HaveLen(0))
+				return nil
+			}).To(Succeed())
+		})
+
+		It("it must not reconcile if it has missing brandName", func() {
+			resource := &kdexv1alpha1.KDexHost{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.KDexHostSpec{},
+			}
+
+			Expect(k8sClient.Create(ctx, resource)).NotTo(Succeed())
+		})
+
+		It("it must not reconcile if it has missing organization", func() {
+			resource := &kdexv1alpha1.KDexHost{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.KDexHostSpec{
+					BrandName: "KDex Tech",
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, resource)).NotTo(Succeed())
+		})
+
+		It("it must not reconcile if it has missing routing", func() {
+			resource := &kdexv1alpha1.KDexHost{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.KDexHostSpec{
+					BrandName:    "KDex Tech",
+					Organization: "KDex Tech Inc.",
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, resource)).NotTo(Succeed())
+		})
+
+		It("it must not reconcile if it has missing routing domains", func() {
+			resource := &kdexv1alpha1.KDexHost{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.KDexHostSpec{
+					BrandName:    "KDex Tech",
+					Organization: "KDex Tech Inc.",
+					Routing: kdexv1alpha1.Routing{
+						Domains: []string{},
+					},
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, resource)).NotTo(Succeed())
+		})
+
+		It("it reconciles if minimum required fields are present", func() {
+			resource := &kdexv1alpha1.KDexHost{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.KDexHostSpec{
+					BrandName:    "KDex Tech",
+					ModulePolicy: kdexv1alpha1.StrictModulePolicy,
+					Organization: "KDex Tech Inc.",
+					Routing: kdexv1alpha1.Routing{
+						Domains: []string{
+							"kdex.dev",
+						},
+						Strategy: kdexv1alpha1.IngressRoutingStrategy,
+					},
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.KDexHost{}, true)
+		})
+
+		It("it reconciles if theme reference becomes available", func() {
+			resource := &kdexv1alpha1.KDexHost{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.KDexHostSpec{
+					BrandName: "KDex Tech",
+					DefaultThemeRef: &v1.LocalObjectReference{
+						Name: "non-existent-theme",
+					},
+					ModulePolicy: kdexv1alpha1.StrictModulePolicy,
+					Organization: "KDex Tech Inc.",
+					Routing: kdexv1alpha1.Routing{
+						Domains: []string{
+							"kdex.dev",
+						},
+						Strategy: kdexv1alpha1.IngressRoutingStrategy,
+					},
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.KDexHost{}, false)
+
+			addOrUpdateTheme(
+				ctx, k8sClient,
+				kdexv1alpha1.KDexTheme{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "non-existent-theme",
+						Namespace: namespace,
+					},
+					Spec: kdexv1alpha1.KDexThemeSpec{
+						Assets: []kdexv1alpha1.Asset{
+							{
+								LinkHref: "http://foo.bar/style.css",
+								Attributes: map[string]string{
+									"rel": "stylesheet",
+								},
+							},
+						},
+					},
+				},
+			)
+
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.KDexHost{}, true)
+		})
+
+		It("it reconciles if scriptlibrary reference becomes available", func() {
+			resource := &kdexv1alpha1.KDexHost{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.KDexHostSpec{
+					BrandName:    "KDex Tech",
+					ModulePolicy: kdexv1alpha1.StrictModulePolicy,
+					Organization: "KDex Tech Inc.",
+					Routing: kdexv1alpha1.Routing{
+						Domains: []string{
+							"kdex.dev",
+						},
+						Strategy: kdexv1alpha1.IngressRoutingStrategy,
+					},
+					ScriptLibraryRef: &v1.LocalObjectReference{
+						Name: "non-existent-script-library",
+					},
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.KDexHost{}, false)
+
+			addOrUpdateScriptLibrary(
+				ctx, k8sClient,
+				kdexv1alpha1.KDexScriptLibrary{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "non-existent-script-library",
+						Namespace: namespace,
+					},
+					Spec: kdexv1alpha1.KDexScriptLibrarySpec{
+						Scripts: []kdexv1alpha1.Script{
+							{
+								Attributes: map[string]string{
+									"type": "text/module",
+								},
+								ScriptSrc: "http://foo.bar/script.js",
+							},
+						},
+					},
+				},
+			)
+
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.KDexHost{}, true)
 		})
 	})
 })
