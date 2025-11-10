@@ -16,6 +16,7 @@ rules:
   - kdex.dev
   resources:
   - kdexapps
+  - kdexhostcontrollers
   - kdexhosts
   - kdexpagearchetypes
   - kdexpagebindings

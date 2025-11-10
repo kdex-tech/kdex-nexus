@@ -42,6 +42,7 @@ type KDexHostReconciler struct {
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexhosts,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexhosts/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexhosts/finalizers,verbs=update
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexhostcontrollers,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexscriptlibraries,verbs=get;list;watch
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexthemes,verbs=get;list;watch
 
@@ -63,8 +64,15 @@ func (r *KDexHostReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		}
 	} else {
 		if controllerutil.ContainsFinalizer(&host, hostFinalizerName) {
-
-			// TODO delete the things...
+			hostController := &kdexv1alpha1.KDexHostController{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      host.Name,
+					Namespace: host.Namespace,
+				},
+			}
+			if err := r.Delete(ctx, hostController); client.IgnoreNotFound(err) != nil {
+				return ctrl.Result{}, err
+			}
 
 			controllerutil.RemoveFinalizer(&host, hostFinalizerName)
 			if err := r.Update(ctx, &host); err != nil {
@@ -106,7 +114,19 @@ func (r *KDexHostReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		return r1, err
 	}
 
-	if err := executeFocusedHostControllerSetup(ctx, &host); err != nil {
+	hostController := &kdexv1alpha1.KDexHostController{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      host.Name,
+			Namespace: host.Namespace,
+		},
+	}
+
+	if _, err := ctrl.CreateOrUpdate(ctx, r.Client, hostController, func() error {
+		hostController.Spec = kdexv1alpha1.KDexHostControllerSpec{
+			Source: host.Spec,
+		}
+		return ctrl.SetControllerReference(&host, hostController, r.Scheme)
+	}); err != nil {
 		kdexv1alpha1.SetConditions(
 			&host.Status.Conditions,
 			kdexv1alpha1.ConditionStatuses{
@@ -146,6 +166,7 @@ func (r *KDexHostReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 func (r *KDexHostReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&kdexv1alpha1.KDexHost{}).
+		Owns(&kdexv1alpha1.KDexHostController{}).
 		Watches(
 			&kdexv1alpha1.KDexScriptLibrary{},
 			handler.EnqueueRequestsFromMapFunc(r.findHostsForScriptLibrary),
@@ -155,8 +176,4 @@ func (r *KDexHostReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			handler.EnqueueRequestsFromMapFunc(r.findHostsForTheme)).
 		Named("kdexhost").
 		Complete(r)
-}
-
-func executeFocusedHostControllerSetup(ctx context.Context, kDexHost *kdexv1alpha1.KDexHost) error {
-	return nil
 }
