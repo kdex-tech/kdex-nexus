@@ -45,23 +45,13 @@ func resolveContents(
 			if errors.IsNotFound(err) {
 				kdexv1alpha1.SetConditions(
 					&pageBinding.Status.Conditions,
-					kdexv1alpha1.ConditionArgs{
-						Degraded: &kdexv1alpha1.ConditionFields{
-							Status:  metav1.ConditionTrue,
-							Reason:  kdexv1alpha1.ConditionReasonReconcileError,
-							Message: err.Error(),
-						},
-						Progressing: &kdexv1alpha1.ConditionFields{
-							Status:  metav1.ConditionFalse,
-							Reason:  kdexv1alpha1.ConditionReasonReconcileError,
-							Message: err.Error(),
-						},
-						Ready: &kdexv1alpha1.ConditionFields{
-							Status:  metav1.ConditionFalse,
-							Reason:  kdexv1alpha1.ConditionReasonReconcileError,
-							Message: err.Error(),
-						},
+					kdexv1alpha1.ConditionStatuses{
+						Degraded:    metav1.ConditionTrue,
+						Progressing: metav1.ConditionFalse,
+						Ready:       metav1.ConditionFalse,
 					},
+					kdexv1alpha1.ConditionReasonReconcileError,
+					err.Error(),
 				)
 
 				if err := c.Status().Update(ctx, pageBinding); err != nil {
@@ -105,23 +95,13 @@ func resolveHost(
 		if errors.IsNotFound(err) {
 			kdexv1alpha1.SetConditions(
 				objectConditions,
-				kdexv1alpha1.ConditionArgs{
-					Degraded: &kdexv1alpha1.ConditionFields{
-						Status:  metav1.ConditionTrue,
-						Reason:  kdexv1alpha1.ConditionReasonReconcileError,
-						Message: err.Error(),
-					},
-					Progressing: &kdexv1alpha1.ConditionFields{
-						Status:  metav1.ConditionFalse,
-						Reason:  kdexv1alpha1.ConditionReasonReconcileError,
-						Message: err.Error(),
-					},
-					Ready: &kdexv1alpha1.ConditionFields{
-						Status:  metav1.ConditionFalse,
-						Reason:  kdexv1alpha1.ConditionReasonReconcileError,
-						Message: err.Error(),
-					},
+				kdexv1alpha1.ConditionStatuses{
+					Degraded:    metav1.ConditionTrue,
+					Progressing: metav1.ConditionFalse,
+					Ready:       metav1.ConditionFalse,
 				},
+				kdexv1alpha1.ConditionReasonReconcileError,
+				err.Error(),
 			)
 
 			if err := c.Status().Update(ctx, object); err != nil {
@@ -162,23 +142,13 @@ func resolvePageArchetype(
 		if errors.IsNotFound(err) {
 			kdexv1alpha1.SetConditions(
 				objectConditions,
-				kdexv1alpha1.ConditionArgs{
-					Degraded: &kdexv1alpha1.ConditionFields{
-						Status:  metav1.ConditionTrue,
-						Reason:  kdexv1alpha1.ConditionReasonReconcileError,
-						Message: err.Error(),
-					},
-					Progressing: &kdexv1alpha1.ConditionFields{
-						Status:  metav1.ConditionFalse,
-						Reason:  kdexv1alpha1.ConditionReasonReconcileError,
-						Message: err.Error(),
-					},
-					Ready: &kdexv1alpha1.ConditionFields{
-						Status:  metav1.ConditionFalse,
-						Reason:  kdexv1alpha1.ConditionReasonReconcileError,
-						Message: err.Error(),
-					},
+				kdexv1alpha1.ConditionStatuses{
+					Degraded:    metav1.ConditionTrue,
+					Progressing: metav1.ConditionFalse,
+					Ready:       metav1.ConditionFalse,
 				},
+				kdexv1alpha1.ConditionReasonReconcileError,
+				err.Error(),
 			)
 
 			if err := c.Status().Update(ctx, object); err != nil {
@@ -220,23 +190,13 @@ func resolvePageFooter(
 		if errors.IsNotFound(err) {
 			kdexv1alpha1.SetConditions(
 				objectConditions,
-				kdexv1alpha1.ConditionArgs{
-					Degraded: &kdexv1alpha1.ConditionFields{
-						Status:  metav1.ConditionTrue,
-						Reason:  kdexv1alpha1.ConditionReasonReconcileError,
-						Message: err.Error(),
-					},
-					Progressing: &kdexv1alpha1.ConditionFields{
-						Status:  metav1.ConditionFalse,
-						Reason:  kdexv1alpha1.ConditionReasonReconcileError,
-						Message: err.Error(),
-					},
-					Ready: &kdexv1alpha1.ConditionFields{
-						Status:  metav1.ConditionFalse,
-						Reason:  kdexv1alpha1.ConditionReasonReconcileError,
-						Message: err.Error(),
-					},
+				kdexv1alpha1.ConditionStatuses{
+					Degraded:    metav1.ConditionTrue,
+					Progressing: metav1.ConditionFalse,
+					Ready:       metav1.ConditionFalse,
 				},
+				kdexv1alpha1.ConditionReasonReconcileError,
+				err.Error(),
 			)
 
 			if err := c.Status().Update(ctx, object); err != nil {
@@ -278,23 +238,13 @@ func resolvePageHeader(
 		if errors.IsNotFound(err) {
 			kdexv1alpha1.SetConditions(
 				objectConditions,
-				kdexv1alpha1.ConditionArgs{
-					Degraded: &kdexv1alpha1.ConditionFields{
-						Status:  metav1.ConditionTrue,
-						Reason:  kdexv1alpha1.ConditionReasonReconcileError,
-						Message: err.Error(),
-					},
-					Progressing: &kdexv1alpha1.ConditionFields{
-						Status:  metav1.ConditionFalse,
-						Reason:  kdexv1alpha1.ConditionReasonReconcileError,
-						Message: err.Error(),
-					},
-					Ready: &kdexv1alpha1.ConditionFields{
-						Status:  metav1.ConditionFalse,
-						Reason:  kdexv1alpha1.ConditionReasonReconcileError,
-						Message: err.Error(),
-					},
+				kdexv1alpha1.ConditionStatuses{
+					Degraded:    metav1.ConditionTrue,
+					Progressing: metav1.ConditionFalse,
+					Ready:       metav1.ConditionFalse,
 				},
+				kdexv1alpha1.ConditionReasonReconcileError,
+				err.Error(),
 			)
 			if err := c.Status().Update(ctx, object); err != nil {
 				return nil, true, ctrl.Result{}, err
@@ -334,23 +284,13 @@ func resolvePageNavigation(
 		if errors.IsNotFound(err) {
 			kdexv1alpha1.SetConditions(
 				objectConditions,
-				kdexv1alpha1.ConditionArgs{
-					Degraded: &kdexv1alpha1.ConditionFields{
-						Status:  metav1.ConditionTrue,
-						Reason:  kdexv1alpha1.ConditionReasonReconcileError,
-						Message: err.Error(),
-					},
-					Progressing: &kdexv1alpha1.ConditionFields{
-						Status:  metav1.ConditionFalse,
-						Reason:  kdexv1alpha1.ConditionReasonReconcileError,
-						Message: err.Error(),
-					},
-					Ready: &kdexv1alpha1.ConditionFields{
-						Status:  metav1.ConditionFalse,
-						Reason:  kdexv1alpha1.ConditionReasonReconcileError,
-						Message: err.Error(),
-					},
+				kdexv1alpha1.ConditionStatuses{
+					Degraded:    metav1.ConditionTrue,
+					Progressing: metav1.ConditionFalse,
+					Ready:       metav1.ConditionFalse,
 				},
+				kdexv1alpha1.ConditionReasonReconcileError,
+				err.Error(),
 			)
 
 			if err := c.Status().Update(ctx, object); err != nil {
@@ -433,23 +373,13 @@ func resolvePageBinding(
 		if errors.IsNotFound(err) {
 			kdexv1alpha1.SetConditions(
 				objectConditions,
-				kdexv1alpha1.ConditionArgs{
-					Degraded: &kdexv1alpha1.ConditionFields{
-						Status:  metav1.ConditionTrue,
-						Reason:  kdexv1alpha1.ConditionReasonReconcileError,
-						Message: err.Error(),
-					},
-					Progressing: &kdexv1alpha1.ConditionFields{
-						Status:  metav1.ConditionFalse,
-						Reason:  kdexv1alpha1.ConditionReasonReconcileError,
-						Message: err.Error(),
-					},
-					Ready: &kdexv1alpha1.ConditionFields{
-						Status:  metav1.ConditionFalse,
-						Reason:  kdexv1alpha1.ConditionReasonReconcileError,
-						Message: err.Error(),
-					},
+				kdexv1alpha1.ConditionStatuses{
+					Degraded:    metav1.ConditionTrue,
+					Progressing: metav1.ConditionFalse,
+					Ready:       metav1.ConditionFalse,
 				},
+				kdexv1alpha1.ConditionReasonReconcileError,
+				err.Error(),
 			)
 
 			if err := c.Status().Update(ctx, object); err != nil {
@@ -490,23 +420,13 @@ func resolveScriptLibrary(
 		if errors.IsNotFound(err) {
 			kdexv1alpha1.SetConditions(
 				objectConditions,
-				kdexv1alpha1.ConditionArgs{
-					Degraded: &kdexv1alpha1.ConditionFields{
-						Status:  metav1.ConditionTrue,
-						Reason:  kdexv1alpha1.ConditionReasonReconcileError,
-						Message: err.Error(),
-					},
-					Progressing: &kdexv1alpha1.ConditionFields{
-						Status:  metav1.ConditionFalse,
-						Reason:  kdexv1alpha1.ConditionReasonReconcileError,
-						Message: err.Error(),
-					},
-					Ready: &kdexv1alpha1.ConditionFields{
-						Status:  metav1.ConditionFalse,
-						Reason:  kdexv1alpha1.ConditionReasonReconcileError,
-						Message: err.Error(),
-					},
+				kdexv1alpha1.ConditionStatuses{
+					Degraded:    metav1.ConditionTrue,
+					Progressing: metav1.ConditionFalse,
+					Ready:       metav1.ConditionFalse,
 				},
+				kdexv1alpha1.ConditionReasonReconcileError,
+				err.Error(),
 			)
 
 			if err := c.Status().Update(ctx, object); err != nil {
@@ -547,23 +467,13 @@ func resolveSecret(
 		if errors.IsNotFound(err) {
 			kdexv1alpha1.SetConditions(
 				objectConditions,
-				kdexv1alpha1.ConditionArgs{
-					Degraded: &kdexv1alpha1.ConditionFields{
-						Status:  metav1.ConditionTrue,
-						Reason:  kdexv1alpha1.ConditionReasonReconcileError,
-						Message: err.Error(),
-					},
-					Progressing: &kdexv1alpha1.ConditionFields{
-						Status:  metav1.ConditionFalse,
-						Reason:  kdexv1alpha1.ConditionReasonReconcileError,
-						Message: err.Error(),
-					},
-					Ready: &kdexv1alpha1.ConditionFields{
-						Status:  metav1.ConditionFalse,
-						Reason:  kdexv1alpha1.ConditionReasonReconcileError,
-						Message: err.Error(),
-					},
+				kdexv1alpha1.ConditionStatuses{
+					Degraded:    metav1.ConditionTrue,
+					Progressing: metav1.ConditionFalse,
+					Ready:       metav1.ConditionFalse,
 				},
+				kdexv1alpha1.ConditionReasonReconcileError,
+				err.Error(),
 			)
 
 			if err := c.Status().Update(ctx, object); err != nil {
@@ -598,23 +508,13 @@ func resolveTheme(
 		if errors.IsNotFound(err) {
 			kdexv1alpha1.SetConditions(
 				objectConditions,
-				kdexv1alpha1.ConditionArgs{
-					Degraded: &kdexv1alpha1.ConditionFields{
-						Status:  metav1.ConditionTrue,
-						Reason:  kdexv1alpha1.ConditionReasonReconcileError,
-						Message: err.Error(),
-					},
-					Progressing: &kdexv1alpha1.ConditionFields{
-						Status:  metav1.ConditionFalse,
-						Reason:  kdexv1alpha1.ConditionReasonReconcileError,
-						Message: err.Error(),
-					},
-					Ready: &kdexv1alpha1.ConditionFields{
-						Status:  metav1.ConditionFalse,
-						Reason:  kdexv1alpha1.ConditionReasonReconcileError,
-						Message: err.Error(),
-					},
+				kdexv1alpha1.ConditionStatuses{
+					Degraded:    metav1.ConditionTrue,
+					Progressing: metav1.ConditionFalse,
+					Ready:       metav1.ConditionFalse,
 				},
+				kdexv1alpha1.ConditionReasonReconcileError,
+				err.Error(),
 			)
 
 			if err := c.Status().Update(ctx, object); err != nil {

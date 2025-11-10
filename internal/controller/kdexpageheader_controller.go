@@ -53,23 +53,13 @@ func (r *KDexPageHeaderReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 
 	kdexv1alpha1.SetConditions(
 		&pageHeader.Status.Conditions,
-		kdexv1alpha1.ConditionArgs{
-			Degraded: &kdexv1alpha1.ConditionFields{
-				Status:  metav1.ConditionFalse,
-				Reason:  kdexv1alpha1.ConditionReasonReconciling,
-				Message: "Reconciling",
-			},
-			Progressing: &kdexv1alpha1.ConditionFields{
-				Status:  metav1.ConditionTrue,
-				Reason:  kdexv1alpha1.ConditionReasonReconciling,
-				Message: "Reconciling",
-			},
-			Ready: &kdexv1alpha1.ConditionFields{
-				Status:  metav1.ConditionUnknown,
-				Reason:  kdexv1alpha1.ConditionReasonReconciling,
-				Message: "Reconciling",
-			},
+		kdexv1alpha1.ConditionStatuses{
+			Degraded:    metav1.ConditionFalse,
+			Progressing: metav1.ConditionTrue,
+			Ready:       metav1.ConditionUnknown,
 		},
+		kdexv1alpha1.ConditionReasonReconciling,
+		"Reconciling",
 	)
 	if err := r.Status().Update(ctx, &pageHeader); err != nil {
 		return ctrl.Result{}, err
@@ -93,23 +83,13 @@ func (r *KDexPageHeaderReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	); err != nil {
 		kdexv1alpha1.SetConditions(
 			&pageHeader.Status.Conditions,
-			kdexv1alpha1.ConditionArgs{
-				Degraded: &kdexv1alpha1.ConditionFields{
-					Status:  metav1.ConditionTrue,
-					Reason:  "ContentValidationFailed",
-					Message: err.Error(),
-				},
-				Progressing: &kdexv1alpha1.ConditionFields{
-					Status:  metav1.ConditionFalse,
-					Reason:  "ContentValidationFailed",
-					Message: err.Error(),
-				},
-				Ready: &kdexv1alpha1.ConditionFields{
-					Status:  metav1.ConditionFalse,
-					Reason:  "ContentValidationFailed",
-					Message: err.Error(),
-				},
+			kdexv1alpha1.ConditionStatuses{
+				Degraded:    metav1.ConditionTrue,
+				Progressing: metav1.ConditionFalse,
+				Ready:       metav1.ConditionFalse,
 			},
+			kdexv1alpha1.ConditionReasonReconcileError,
+			err.Error(),
 		)
 		if err := r.Status().Update(ctx, &pageHeader); err != nil {
 			return ctrl.Result{}, err
@@ -120,23 +100,13 @@ func (r *KDexPageHeaderReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 
 	kdexv1alpha1.SetConditions(
 		&pageHeader.Status.Conditions,
-		kdexv1alpha1.ConditionArgs{
-			Degraded: &kdexv1alpha1.ConditionFields{
-				Status:  metav1.ConditionFalse,
-				Reason:  kdexv1alpha1.ConditionReasonReconcileSuccess,
-				Message: "Reconciliation successful",
-			},
-			Progressing: &kdexv1alpha1.ConditionFields{
-				Status:  metav1.ConditionFalse,
-				Reason:  kdexv1alpha1.ConditionReasonReconcileSuccess,
-				Message: "Reconciliation successful",
-			},
-			Ready: &kdexv1alpha1.ConditionFields{
-				Status:  metav1.ConditionTrue,
-				Reason:  kdexv1alpha1.ConditionReasonReconcileSuccess,
-				Message: "Reconciliation successful",
-			},
+		kdexv1alpha1.ConditionStatuses{
+			Degraded:    metav1.ConditionFalse,
+			Progressing: metav1.ConditionFalse,
+			Ready:       metav1.ConditionTrue,
 		},
+		kdexv1alpha1.ConditionReasonReconcileSuccess,
+		"Reconciliation successful",
 	)
 	if err := r.Status().Update(ctx, &pageHeader); err != nil {
 		return ctrl.Result{}, err
