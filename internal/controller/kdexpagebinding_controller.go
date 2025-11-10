@@ -98,7 +98,7 @@ func (r *KDexPageBindingReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	defer func() {
 		pageBinding.Status.ObservedGeneration = pageBinding.Generation
 		if err := r.Status().Update(ctx, &pageBinding); err != nil {
-			log.Error(err, "failed to update pageBinding status")
+			log.Info("failed to update status", "err", err)
 		}
 	}()
 

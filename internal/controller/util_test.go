@@ -231,5 +231,5 @@ func assertResourceReady(ctx context.Context, k8sClient client.Client, name stri
 		}
 	}
 
-	Eventually(check).Should(Succeed())
+	Eventually(check, "5s").Should(Succeed())
 }

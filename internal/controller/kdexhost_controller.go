@@ -92,7 +92,7 @@ func (r *KDexHostReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	defer func() {
 		host.Status.ObservedGeneration = host.Generation
 		if err := r.Status().Update(ctx, &host); err != nil {
-			log.Error(err, "failed to update host status")
+			log.Info("failed to update status", "err", err)
 		}
 	}()
 

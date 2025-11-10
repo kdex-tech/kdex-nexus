@@ -70,7 +70,7 @@ func (r *KDexScriptLibraryReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	defer func() {
 		scriptLibrary.Status.ObservedGeneration = scriptLibrary.Generation
 		if err := r.Status().Update(ctx, &scriptLibrary); err != nil {
-			log.Error(err, "failed to update app status")
+			log.Info("failed to update status", "err", err)
 		}
 	}()
 

@@ -66,7 +66,7 @@ func (r *KDexThemeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	defer func() {
 		theme.Status.ObservedGeneration = theme.Generation
 		if err := r.Status().Update(ctx, &theme); err != nil {
-			log.Error(err, "failed to update theme status")
+			log.Info("failed to update status", "err", err)
 		}
 	}()
 
