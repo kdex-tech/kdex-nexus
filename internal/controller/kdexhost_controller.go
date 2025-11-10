@@ -20,6 +20,7 @@ import (
 	"context"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
@@ -123,7 +124,9 @@ func (r *KDexHostReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 	if _, err := ctrl.CreateOrUpdate(ctx, r.Client, hostController, func() error {
 		hostController.Spec = kdexv1alpha1.KDexHostControllerSpec{
-			Source: host.Spec,
+			HostRef: corev1.LocalObjectReference{
+				Name: host.Name,
+			},
 		}
 		return ctrl.SetControllerReference(&host, hostController, r.Scheme)
 	}); err != nil {
