@@ -24,7 +24,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var _ = Describe("KDexHost Controller", func() {
@@ -35,18 +34,7 @@ var _ = Describe("KDexHost Controller", func() {
 		ctx := context.Background()
 
 		AfterEach(func() {
-			By("Cleanup all the test resource instances")
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexHost{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexTheme{}, client.InNamespace(namespace))).To(Succeed())
-
-			// When resources have finalizers we need to wait for them to complete like this:
-			Eventually(func(g Gomega) error {
-				list := &kdexv1alpha1.KDexHostList{}
-				err := k8sClient.List(ctx, list, client.InNamespace(namespace))
-				g.Expect(err).NotTo(HaveOccurred())
-				g.Expect(list.Items).To(HaveLen(0))
-				return nil
-			}).To(Succeed())
+			cleanupResources(namespace)
 		})
 
 		It("it must not reconcile if it has missing brandName", func() {

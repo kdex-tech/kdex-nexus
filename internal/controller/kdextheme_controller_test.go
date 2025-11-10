@@ -23,7 +23,6 @@ import (
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var _ = Describe("KDexTheme Controller", func() {
@@ -34,8 +33,7 @@ var _ = Describe("KDexTheme Controller", func() {
 		ctx := context.Background()
 
 		AfterEach(func() {
-			By("Cleanup all the test resource instances")
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexTheme{}, client.InNamespace(namespace))).To(Succeed())
+			cleanupResources(namespace)
 		})
 
 		It("should not reconcile without assets", func() {

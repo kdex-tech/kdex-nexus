@@ -25,7 +25,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var _ = Describe("KDexPageBinding Controller", func() {
@@ -36,14 +35,7 @@ var _ = Describe("KDexPageBinding Controller", func() {
 		ctx := context.Background()
 
 		AfterEach(func() {
-			By("Cleanup all the test resource instances")
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageBinding{}, client.InNamespace(namespace))).To(Succeed())
-
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexHost{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageArchetype{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageFooter{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageHeader{}, client.InNamespace(namespace))).To(Succeed())
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexPageNavigation{}, client.InNamespace(namespace))).To(Succeed())
+			cleanupResources(namespace)
 		})
 
 		It("with empty content entries should not succeed", func() {
@@ -139,8 +131,9 @@ var _ = Describe("KDexPageBinding Controller", func() {
 						Namespace: namespace,
 					},
 					Spec: kdexv1alpha1.KDexHostSpec{
+						BrandName:    "KDex Tech",
 						ModulePolicy: kdexv1alpha1.LooseModulePolicy,
-						Organization: "KDex Tech",
+						Organization: "KDex Tech Inc.",
 						Routing: kdexv1alpha1.Routing{
 							Domains: []string{
 								"example.com",
@@ -222,8 +215,9 @@ var _ = Describe("KDexPageBinding Controller", func() {
 						Namespace: namespace,
 					},
 					Spec: kdexv1alpha1.KDexHostSpec{
+						BrandName:    "KDex Tech",
 						ModulePolicy: kdexv1alpha1.LooseModulePolicy,
-						Organization: "KDex Tech",
+						Organization: "KDex Tech Inc.",
 						Routing: kdexv1alpha1.Routing{
 							Domains: []string{
 								"example.com",
@@ -328,8 +322,9 @@ var _ = Describe("KDexPageBinding Controller", func() {
 						Namespace: namespace,
 					},
 					Spec: kdexv1alpha1.KDexHostSpec{
+						BrandName:    "KDex Tech",
 						ModulePolicy: kdexv1alpha1.LooseModulePolicy,
-						Organization: "KDex Tech",
+						Organization: "KDex Tech Inc.",
 						Routing: kdexv1alpha1.Routing{
 							Domains: []string{
 								"example.com",
@@ -432,8 +427,9 @@ var _ = Describe("KDexPageBinding Controller", func() {
 						Namespace: namespace,
 					},
 					Spec: kdexv1alpha1.KDexHostSpec{
+						BrandName:    "KDex Tech",
 						ModulePolicy: kdexv1alpha1.LooseModulePolicy,
-						Organization: "KDex Tech",
+						Organization: "KDex Tech Inc.",
 						Routing: kdexv1alpha1.Routing{
 							Domains: []string{
 								"example.com",
@@ -555,8 +551,9 @@ var _ = Describe("KDexPageBinding Controller", func() {
 						Namespace: namespace,
 					},
 					Spec: kdexv1alpha1.KDexHostSpec{
+						BrandName:    "KDex Tech",
 						ModulePolicy: kdexv1alpha1.LooseModulePolicy,
-						Organization: "KDex Tech",
+						Organization: "KDex Tech Inc.",
 						Routing: kdexv1alpha1.Routing{
 							Domains: []string{
 								"example.com",

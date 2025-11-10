@@ -24,7 +24,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var _ = Describe("KDexScriptLibrary Controller", func() {
@@ -35,8 +34,7 @@ var _ = Describe("KDexScriptLibrary Controller", func() {
 		ctx := context.Background()
 
 		AfterEach(func() {
-			By("Cleanup all the test resource instances")
-			Expect(k8sClient.DeleteAllOf(ctx, &kdexv1alpha1.KDexScriptLibrary{}, client.InNamespace(namespace))).To(Succeed())
+			cleanupResources(namespace)
 		})
 
 		It("it must not become ready if it has empty script reference", func() {

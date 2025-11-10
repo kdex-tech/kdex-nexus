@@ -32,6 +32,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/client-go/rest"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	"kdex.dev/nexus/internal/npm"
@@ -128,6 +129,24 @@ var _ = BeforeSuite(func() {
 	})
 	Expect(err).NotTo(HaveOccurred())
 
+	registryFactory := func(
+		secret *corev1.Secret,
+		error func(err error, msg string, keysAndValues ...any),
+	) npm.Registry {
+		return &MockRegistry{}
+	}
+
+	// App
+	appReconciler := &KDexAppReconciler{
+		Client:          k8sManager.GetClient(),
+		RegistryFactory: registryFactory,
+		RequeueDelay:    0,
+		Scheme:          k8sManager.GetScheme(),
+	}
+	err = appReconciler.SetupWithManager(k8sManager)
+	Expect(err).NotTo(HaveOccurred())
+
+	// Host
 	hostReconciler := &KDexHostReconciler{
 		Client:       k8sManager.GetClient(),
 		RequeueDelay: 0,
@@ -136,22 +155,7 @@ var _ = BeforeSuite(func() {
 	err = hostReconciler.SetupWithManager(k8sManager)
 	Expect(err).NotTo(HaveOccurred())
 
-	registryFactory := func(
-		secret *corev1.Secret,
-		error func(err error, msg string, keysAndValues ...any),
-	) npm.Registry {
-		return &MockRegistry{}
-	}
-
-	pageReconciler := &KDexAppReconciler{
-		Client:          k8sManager.GetClient(),
-		RegistryFactory: registryFactory,
-		RequeueDelay:    0,
-		Scheme:          k8sManager.GetScheme(),
-	}
-	err = pageReconciler.SetupWithManager(k8sManager)
-	Expect(err).NotTo(HaveOccurred())
-
+	// Page Archetype
 	pageArchetypeReconciler := &KDexPageArchetypeReconciler{
 		Client:       k8sClient,
 		RequeueDelay: 0,
@@ -160,6 +164,7 @@ var _ = BeforeSuite(func() {
 	err = pageArchetypeReconciler.SetupWithManager(k8sManager)
 	Expect(err).NotTo(HaveOccurred())
 
+	// Page Binding
 	pageBindingReconciler := &KDexPageBindingReconciler{
 		Client:       k8sClient,
 		RequeueDelay: 0,
@@ -168,14 +173,7 @@ var _ = BeforeSuite(func() {
 	err = pageBindingReconciler.SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 
-	pageHeaderReconciler := &KDexPageHeaderReconciler{
-		Client:       k8sClient,
-		RequeueDelay: 0,
-		Scheme:       k8sClient.Scheme(),
-	}
-	err = pageHeaderReconciler.SetupWithManager(k8sManager)
-	Expect(err).ToNot(HaveOccurred())
-
+	// Page Footer
 	pageFooterReconciler := &KDexPageFooterReconciler{
 		Client:       k8sClient,
 		RequeueDelay: 0,
@@ -184,6 +182,16 @@ var _ = BeforeSuite(func() {
 	err = pageFooterReconciler.SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 
+	// Page Header
+	pageHeaderReconciler := &KDexPageHeaderReconciler{
+		Client:       k8sClient,
+		RequeueDelay: 0,
+		Scheme:       k8sClient.Scheme(),
+	}
+	err = pageHeaderReconciler.SetupWithManager(k8sManager)
+	Expect(err).ToNot(HaveOccurred())
+
+	// Page Navigation
 	pageNavigationReconciler := &KDexPageNavigationReconciler{
 		Client: k8sClient,
 		Scheme: k8sClient.Scheme(),
@@ -191,6 +199,7 @@ var _ = BeforeSuite(func() {
 	err = pageNavigationReconciler.SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 
+	// Script Library
 	scriptLibraryReconciler := &KDexScriptLibraryReconciler{
 		Client:          k8sClient,
 		RegistryFactory: registryFactory,
@@ -200,6 +209,7 @@ var _ = BeforeSuite(func() {
 	err = scriptLibraryReconciler.SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 
+	// Theme
 	themeReconciler := &KDexThemeReconciler{
 		Client: k8sClient,
 		Scheme: k8sClient.Scheme(),
@@ -228,6 +238,41 @@ func addRemoteCRD(paths *[]string, tempDir string, url string) {
 	}
 
 	*paths = append(*paths, crdPath)
+}
+
+type Pairs struct {
+	resource client.Object
+	list     client.ObjectList
+}
+
+func cleanupResources(namespace string) {
+	By("Cleanup all the test resource instances")
+
+	for _, pair := range []Pairs{
+		{&kdexv1alpha1.KDexApp{}, &kdexv1alpha1.KDexAppList{}},
+		{&kdexv1alpha1.KDexHost{}, &kdexv1alpha1.KDexHostList{}},
+		{&kdexv1alpha1.KDexPageArchetype{}, &kdexv1alpha1.KDexPageArchetypeList{}},
+		{&kdexv1alpha1.KDexPageBinding{}, &kdexv1alpha1.KDexPageBindingList{}},
+		{&kdexv1alpha1.KDexPageFooter{}, &kdexv1alpha1.KDexPageFooterList{}},
+		{&kdexv1alpha1.KDexPageHeader{}, &kdexv1alpha1.KDexPageHeaderList{}},
+		{&kdexv1alpha1.KDexPageNavigation{}, &kdexv1alpha1.KDexPageNavigationList{}},
+		{&kdexv1alpha1.KDexScriptLibrary{}, &kdexv1alpha1.KDexScriptLibraryList{}},
+		{&kdexv1alpha1.KDexTheme{}, &kdexv1alpha1.KDexThemeList{}},
+		{&corev1.Secret{}, &corev1.SecretList{}},
+	} {
+		err := k8sClient.DeleteAllOf(ctx, pair.resource, client.InNamespace(namespace))
+		Expect(err).NotTo(HaveOccurred())
+
+		Eventually(func(g Gomega) error {
+			list := pair.list
+			err := k8sClient.List(ctx, list, client.InNamespace(namespace))
+			g.Expect(err).NotTo(HaveOccurred())
+			items, err := meta.ExtractList(list)
+			g.Expect(err).NotTo(HaveOccurred())
+			g.Expect(items).To(HaveLen(0))
+			return nil
+		}).To(Succeed())
+	}
 }
 
 func downloadCRD(url, tempDir string) (string, error) {
