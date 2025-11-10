@@ -131,13 +131,13 @@ func (r *KDexHostReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 			Ready:       metav1.ConditionTrue,
 		},
 		kdexv1alpha1.ConditionReasonReconcileSuccess,
-		"Stage 1 Reconciliation successful",
+		"Reconciliation successful",
 	)
 	if err := r.Status().Update(ctx, &host); err != nil {
 		return ctrl.Result{}, err
 	}
 
-	log.Info("reconciled KDexHost stage1")
+	log.Info("reconciled KDexHost")
 
 	return ctrl.Result{}, nil
 }
@@ -153,7 +153,7 @@ func (r *KDexHostReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Watches(
 			&kdexv1alpha1.KDexTheme{},
 			handler.EnqueueRequestsFromMapFunc(r.findHostsForTheme)).
-		Named("kdexhost-stage1").
+		Named("kdexhost").
 		Complete(r)
 }
 
