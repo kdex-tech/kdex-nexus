@@ -145,34 +145,3 @@ func (r *KDexPageArchetypeReconciler) findPageArchetypesForScriptLibrary(
 	}
 	return requests
 }
-
-func (r *KDexPageArchetypeReconciler) findPageArchetypesForTheme(
-	ctx context.Context,
-	theme client.Object,
-) []reconcile.Request {
-	log := logf.FromContext(ctx)
-
-	var pageArchetypesList kdexv1alpha1.KDexPageArchetypeList
-	if err := r.List(ctx, &pageArchetypesList, &client.ListOptions{
-		Namespace: theme.GetNamespace(),
-	}); err != nil {
-		log.Error(err, "unable to list KDexPageArchetypes for theme", "name", theme.GetName())
-		return []reconcile.Request{}
-	}
-
-	requests := make([]reconcile.Request, 0, len(pageArchetypesList.Items))
-	for _, pageArchetype := range pageArchetypesList.Items {
-		if pageArchetype.Spec.OverrideThemeRef == nil {
-			continue
-		}
-		if pageArchetype.Spec.OverrideThemeRef.Name == theme.GetName() {
-			requests = append(requests, reconcile.Request{
-				NamespacedName: types.NamespacedName{
-					Name:      pageArchetype.Name,
-					Namespace: pageArchetype.Namespace,
-				},
-			})
-		}
-	}
-	return requests
-}

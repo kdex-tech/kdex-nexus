@@ -205,51 +205,6 @@ var _ = Describe("KDexPageArchetype Controller", func() {
 				&kdexv1alpha1.KDexPageArchetype{}, true)
 		})
 
-		It("with missing theme reference should not successfully reconcile", func() {
-			resource := &kdexv1alpha1.KDexPageArchetype{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      resourceName,
-					Namespace: namespace,
-				},
-				Spec: kdexv1alpha1.KDexPageArchetypeSpec{
-					Content: "<h1>Hello, World!</h1>",
-					OverrideThemeRef: &corev1.LocalObjectReference{
-						Name: "non-existent-theme",
-					},
-				},
-			}
-
-			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
-
-			assertResourceReady(
-				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.KDexPageArchetype{}, false)
-
-			addOrUpdateTheme(
-				ctx, k8sClient,
-				kdexv1alpha1.KDexTheme{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "non-existent-theme",
-						Namespace: namespace,
-					},
-					Spec: kdexv1alpha1.KDexThemeSpec{
-						Assets: []kdexv1alpha1.Asset{
-							{
-								LinkHref: "http://foo.bar/style.css",
-								Attributes: map[string]string{
-									"rel": "stylesheet",
-								},
-							},
-						},
-					},
-				},
-			)
-
-			assertResourceReady(
-				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.KDexPageArchetype{}, true)
-		})
-
 		It("with only content should successfully reconcile the resource", func() {
 			resource := &kdexv1alpha1.KDexPageArchetype{
 				ObjectMeta: metav1.ObjectMeta{

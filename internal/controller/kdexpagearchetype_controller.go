@@ -44,7 +44,6 @@ type KDexPageArchetypeReconciler struct {
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexpageheaders,verbs=get;list;watch
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagenavigations,verbs=get;list;watch
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexscriptlibraries,verbs=get;list;watch
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexthemes,verbs=get;list;watch
 
 func (r *KDexPageArchetypeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx)
@@ -92,11 +91,6 @@ func (r *KDexPageArchetypeReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	_, shouldReturn, r1, err = resolveScriptLibrary(ctx, r.Client, &pageArchetype, &pageArchetype.Status.Conditions, pageArchetype.Spec.ScriptLibraryRef, r.RequeueDelay)
-	if shouldReturn {
-		return r1, err
-	}
-
-	_, shouldReturn, r1, err = resolveTheme(ctx, r.Client, &pageArchetype, &pageArchetype.Status.Conditions, pageArchetype.Spec.OverrideThemeRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
@@ -156,9 +150,6 @@ func (r *KDexPageArchetypeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Watches(
 			&kdexv1alpha1.KDexScriptLibrary{},
 			handler.EnqueueRequestsFromMapFunc(r.findPageArchetypesForScriptLibrary)).
-		Watches(
-			&kdexv1alpha1.KDexTheme{},
-			handler.EnqueueRequestsFromMapFunc(r.findPageArchetypesForTheme)).
 		Named("kdexpagearchetype").
 		Complete(r)
 }

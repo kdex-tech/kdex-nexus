@@ -154,11 +154,6 @@ func (r *KDexPageBindingReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		return r1, err
 	}
 
-	theme, shouldReturn, r1, err := resolveTheme(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, archetype.Spec.OverrideThemeRef, r.RequeueDelay)
-	if shouldReturn {
-		return r1, err
-	}
-
 	if pageBinding.Spec.BasePath == "/" && pageBinding.Spec.ParentPageRef != nil {
 		err := fmt.Errorf("a page binding with basePath set to '/' must not specify a parent page binding")
 
@@ -189,7 +184,6 @@ func (r *KDexPageBindingReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		PageBinding:   &pageBinding,
 		ParentBinding: parentBinding,
 		ScriptLibrary: scriptLibrary,
-		Theme:         theme,
 	}
 
 	err = r._reconcile(ctx, resolved)
