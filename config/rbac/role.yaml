@@ -19,7 +19,6 @@ rules:
   - kdexhostcontrollers
   - kdexhosts
   - kdexpagearchetypes
-  - kdexpagebindings
   - kdexpagefooters
   - kdexpageheaders
   - kdexpagenavigations
@@ -39,7 +38,6 @@ rules:
   - kdexapps/finalizers
   - kdexhosts/finalizers
   - kdexpagearchetypes/finalizers
-  - kdexpagebindings/finalizers
   - kdexpagefooters/finalizers
   - kdexpageheaders/finalizers
   - kdexpagenavigations/finalizers
@@ -53,7 +51,6 @@ rules:
   - kdexapps/status
   - kdexhosts/status
   - kdexpagearchetypes/status
-  - kdexpagebindings/status
   - kdexpagefooters/status
   - kdexpageheaders/status
   - kdexpagenavigations/status

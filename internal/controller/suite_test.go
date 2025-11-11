@@ -32,7 +32,6 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
-	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/client-go/rest"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	"kdex.dev/nexus/internal/npm"
@@ -164,15 +163,6 @@ var _ = BeforeSuite(func() {
 	err = pageArchetypeReconciler.SetupWithManager(k8sManager)
 	Expect(err).NotTo(HaveOccurred())
 
-	// Page Binding
-	pageBindingReconciler := &KDexPageBindingReconciler{
-		Client:       k8sClient,
-		RequeueDelay: 0,
-		Scheme:       k8sClient.Scheme(),
-	}
-	err = pageBindingReconciler.SetupWithManager(k8sManager)
-	Expect(err).ToNot(HaveOccurred())
-
 	// Page Footer
 	pageFooterReconciler := &KDexPageFooterReconciler{
 		Client:       k8sClient,
@@ -238,41 +228,6 @@ func addRemoteCRD(paths *[]string, tempDir string, url string) {
 	}
 
 	*paths = append(*paths, crdPath)
-}
-
-type Pairs struct {
-	resource client.Object
-	list     client.ObjectList
-}
-
-func cleanupResources(namespace string) {
-	By("Cleanup all the test resource instances")
-
-	for _, pair := range []Pairs{
-		{&kdexv1alpha1.KDexApp{}, &kdexv1alpha1.KDexAppList{}},
-		{&kdexv1alpha1.KDexHost{}, &kdexv1alpha1.KDexHostList{}},
-		{&kdexv1alpha1.KDexPageArchetype{}, &kdexv1alpha1.KDexPageArchetypeList{}},
-		{&kdexv1alpha1.KDexPageBinding{}, &kdexv1alpha1.KDexPageBindingList{}},
-		{&kdexv1alpha1.KDexPageFooter{}, &kdexv1alpha1.KDexPageFooterList{}},
-		{&kdexv1alpha1.KDexPageHeader{}, &kdexv1alpha1.KDexPageHeaderList{}},
-		{&kdexv1alpha1.KDexPageNavigation{}, &kdexv1alpha1.KDexPageNavigationList{}},
-		{&kdexv1alpha1.KDexScriptLibrary{}, &kdexv1alpha1.KDexScriptLibraryList{}},
-		{&kdexv1alpha1.KDexTheme{}, &kdexv1alpha1.KDexThemeList{}},
-		{&corev1.Secret{}, &corev1.SecretList{}},
-	} {
-		err := k8sClient.DeleteAllOf(ctx, pair.resource, client.InNamespace(namespace))
-		Expect(err).NotTo(HaveOccurred())
-
-		Eventually(func(g Gomega) error {
-			list := pair.list
-			err := k8sClient.List(ctx, list, client.InNamespace(namespace))
-			g.Expect(err).NotTo(HaveOccurred())
-			items, err := meta.ExtractList(list)
-			g.Expect(err).NotTo(HaveOccurred())
-			g.Expect(items).To(HaveLen(0))
-			return nil
-		}).To(Succeed())
-	}
 }
 
 func downloadCRD(url, tempDir string) (string, error) {

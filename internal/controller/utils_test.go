@@ -4,14 +4,21 @@ import (
 	"context"
 	"reflect"
 
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	apimeta "k8s.io/apimachinery/pkg/api/meta"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+type Pairs struct {
+	resource client.Object
+	list     client.ObjectList
+}
 
 // func addOrUpdate(
 // 	ctx context.Context,
@@ -218,13 +225,13 @@ func assertResourceReady(ctx context.Context, k8sClient client.Client, name stri
 		g.Expect(ok).To(BeTrue())
 		if ready {
 			g.Expect(
-				apimeta.IsStatusConditionTrue(
+				meta.IsStatusConditionTrue(
 					conditions, string(kdexv1alpha1.ConditionTypeReady),
 				),
 			).To(BeTrue())
 		} else {
 			g.Expect(
-				apimeta.IsStatusConditionFalse(
+				meta.IsStatusConditionFalse(
 					conditions, string(kdexv1alpha1.ConditionTypeReady),
 				),
 			).To(BeTrue())
@@ -232,4 +239,34 @@ func assertResourceReady(ctx context.Context, k8sClient client.Client, name stri
 	}
 
 	Eventually(check, "5s").Should(Succeed())
+}
+
+func cleanupResources(namespace string) {
+	By("Cleanup all the test resource instances")
+
+	for _, pair := range []Pairs{
+		{&kdexv1alpha1.KDexApp{}, &kdexv1alpha1.KDexAppList{}},
+		{&kdexv1alpha1.KDexHost{}, &kdexv1alpha1.KDexHostList{}},
+		{&kdexv1alpha1.KDexPageArchetype{}, &kdexv1alpha1.KDexPageArchetypeList{}},
+		{&kdexv1alpha1.KDexPageBinding{}, &kdexv1alpha1.KDexPageBindingList{}},
+		{&kdexv1alpha1.KDexPageFooter{}, &kdexv1alpha1.KDexPageFooterList{}},
+		{&kdexv1alpha1.KDexPageHeader{}, &kdexv1alpha1.KDexPageHeaderList{}},
+		{&kdexv1alpha1.KDexPageNavigation{}, &kdexv1alpha1.KDexPageNavigationList{}},
+		{&kdexv1alpha1.KDexScriptLibrary{}, &kdexv1alpha1.KDexScriptLibraryList{}},
+		{&kdexv1alpha1.KDexTheme{}, &kdexv1alpha1.KDexThemeList{}},
+		{&corev1.Secret{}, &corev1.SecretList{}},
+	} {
+		err := k8sClient.DeleteAllOf(ctx, pair.resource, client.InNamespace(namespace))
+		Expect(err).NotTo(HaveOccurred())
+
+		Eventually(func(g Gomega) error {
+			list := pair.list
+			err := k8sClient.List(ctx, list, client.InNamespace(namespace))
+			g.Expect(err).NotTo(HaveOccurred())
+			items, err := meta.ExtractList(list)
+			g.Expect(err).NotTo(HaveOccurred())
+			g.Expect(items).To(HaveLen(0))
+			return nil
+		}).To(Succeed())
+	}
 }
