@@ -26,10 +26,14 @@ import (
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
+	"kdex.dev/crds/configuration"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -49,12 +53,19 @@ var (
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	utilruntime.Must(appsv1.AddToScheme(scheme))
+	utilruntime.Must(corev1.AddToScheme(scheme))
+	utilruntime.Must(rbacv1.AddToScheme(scheme))
 	utilruntime.Must(kdexv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(configuration.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
 // nolint:gocyclo
 func main() {
+	var configFile string
+	var requeueDelaySeconds int
+
 	var metricsAddr string
 	var metricsCertPath, metricsCertName, metricsCertKey string
 	var webhookCertPath, webhookCertName, webhookCertKey string
@@ -63,7 +74,10 @@ func main() {
 	var secureMetrics bool
 	var enableHTTP2 bool
 	var tlsOpts []func(*tls.Config)
-	var requeueDelaySeconds int
+
+	flag.StringVar(&configFile, "config-file", "/config.yaml", "The path to a configuration yaml file.")
+	flag.IntVar(&requeueDelaySeconds, "requeue-delay-seconds", 15, "Set the delay for requeuing reconciliation loops")
+
 	flag.StringVar(&metricsAddr, "metrics-bind-address", "0", "The address the metrics endpoint binds to. "+
 		"Use :8443 for HTTPS or :8080 for HTTP, or leave as 0 to disable the metrics service.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
@@ -81,7 +95,6 @@ func main() {
 	flag.StringVar(&metricsCertKey, "metrics-cert-key", "tls.key", "The name of the metrics server key file.")
 	flag.BoolVar(&enableHTTP2, "enable-http2", false,
 		"If set, HTTP/2 will be enabled for the metrics and webhook servers")
-	flag.IntVar(&requeueDelaySeconds, "requeue-delay-seconds", 15, "Set the delay for requeuing reconciliation loops")
 	opts := zap.Options{
 		Development: true,
 	}
@@ -182,6 +195,7 @@ func main() {
 	}
 
 	requeueDelay := time.Duration(requeueDelaySeconds) * time.Second
+	configuration := configuration.LoadConfiguration(configFile, scheme)
 
 	if err := (&controller.KDexAppReconciler{
 		Client:          mgr.GetClient(),
@@ -190,6 +204,15 @@ func main() {
 		Scheme:          mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "KDexApp")
+		os.Exit(1)
+	}
+	if err := (&controller.KDexHostReconciler{
+		Client:        mgr.GetClient(),
+		Configuration: configuration,
+		RequeueDelay:  requeueDelay,
+		Scheme:        mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "KDexHost")
 		os.Exit(1)
 	}
 	if err := (&controller.KDexPageArchetypeReconciler{
@@ -224,13 +247,6 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "KDexPageNavigation")
 		os.Exit(1)
 	}
-	if err := (&controller.KDexThemeReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "KDexTheme")
-		os.Exit(1)
-	}
 	if err := (&controller.KDexScriptLibraryReconciler{
 		Client:          mgr.GetClient(),
 		RegistryFactory: npm.NewRegistry,
@@ -240,12 +256,11 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "KDexScriptLibrary")
 		os.Exit(1)
 	}
-	if err := (&controller.KDexHostReconciler{
-		Client:       mgr.GetClient(),
-		RequeueDelay: requeueDelay,
-		Scheme:       mgr.GetScheme(),
+	if err := (&controller.KDexThemeReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "KDexHost")
+		setupLog.Error(err, "unable to create controller", "controller", "KDexTheme")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder

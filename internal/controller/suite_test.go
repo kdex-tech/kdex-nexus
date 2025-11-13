@@ -30,10 +30,13 @@ import (
 	"go.yaml.in/yaml/v3"
 	"golang.org/x/mod/modfile"
 
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
 	"k8s.io/client-go/rest"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
+	"kdex.dev/crds/configuration"
 	"kdex.dev/nexus/internal/npm"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
@@ -108,10 +111,15 @@ var _ = BeforeSuite(func() {
 		testEnv.BinaryAssetsDirectory = getFirstFoundEnvTestBinaryDir()
 	}
 
+	err = appsv1.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
 	err = corev1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
-
+	err = rbacv1.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
 	err = kdexv1alpha1.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
+	err = configuration.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	// cfg is defined in this file globally.
@@ -135,6 +143,9 @@ var _ = BeforeSuite(func() {
 		return &MockRegistry{}
 	}
 
+	configuration := configuration.LoadConfiguration("/config.yaml", scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
+
 	// App
 	appReconciler := &KDexAppReconciler{
 		Client:          k8sManager.GetClient(),
@@ -147,9 +158,10 @@ var _ = BeforeSuite(func() {
 
 	// Host
 	hostReconciler := &KDexHostReconciler{
-		Client:       k8sManager.GetClient(),
-		RequeueDelay: 0,
-		Scheme:       k8sManager.GetScheme(),
+		Client:        k8sManager.GetClient(),
+		Configuration: configuration,
+		RequeueDelay:  0,
+		Scheme:        k8sManager.GetScheme(),
 	}
 	err = hostReconciler.SetupWithManager(k8sManager)
 	Expect(err).NotTo(HaveOccurred())
