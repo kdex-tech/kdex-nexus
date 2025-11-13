@@ -286,9 +286,7 @@ func (r *KDexHostReconciler) createOrUpdateHostControllerResource(
 
 	if _, err := ctrl.CreateOrUpdate(ctx, r.Client, hostController, func() error {
 		hostController.Spec = kdexv1alpha1.KDexHostControllerSpec{
-			HostRef: corev1.LocalObjectReference{
-				Name: host.Name,
-			},
+			Host: host.Spec,
 		}
 		return ctrl.SetControllerReference(host, hostController, r.Scheme)
 	}); err != nil {
@@ -533,7 +531,6 @@ func (r *KDexHostReconciler) createOrUpdateService(
 		r.Client,
 		service,
 		func() error {
-
 			service.Annotations = host.Annotations
 			service.Labels = host.Labels
 			if service.Labels == nil {

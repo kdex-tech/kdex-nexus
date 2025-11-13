@@ -29,7 +29,6 @@ import (
 	. "github.com/onsi/gomega"
 	"go.yaml.in/yaml/v3"
 	"golang.org/x/mod/modfile"
-
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
