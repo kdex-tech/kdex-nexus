@@ -62,9 +62,6 @@ func (r *KDexAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		kdexv1alpha1.ConditionReasonReconciling,
 		"Reconciling",
 	)
-	if err := r.Status().Update(ctx, &app); err != nil {
-		return ctrl.Result{}, err
-	}
 
 	// Defer status update
 	defer func() {
@@ -74,7 +71,7 @@ func (r *KDexAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 	}()
 
-	secret, shouldReturn, r1, err := resolveSecret(ctx, r.Client, &app, &app.Status.Conditions, app.Spec.PackageReference.SecretRef, r.RequeueDelay)
+	secret, shouldReturn, r1, err := ResolveSecret(ctx, r.Client, &app, &app.Status.Conditions, app.Spec.PackageReference.SecretRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
@@ -90,9 +87,7 @@ func (r *KDexAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			kdexv1alpha1.ConditionReasonReconcileError,
 			err.Error(),
 		)
-		if err := r.Status().Update(ctx, &app); err != nil {
-			return ctrl.Result{}, err
-		}
+
 		return ctrl.Result{}, err
 	}
 
@@ -106,9 +101,6 @@ func (r *KDexAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		kdexv1alpha1.ConditionReasonReconcileSuccess,
 		"Reconciliation successful",
 	)
-	if err := r.Status().Update(ctx, &app); err != nil {
-		return ctrl.Result{}, err
-	}
 
 	log.Info("reconciled KDexApp")
 

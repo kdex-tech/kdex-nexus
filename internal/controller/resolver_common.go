@@ -18,7 +18,7 @@ type ResolvedContentEntry struct {
 	App     *kdexv1alpha1.KDexApp
 }
 
-func resolveContents(
+func ResolveContents(
 	ctx context.Context,
 	c client.Client,
 	pageBinding *kdexv1alpha1.KDexPageBinding,
@@ -54,10 +54,6 @@ func resolveContents(
 					err.Error(),
 				)
 
-				if err := c.Status().Update(ctx, pageBinding); err != nil {
-					return nil, true, ctrl.Result{}, err
-				}
-
 				return nil, true, ctrl.Result{RequeueAfter: requeueDelay}, nil
 			}
 
@@ -74,7 +70,7 @@ func resolveContents(
 	return contents, false, ctrl.Result{}, nil
 }
 
-func resolveHost(
+func ResolveHost(
 	ctx context.Context,
 	c client.Client,
 	object client.Object,
@@ -104,10 +100,6 @@ func resolveHost(
 				err.Error(),
 			)
 
-			if err := c.Status().Update(ctx, object); err != nil {
-				return nil, true, ctrl.Result{}, err
-			}
-
 			return nil, true, ctrl.Result{RequeueAfter: requeueDelay}, nil
 		}
 
@@ -121,7 +113,7 @@ func resolveHost(
 	return &host, false, ctrl.Result{}, nil
 }
 
-func resolvePageArchetype(
+func ResolvePageArchetype(
 	ctx context.Context,
 	c client.Client,
 	object client.Object,
@@ -151,10 +143,6 @@ func resolvePageArchetype(
 				err.Error(),
 			)
 
-			if err := c.Status().Update(ctx, object); err != nil {
-				return nil, true, ctrl.Result{}, err
-			}
-
 			return nil, true, ctrl.Result{RequeueAfter: requeueDelay}, nil
 		}
 
@@ -168,7 +156,7 @@ func resolvePageArchetype(
 	return &pageArchetype, false, ctrl.Result{}, nil
 }
 
-func resolvePageFooter(
+func ResolvePageFooter(
 	ctx context.Context,
 	c client.Client,
 	object client.Object,
@@ -199,10 +187,6 @@ func resolvePageFooter(
 				err.Error(),
 			)
 
-			if err := c.Status().Update(ctx, object); err != nil {
-				return nil, true, ctrl.Result{}, err
-			}
-
 			return nil, true, ctrl.Result{RequeueAfter: requeueDelay}, nil
 		}
 
@@ -216,7 +200,7 @@ func resolvePageFooter(
 	return &footer, false, ctrl.Result{}, nil
 }
 
-func resolvePageHeader(
+func ResolvePageHeader(
 	ctx context.Context,
 	c client.Client,
 	object client.Object,
@@ -246,9 +230,6 @@ func resolvePageHeader(
 				kdexv1alpha1.ConditionReasonReconcileError,
 				err.Error(),
 			)
-			if err := c.Status().Update(ctx, object); err != nil {
-				return nil, true, ctrl.Result{}, err
-			}
 
 			return nil, true, ctrl.Result{RequeueAfter: requeueDelay}, nil
 		}
@@ -263,7 +244,7 @@ func resolvePageHeader(
 	return &header, false, ctrl.Result{}, nil
 }
 
-func resolvePageNavigation(
+func ResolvePageNavigation(
 	ctx context.Context,
 	c client.Client,
 	object client.Object,
@@ -293,10 +274,6 @@ func resolvePageNavigation(
 				err.Error(),
 			)
 
-			if err := c.Status().Update(ctx, object); err != nil {
-				return nil, true, ctrl.Result{}, err
-			}
-
 			return nil, true, ctrl.Result{RequeueAfter: requeueDelay}, nil
 		}
 
@@ -310,7 +287,7 @@ func resolvePageNavigation(
 	return &navigation, false, ctrl.Result{}, nil
 }
 
-func resolvePageNavigations(
+func ResolvePageNavigations(
 	ctx context.Context,
 	c client.Client,
 	object client.Object,
@@ -321,7 +298,7 @@ func resolvePageNavigations(
 ) (map[string]*kdexv1alpha1.KDexPageNavigation, bool, ctrl.Result, error) {
 	navigations := make(map[string]*kdexv1alpha1.KDexPageNavigation)
 
-	navigation, shouldReturn, response, err := resolvePageNavigation(
+	navigation, shouldReturn, response, err := ResolvePageNavigation(
 		ctx, c, object, objectConditions, navigationRef, requeueDelay)
 
 	if shouldReturn {
@@ -337,7 +314,7 @@ func resolvePageNavigations(
 	}
 
 	for navigationName, navigationRef := range extraNavigations {
-		navigation, shouldReturn, response, err := resolvePageNavigation(
+		navigation, shouldReturn, response, err := ResolvePageNavigation(
 			ctx, c, object, objectConditions, navigationRef, requeueDelay)
 
 		if shouldReturn {
@@ -352,7 +329,7 @@ func resolvePageNavigations(
 	return navigations, false, ctrl.Result{}, nil
 }
 
-func resolvePageBinding(
+func ResolvePageBinding(
 	ctx context.Context,
 	c client.Client,
 	object client.Object,
@@ -382,10 +359,6 @@ func resolvePageBinding(
 				err.Error(),
 			)
 
-			if err := c.Status().Update(ctx, object); err != nil {
-				return nil, true, ctrl.Result{}, err
-			}
-
 			return nil, true, ctrl.Result{RequeueAfter: requeueDelay}, nil
 		}
 
@@ -399,7 +372,7 @@ func resolvePageBinding(
 	return &pageBinding, false, ctrl.Result{}, nil
 }
 
-func resolveScriptLibrary(
+func ResolveScriptLibrary(
 	ctx context.Context,
 	c client.Client,
 	object client.Object,
@@ -429,10 +402,6 @@ func resolveScriptLibrary(
 				err.Error(),
 			)
 
-			if err := c.Status().Update(ctx, object); err != nil {
-				return nil, true, ctrl.Result{}, err
-			}
-
 			return nil, true, ctrl.Result{RequeueAfter: requeueDelay}, nil
 		}
 
@@ -446,7 +415,7 @@ func resolveScriptLibrary(
 	return &scriptLibrary, false, ctrl.Result{}, nil
 }
 
-func resolveSecret(
+func ResolveSecret(
 	ctx context.Context,
 	c client.Client,
 	object client.Object,
@@ -476,10 +445,6 @@ func resolveSecret(
 				err.Error(),
 			)
 
-			if err := c.Status().Update(ctx, object); err != nil {
-				return nil, true, ctrl.Result{}, err
-			}
-
 			return nil, true, ctrl.Result{RequeueAfter: requeueDelay}, nil
 		}
 	}
@@ -487,7 +452,7 @@ func resolveSecret(
 	return &secret, false, ctrl.Result{}, nil
 }
 
-func resolveTheme(
+func ResolveTheme(
 	ctx context.Context,
 	c client.Client,
 	object client.Object,
@@ -516,10 +481,6 @@ func resolveTheme(
 				kdexv1alpha1.ConditionReasonReconcileError,
 				err.Error(),
 			)
-
-			if err := c.Status().Update(ctx, object); err != nil {
-				return nil, true, ctrl.Result{}, err
-			}
 
 			return nil, true, ctrl.Result{RequeueAfter: requeueDelay}, nil
 		}

@@ -119,9 +119,6 @@ func (r *KDexHostReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		kdexv1alpha1.ConditionReasonReconciling,
 		"Reconciling",
 	)
-	if err := r.Status().Update(ctx, &host); err != nil {
-		return ctrl.Result{}, err
-	}
 
 	// Defer status update
 	defer func() {
@@ -131,12 +128,12 @@ func (r *KDexHostReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		}
 	}()
 
-	_, shouldReturn, r1, err := resolveTheme(ctx, r.Client, &host, &host.Status.Conditions, host.Spec.DefaultThemeRef, r.RequeueDelay)
+	_, shouldReturn, r1, err := ResolveTheme(ctx, r.Client, &host, &host.Status.Conditions, host.Spec.DefaultThemeRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
 
-	_, shouldReturn, r1, err = resolveScriptLibrary(ctx, r.Client, &host, &host.Status.Conditions, host.Spec.ScriptLibraryRef, r.RequeueDelay)
+	_, shouldReturn, r1, err = ResolveScriptLibrary(ctx, r.Client, &host, &host.Status.Conditions, host.Spec.ScriptLibraryRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
@@ -187,9 +184,6 @@ func (r *KDexHostReconciler) innerReconcile(ctx context.Context, host *kdexv1alp
 		kdexv1alpha1.ConditionReasonReconcileSuccess,
 		"Reconciliation successful",
 	)
-	if err := r.Status().Update(ctx, host); err != nil {
-		return err
-	}
 
 	log.Info("reconciled KDexHost")
 
@@ -272,9 +266,6 @@ func (r *KDexHostReconciler) createOrUpdateConfigMap(
 			kdexv1alpha1.ConditionReasonReconcileError,
 			err.Error(),
 		)
-		if err := r.Status().Update(ctx, host); err != nil {
-			return err
-		}
 		return err
 	}
 
@@ -308,9 +299,7 @@ func (r *KDexHostReconciler) createOrUpdateHostControllerResource(
 			kdexv1alpha1.ConditionReasonReconcileError,
 			err.Error(),
 		)
-		if err := r.Status().Update(ctx, host); err != nil {
-			return err
-		}
+
 		return err
 	}
 
@@ -401,10 +390,6 @@ func (r *KDexHostReconciler) createOrUpdateDeployment(
 			err.Error(),
 		)
 
-		if err := r.Status().Update(ctx, host); err != nil {
-			return err
-		}
-
 		return err
 	}
 
@@ -455,10 +440,6 @@ func (r *KDexHostReconciler) createOrUpdateRole(ctx context.Context, host *kdexv
 			kdexv1alpha1.ConditionReasonReconcileError,
 			err.Error(),
 		)
-
-		if err := r.Status().Update(ctx, host); err != nil {
-			return err
-		}
 
 		return err
 	}
@@ -512,10 +493,6 @@ func (r *KDexHostReconciler) createOrUpdateRoleBinding(ctx context.Context, host
 			kdexv1alpha1.ConditionReasonReconcileError,
 			err.Error(),
 		)
-
-		if err := r.Status().Update(ctx, host); err != nil {
-			return err
-		}
 
 		return err
 	}
@@ -571,10 +548,6 @@ func (r *KDexHostReconciler) createOrUpdateService(
 			err.Error(),
 		)
 
-		if err := r.Status().Update(ctx, host); err != nil {
-			return err
-		}
-
 		return err
 	}
 
@@ -594,7 +567,6 @@ func (r *KDexHostReconciler) createOrUpdateServiceAccount(ctx context.Context, h
 		r.Client,
 		serviceAccount,
 		func() error {
-
 			serviceAccount.Annotations = host.Annotations
 			serviceAccount.Labels = host.Labels
 			if serviceAccount.Labels == nil {
@@ -616,10 +588,6 @@ func (r *KDexHostReconciler) createOrUpdateServiceAccount(ctx context.Context, h
 			kdexv1alpha1.ConditionReasonReconcileError,
 			err.Error(),
 		)
-
-		if err := r.Status().Update(ctx, host); err != nil {
-			return err
-		}
 
 		return err
 	}

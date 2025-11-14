@@ -63,9 +63,6 @@ func (r *KDexPageArchetypeReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		kdexv1alpha1.ConditionReasonReconciling,
 		"Reconciling",
 	)
-	if err := r.Status().Update(ctx, &pageArchetype); err != nil {
-		return ctrl.Result{}, err
-	}
 
 	// Defer status update
 	defer func() {
@@ -75,22 +72,22 @@ func (r *KDexPageArchetypeReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		}
 	}()
 
-	_, shouldReturn, r1, err := resolvePageFooter(ctx, r.Client, &pageArchetype, &pageArchetype.Status.Conditions, pageArchetype.Spec.DefaultFooterRef, r.RequeueDelay)
+	_, shouldReturn, r1, err := ResolvePageFooter(ctx, r.Client, &pageArchetype, &pageArchetype.Status.Conditions, pageArchetype.Spec.DefaultFooterRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
 
-	_, shouldReturn, r1, err = resolvePageHeader(ctx, r.Client, &pageArchetype, &pageArchetype.Status.Conditions, pageArchetype.Spec.DefaultHeaderRef, r.RequeueDelay)
+	_, shouldReturn, r1, err = ResolvePageHeader(ctx, r.Client, &pageArchetype, &pageArchetype.Status.Conditions, pageArchetype.Spec.DefaultHeaderRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
 
-	_, shouldReturn, response, err := resolvePageNavigations(ctx, r.Client, &pageArchetype, &pageArchetype.Status.Conditions, pageArchetype.Spec.DefaultMainNavigationRef, pageArchetype.Spec.ExtraNavigations, r.RequeueDelay)
+	_, shouldReturn, response, err := ResolvePageNavigations(ctx, r.Client, &pageArchetype, &pageArchetype.Status.Conditions, pageArchetype.Spec.DefaultMainNavigationRef, pageArchetype.Spec.ExtraNavigations, r.RequeueDelay)
 	if shouldReturn {
 		return response, err
 	}
 
-	_, shouldReturn, r1, err = resolveScriptLibrary(ctx, r.Client, &pageArchetype, &pageArchetype.Status.Conditions, pageArchetype.Spec.ScriptLibraryRef, r.RequeueDelay)
+	_, shouldReturn, r1, err = ResolveScriptLibrary(ctx, r.Client, &pageArchetype, &pageArchetype.Status.Conditions, pageArchetype.Spec.ScriptLibraryRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
@@ -108,9 +105,6 @@ func (r *KDexPageArchetypeReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			kdexv1alpha1.ConditionReasonReconcileError,
 			err.Error(),
 		)
-		if err := r.Status().Update(ctx, &pageArchetype); err != nil {
-			return ctrl.Result{}, err
-		}
 
 		return ctrl.Result{}, err
 	}
@@ -125,9 +119,6 @@ func (r *KDexPageArchetypeReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		kdexv1alpha1.ConditionReasonReconcileSuccess,
 		"Reconciliation successful",
 	)
-	if err := r.Status().Update(ctx, &pageArchetype); err != nil {
-		return ctrl.Result{}, err
-	}
 
 	log.Info("reconciled KDexPageArchetype")
 

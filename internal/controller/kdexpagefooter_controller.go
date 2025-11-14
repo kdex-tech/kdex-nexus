@@ -60,9 +60,6 @@ func (r *KDexPageFooterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		kdexv1alpha1.ConditionReasonReconciling,
 		"Reconciling",
 	)
-	if err := r.Status().Update(ctx, &pageFooter); err != nil {
-		return ctrl.Result{}, err
-	}
 
 	// Defer status update
 	defer func() {
@@ -72,7 +69,7 @@ func (r *KDexPageFooterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		}
 	}()
 
-	_, shouldReturn, r1, err := resolveScriptLibrary(ctx, r.Client, &pageFooter, &pageFooter.Status.Conditions, pageFooter.Spec.ScriptLibraryRef, r.RequeueDelay)
+	_, shouldReturn, r1, err := ResolveScriptLibrary(ctx, r.Client, &pageFooter, &pageFooter.Status.Conditions, pageFooter.Spec.ScriptLibraryRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
@@ -90,9 +87,7 @@ func (r *KDexPageFooterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 			kdexv1alpha1.ConditionReasonReconcileError,
 			err.Error(),
 		)
-		if err := r.Status().Update(ctx, &pageFooter); err != nil {
-			return ctrl.Result{}, err
-		}
+
 		return ctrl.Result{}, err
 	}
 
@@ -106,9 +101,6 @@ func (r *KDexPageFooterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		kdexv1alpha1.ConditionReasonReconcileSuccess,
 		"Reconciliation successful",
 	)
-	if err := r.Status().Update(ctx, &pageFooter); err != nil {
-		return ctrl.Result{}, err
-	}
 
 	log.Info("reconciled KDexPageFooter")
 

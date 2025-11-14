@@ -62,9 +62,6 @@ func (r *KDexScriptLibraryReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		kdexv1alpha1.ConditionReasonReconciling,
 		"Reconciling",
 	)
-	if err := r.Status().Update(ctx, &scriptLibrary); err != nil {
-		return ctrl.Result{}, err
-	}
 
 	// Defer status update
 	defer func() {
@@ -75,7 +72,7 @@ func (r *KDexScriptLibraryReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}()
 
 	if scriptLibrary.Spec.PackageReference != nil {
-		secret, shouldReturn, r1, err := resolveSecret(ctx, r.Client, &scriptLibrary, &scriptLibrary.Status.Conditions, scriptLibrary.Spec.PackageReference.SecretRef, r.RequeueDelay)
+		secret, shouldReturn, r1, err := ResolveSecret(ctx, r.Client, &scriptLibrary, &scriptLibrary.Status.Conditions, scriptLibrary.Spec.PackageReference.SecretRef, r.RequeueDelay)
 		if shouldReturn {
 			return r1, err
 		}
@@ -91,9 +88,7 @@ func (r *KDexScriptLibraryReconciler) Reconcile(ctx context.Context, req ctrl.Re
 				kdexv1alpha1.ConditionReasonReconcileError,
 				err.Error(),
 			)
-			if err := r.Status().Update(ctx, &scriptLibrary); err != nil {
-				return ctrl.Result{}, err
-			}
+
 			return ctrl.Result{}, err
 		}
 	}
@@ -110,9 +105,6 @@ func (r *KDexScriptLibraryReconciler) Reconcile(ctx context.Context, req ctrl.Re
 				kdexv1alpha1.ConditionReasonReconcileError,
 				err.Error(),
 			)
-			if err := r.Status().Update(ctx, &scriptLibrary); err != nil {
-				return ctrl.Result{}, err
-			}
 
 			return ctrl.Result{}, err
 		}
@@ -128,9 +120,6 @@ func (r *KDexScriptLibraryReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		kdexv1alpha1.ConditionReasonReconcileSuccess,
 		"Reconciliation successful",
 	)
-	if err := r.Status().Update(ctx, &scriptLibrary); err != nil {
-		return ctrl.Result{}, err
-	}
 
 	log.Info("reconciled KDexScriptLibrary")
 
