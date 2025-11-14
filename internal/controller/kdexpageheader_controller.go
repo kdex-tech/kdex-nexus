@@ -43,7 +43,7 @@ type KDexPageHeaderReconciler struct {
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexpageheaders/finalizers,verbs=update
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexscriptlibraries,verbs=get;list;watch
 
-func (r *KDexPageHeaderReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *KDexPageHeaderReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, err error) {
 	log := logf.FromContext(ctx)
 
 	var pageHeader kdexv1alpha1.KDexPageHeader
@@ -65,8 +65,11 @@ func (r *KDexPageHeaderReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	// Defer status update
 	defer func() {
 		pageHeader.Status.ObservedGeneration = pageHeader.Generation
-		if err := r.Status().Update(ctx, &pageHeader); err != nil {
-			log.Info("failed to update status", "err", err)
+		if updateErr := r.Status().Update(ctx, &pageHeader); updateErr != nil {
+			log.Info("failed to update status", "err", updateErr)
+			if err == nil {
+				err = updateErr
+			}
 		}
 	}()
 

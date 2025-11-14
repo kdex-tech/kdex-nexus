@@ -42,7 +42,7 @@ type KDexPageNavigationReconciler struct {
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagenavigations/finalizers,verbs=update
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexscriptlibraries,verbs=get;list;watch
 
-func (r *KDexPageNavigationReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *KDexPageNavigationReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, err error) {
 	log := logf.FromContext(ctx)
 
 	var pageNavigation kdexv1alpha1.KDexPageNavigation
@@ -64,8 +64,11 @@ func (r *KDexPageNavigationReconciler) Reconcile(ctx context.Context, req ctrl.R
 	// Defer status update
 	defer func() {
 		pageNavigation.Status.ObservedGeneration = pageNavigation.Generation
-		if err := r.Status().Update(ctx, &pageNavigation); err != nil {
-			log.Info("failed to update status", "err", err)
+		if updateErr := r.Status().Update(ctx, &pageNavigation); updateErr != nil {
+			log.Info("failed to update status", "err", updateErr)
+			if err == nil {
+				err = updateErr
+			}
 		}
 	}()
 

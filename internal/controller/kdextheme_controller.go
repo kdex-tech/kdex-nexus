@@ -40,7 +40,7 @@ type KDexThemeReconciler struct {
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexthemes/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexthemes/finalizers,verbs=update
 
-func (r *KDexThemeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *KDexThemeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, err error) {
 	log := logf.FromContext(ctx)
 
 	var theme kdexv1alpha1.KDexTheme
@@ -62,8 +62,11 @@ func (r *KDexThemeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	// Defer status update
 	defer func() {
 		theme.Status.ObservedGeneration = theme.Generation
-		if err := r.Status().Update(ctx, &theme); err != nil {
-			log.Info("failed to update status", "err", err)
+		if updateErr := r.Status().Update(ctx, &theme); updateErr != nil {
+			log.Info("failed to update status", "err", updateErr)
+			if err == nil {
+				err = updateErr
+			}
 		}
 	}()
 

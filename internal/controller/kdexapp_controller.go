@@ -44,7 +44,7 @@ type KDexAppReconciler struct {
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexapps/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexapps/finalizers,verbs=update
 
-func (r *KDexAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *KDexAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, err error) {
 	log := logf.FromContext(ctx)
 
 	var app kdexv1alpha1.KDexApp
@@ -66,8 +66,11 @@ func (r *KDexAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	// Defer status update
 	defer func() {
 		app.Status.ObservedGeneration = app.Generation
-		if err := r.Status().Update(ctx, &app); err != nil {
-			log.Info("failed to update app status", "err", err)
+		if updateErr := r.Status().Update(ctx, &app); updateErr != nil {
+			log.Info("failed to update status", "err", updateErr)
+			if err == nil {
+				err = updateErr
+			}
 		}
 	}()
 

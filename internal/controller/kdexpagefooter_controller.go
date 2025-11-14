@@ -42,7 +42,7 @@ type KDexPageFooterReconciler struct {
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagefooters/finalizers,verbs=update
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexscriptlibraries,verbs=get;list;watch
 
-func (r *KDexPageFooterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *KDexPageFooterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, err error) {
 	log := logf.FromContext(ctx)
 
 	var pageFooter kdexv1alpha1.KDexPageFooter
@@ -64,8 +64,11 @@ func (r *KDexPageFooterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	// Defer status update
 	defer func() {
 		pageFooter.Status.ObservedGeneration = pageFooter.Generation
-		if err := r.Status().Update(ctx, &pageFooter); err != nil {
-			log.Info("failed to update status", "err", err)
+		if updateErr := r.Status().Update(ctx, &pageFooter); updateErr != nil {
+			log.Info("failed to update status", "err", updateErr)
+			if err == nil {
+				err = updateErr
+			}
 		}
 	}()
 

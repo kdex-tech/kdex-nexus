@@ -44,7 +44,7 @@ type KDexScriptLibraryReconciler struct {
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexscriptlibraries/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexscriptlibraries/finalizers,verbs=update
 
-func (r *KDexScriptLibraryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *KDexScriptLibraryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, err error) {
 	log := logf.FromContext(ctx)
 
 	var scriptLibrary kdexv1alpha1.KDexScriptLibrary
@@ -66,8 +66,11 @@ func (r *KDexScriptLibraryReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	// Defer status update
 	defer func() {
 		scriptLibrary.Status.ObservedGeneration = scriptLibrary.Generation
-		if err := r.Status().Update(ctx, &scriptLibrary); err != nil {
-			log.Info("failed to update status", "err", err)
+		if updateErr := r.Status().Update(ctx, &scriptLibrary); updateErr != nil {
+			log.Info("failed to update status", "err", updateErr)
+			if err == nil {
+				err = updateErr
+			}
 		}
 	}()
 
