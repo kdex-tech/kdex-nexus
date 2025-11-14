@@ -38,7 +38,10 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-const hostFinalizerName = "kdex.dev/kdex-nexus-host-finalizer"
+const (
+	hostFinalizerName = "kdex.dev/kdex-nexus-host-finalizer"
+	kdexWeb           = "kdex-web"
+)
 
 // KDexHostReconciler reconciles a KDexHost object
 type KDexHostReconciler struct {
@@ -248,7 +251,7 @@ func (r *KDexHostReconciler) createOrUpdateConfigMap(
 		if configMap.Labels == nil {
 			configMap.Labels = make(map[string]string)
 		}
-		configMap.Labels["app.kubernetes.io/name"] = "kdex-web"
+		configMap.Labels["app.kubernetes.io/name"] = kdexWeb
 		configMap.Labels["kdex.dev/focus-host"] = host.Name
 		configMap.Data = map[string]string{
 			"config.yaml": buf.String(),
@@ -327,14 +330,14 @@ func (r *KDexHostReconciler) createOrUpdateDeployment(
 			if deployment.Labels == nil {
 				deployment.Labels = make(map[string]string)
 			}
-			deployment.Labels["app.kubernetes.io/name"] = "kdex-web"
+			deployment.Labels["app.kubernetes.io/name"] = kdexWeb
 			deployment.Labels["kdex.dev/focus-host"] = host.Name
 			deployment.Spec = r.Configuration.FocusController.Deployment
 			deployment.Spec.Selector.MatchLabels = make(map[string]string)
-			deployment.Spec.Selector.MatchLabels["app.kubernetes.io/name"] = "kdex-web"
+			deployment.Spec.Selector.MatchLabels["app.kubernetes.io/name"] = kdexWeb
 			deployment.Spec.Selector.MatchLabels["kdex.dev/focus-host"] = host.Name
 			deployment.Spec.Template.Labels = make(map[string]string)
-			deployment.Spec.Template.Labels["app.kubernetes.io/name"] = "kdex-web"
+			deployment.Spec.Template.Labels["app.kubernetes.io/name"] = kdexWeb
 			deployment.Spec.Template.Labels["kdex.dev/focus-host"] = host.Name
 
 			foundFocalHost := false
@@ -372,7 +375,7 @@ func (r *KDexHostReconciler) createOrUpdateDeployment(
 
 			for idx, volume := range deployment.Spec.Template.Spec.Volumes {
 				if volume.Name == "config" {
-					deployment.Spec.Template.Spec.Volumes[idx].VolumeSource.ConfigMap.Name = host.Name
+					deployment.Spec.Template.Spec.Volumes[idx].ConfigMap.Name = host.Name
 				}
 			}
 
@@ -414,7 +417,7 @@ func (r *KDexHostReconciler) createOrUpdateRole(ctx context.Context, host *kdexv
 			if role.Labels == nil {
 				role.Labels = make(map[string]string)
 			}
-			role.Labels["app.kubernetes.io/name"] = "kdex-web"
+			role.Labels["app.kubernetes.io/name"] = kdexWeb
 			role.Labels["kdex.dev/focus-host"] = host.Name
 
 			role.Rules = []rbacv1.PolicyRule{}
@@ -465,7 +468,7 @@ func (r *KDexHostReconciler) createOrUpdateRoleBinding(ctx context.Context, host
 			if roleBinding.Labels == nil {
 				roleBinding.Labels = make(map[string]string)
 			}
-			roleBinding.Labels["app.kubernetes.io/name"] = "kdex-web"
+			roleBinding.Labels["app.kubernetes.io/name"] = kdexWeb
 			roleBinding.Labels["kdex.dev/focus-host"] = host.Name
 			roleBinding.RoleRef = rbacv1.RoleRef{
 				APIGroup: "rbac.authorization.k8s.io",
@@ -521,10 +524,10 @@ func (r *KDexHostReconciler) createOrUpdateService(
 			if service.Labels == nil {
 				service.Labels = make(map[string]string)
 			}
-			service.Labels["app.kubernetes.io/name"] = "kdex-web"
+			service.Labels["app.kubernetes.io/name"] = kdexWeb
 			service.Labels["kdex.dev/focus-host"] = host.Name
 			service.Spec = r.Configuration.FocusController.Service
-			service.Spec.Selector["app.kubernetes.io/name"] = "kdex-web"
+			service.Spec.Selector["app.kubernetes.io/name"] = kdexWeb
 			service.Spec.Selector["kdex.dev/focus-host"] = host.Name
 
 			for idx, value := range service.Spec.Ports {
@@ -572,7 +575,7 @@ func (r *KDexHostReconciler) createOrUpdateServiceAccount(ctx context.Context, h
 			if serviceAccount.Labels == nil {
 				serviceAccount.Labels = make(map[string]string)
 			}
-			serviceAccount.Labels["app.kubernetes.io/name"] = "kdex-web"
+			serviceAccount.Labels["app.kubernetes.io/name"] = kdexWeb
 			serviceAccount.Labels["kdex.dev/focus-host"] = host.Name
 
 			return ctrl.SetControllerReference(host, serviceAccount, r.Scheme)

@@ -18,9 +18,6 @@ import (
 )
 
 func isReady(
-	ctx context.Context,
-	c client.Client,
-	object client.Object,
 	referred client.Object,
 	referredConditions *[]metav1.Condition,
 	requeueDelay time.Duration,

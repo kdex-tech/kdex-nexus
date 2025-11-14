@@ -60,7 +60,7 @@ func ResolveContents(
 			return nil, true, ctrl.Result{}, err
 		}
 
-		if isReady, r1, err := isReady(ctx, c, pageBinding, &app, &app.Status.Conditions, requeueDelay); !isReady {
+		if isReady, r1, err := isReady(&app, &app.Status.Conditions, requeueDelay); !isReady {
 			return nil, true, r1, err
 		}
 
@@ -106,7 +106,7 @@ func ResolveHost(
 		return nil, true, ctrl.Result{}, err
 	}
 
-	if isReady, r1, err := isReady(ctx, c, object, &host, &host.Status.Conditions, requeueDelay); !isReady {
+	if isReady, r1, err := isReady(&host, &host.Status.Conditions, requeueDelay); !isReady {
 		return nil, true, r1, err
 	}
 
@@ -149,7 +149,7 @@ func ResolvePageArchetype(
 		return nil, true, ctrl.Result{}, err
 	}
 
-	if isReady, r1, err := isReady(ctx, c, object, &pageArchetype, &pageArchetype.Status.Conditions, requeueDelay); !isReady {
+	if isReady, r1, err := isReady(&pageArchetype, &pageArchetype.Status.Conditions, requeueDelay); !isReady {
 		return nil, true, r1, err
 	}
 
@@ -193,7 +193,7 @@ func ResolvePageFooter(
 		return nil, true, ctrl.Result{}, err
 	}
 
-	if isReady, r1, err := isReady(ctx, c, object, &footer, &footer.Status.Conditions, requeueDelay); !isReady {
+	if isReady, r1, err := isReady(&footer, &footer.Status.Conditions, requeueDelay); !isReady {
 		return nil, true, r1, err
 	}
 
@@ -237,7 +237,7 @@ func ResolvePageHeader(
 		return nil, true, ctrl.Result{}, err
 	}
 
-	if isReady, r1, err := isReady(ctx, c, object, &header, &header.Status.Conditions, requeueDelay); !isReady {
+	if isReady, r1, err := isReady(&header, &header.Status.Conditions, requeueDelay); !isReady {
 		return nil, true, r1, err
 	}
 
@@ -280,7 +280,7 @@ func ResolvePageNavigation(
 		return nil, true, ctrl.Result{}, err
 	}
 
-	if isReady, r1, err := isReady(ctx, c, object, &navigation, &navigation.Status.Conditions, requeueDelay); !isReady {
+	if isReady, r1, err := isReady(&navigation, &navigation.Status.Conditions, requeueDelay); !isReady {
 		return nil, true, r1, err
 	}
 
@@ -365,7 +365,7 @@ func ResolvePageBinding(
 		return nil, true, ctrl.Result{}, err
 	}
 
-	if isReady, r1, err := isReady(ctx, c, object, &pageBinding, &pageBinding.Status.Conditions, requeueDelay); !isReady {
+	if isReady, r1, err := isReady(&pageBinding, &pageBinding.Status.Conditions, requeueDelay); !isReady {
 		return nil, true, r1, err
 	}
 
@@ -408,7 +408,7 @@ func ResolveScriptLibrary(
 		return nil, true, ctrl.Result{}, err
 	}
 
-	if isReady, r1, err := isReady(ctx, c, object, &scriptLibrary, &scriptLibrary.Status.Conditions, requeueDelay); !isReady {
+	if isReady, r1, err := isReady(&scriptLibrary, &scriptLibrary.Status.Conditions, requeueDelay); !isReady {
 		return nil, true, r1, err
 	}
 
@@ -488,7 +488,7 @@ func ResolveTheme(
 		return nil, true, ctrl.Result{}, err
 	}
 
-	if isReady, r1, err := isReady(ctx, c, object, &theme, &theme.Status.Conditions, requeueDelay); !isReady {
+	if isReady, r1, err := isReady(&theme, &theme.Status.Conditions, requeueDelay); !isReady {
 		return nil, true, r1, err
 	}
 

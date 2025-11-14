@@ -194,7 +194,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	configuration := configuration.LoadConfiguration(configFile, scheme)
+	conf := configuration.LoadConfiguration(configFile, scheme)
 	requeueDelay := time.Duration(requeueDelaySeconds) * time.Second
 
 	if err := (&controller.KDexAppReconciler{
@@ -208,7 +208,7 @@ func main() {
 	}
 	if err := (&controller.KDexHostReconciler{
 		Client:        mgr.GetClient(),
-		Configuration: configuration,
+		Configuration: conf,
 		RequeueDelay:  requeueDelay,
 		Scheme:        mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
