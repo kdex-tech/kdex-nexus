@@ -57,11 +57,13 @@ rules:
   - kdexhostcontrollers
   - kdexhosts
   - kdexpagearchetypes
+  - kdexpagebindings
   - kdexpagefooters
   - kdexpageheaders
   - kdexpagenavigations
   - kdexscriptlibraries
   - kdexthemes
+  - kdextranslations
   verbs:
   - create
   - delete
@@ -74,26 +76,32 @@ rules:
   - kdex.dev
   resources:
   - kdexapps/finalizers
+  - kdexhostcontrollers/finalizers
   - kdexhosts/finalizers
   - kdexpagearchetypes/finalizers
+  - kdexpagebindings/finalizers
   - kdexpagefooters/finalizers
   - kdexpageheaders/finalizers
   - kdexpagenavigations/finalizers
   - kdexscriptlibraries/finalizers
   - kdexthemes/finalizers
+  - kdextranslations/finalizers
   verbs:
   - update
 - apiGroups:
   - kdex.dev
   resources:
   - kdexapps/status
+  - kdexhostcontrollers/status
   - kdexhosts/status
   - kdexpagearchetypes/status
+  - kdexpagebindings/status
   - kdexpagefooters/status
   - kdexpageheaders/status
   - kdexpagenavigations/status
   - kdexscriptlibraries/status
   - kdexthemes/status
+  - kdextranslations/status
   verbs:
   - get
   - patch
