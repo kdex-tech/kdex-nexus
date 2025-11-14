@@ -117,11 +117,11 @@ data:
             spec:
               containers:
               - image: k3d-registry:5000/kdex-tech/kdex-web:latest
-                pullPolicy: Always
+                imagePullPolicy: Always
       theme:
         deployment:
           template:
             spec:
               containers:
               - image: k3d-registry:5000/kdex-tech/kdex-themeserver:latest
-                pullPolicy: Always
+                imagePullPolicy: Always
