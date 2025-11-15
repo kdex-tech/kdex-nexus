@@ -21,6 +21,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -49,6 +50,11 @@ type KDexHostReconciler struct {
 	Configuration configuration.NexusConfiguration
 	RequeueDelay  time.Duration
 	Scheme        *runtime.Scheme
+
+	mu                    sync.RWMutex
+	memoizedConfiguration string
+	memoizedDeployment    *appsv1.DeploymentSpec
+	memoizedRules         []rbacv1.PolicyRule
 }
 
 // +kubebuilder:rbac:groups=apps,resources=deployments,                       verbs=get;list;watch;create;update;patch;delete
@@ -169,6 +175,81 @@ func (r *KDexHostReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
+func (r *KDexHostReconciler) getMemoizedConfiguration() (string, error) {
+	r.mu.RLock()
+
+	if r.memoizedConfiguration != "" {
+		r.mu.RUnlock()
+		return r.memoizedConfiguration, nil
+	}
+
+	r.mu.RUnlock()
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	codecs := serializer.NewCodecFactory(r.Scheme)
+
+	info, ok := runtime.SerializerInfoForMediaType(codecs.SupportedMediaTypes(), "application/yaml")
+	if !ok {
+		return "", fmt.Errorf("no YAML serializer found")
+	}
+
+	encoder := codecs.EncoderForVersion(info.Serializer, configuration.GroupVersion)
+
+	var buf bytes.Buffer
+	if err := encoder.Encode(&r.Configuration, &buf); err != nil {
+		return "", fmt.Errorf("failed to encode object to YAML: %w", err)
+	}
+
+	r.memoizedConfiguration = buf.String()
+
+	return r.memoizedConfiguration, nil
+}
+
+func (r *KDexHostReconciler) getMemoizedDeployment() *appsv1.DeploymentSpec {
+	r.mu.RLock()
+
+	if r.memoizedDeployment != nil {
+		r.mu.RUnlock()
+		return r.memoizedDeployment
+	}
+
+	r.mu.RUnlock()
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	r.memoizedDeployment = r.Configuration.FocusController.Deployment.DeepCopy()
+
+	return r.memoizedDeployment
+}
+
+func (r *KDexHostReconciler) getMemoizedRules() []rbacv1.PolicyRule {
+	r.mu.RLock()
+
+	if r.memoizedRules != nil {
+		r.mu.RUnlock()
+		return r.memoizedRules
+	}
+
+	r.mu.RUnlock()
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	rules := []rbacv1.PolicyRule{}
+
+	for _, rule := range r.Configuration.FocusController.RolePolicyRules {
+		rules = append(rules, rbacv1.PolicyRule{
+			APIGroups: rule.APIGroups,
+			Resources: rule.Resources,
+			Verbs:     rule.Verbs,
+		})
+	}
+
+	r.memoizedRules = rules
+
+	return rules
+}
+
 func (r *KDexHostReconciler) innerReconcile(ctx context.Context, host *kdexv1alpha1.KDexHost) error {
 	log := logf.FromContext(ctx)
 
@@ -227,18 +308,9 @@ func (r *KDexHostReconciler) createOrUpdateConfigMap(
 	ctx context.Context,
 	host *kdexv1alpha1.KDexHost,
 ) error {
-	codecs := serializer.NewCodecFactory(r.Scheme)
-
-	info, ok := runtime.SerializerInfoForMediaType(codecs.SupportedMediaTypes(), "application/yaml")
-	if !ok {
-		return fmt.Errorf("no YAML serializer found")
-	}
-
-	encoder := codecs.EncoderForVersion(info.Serializer, configuration.GroupVersion)
-
-	var buf bytes.Buffer
-	if err := encoder.Encode(&r.Configuration, &buf); err != nil {
-		return fmt.Errorf("failed to encode object to YAML: %w", err)
+	configString, err := r.getMemoizedConfiguration()
+	if err != nil {
+		return err
 	}
 
 	configMap := &corev1.ConfigMap{
@@ -257,7 +329,7 @@ func (r *KDexHostReconciler) createOrUpdateConfigMap(
 		configMap.Labels["app.kubernetes.io/name"] = kdexWeb
 		configMap.Labels["kdex.dev/focus-host"] = host.Name
 		configMap.Data = map[string]string{
-			"config.yaml": buf.String(),
+			"config.yaml": configString,
 		}
 
 		return ctrl.SetControllerReference(host, configMap, r.Scheme)
@@ -328,18 +400,32 @@ func (r *KDexHostReconciler) createOrUpdateDeployment(
 		r.Client,
 		deployment,
 		func() error {
-			deployment.Annotations = host.Annotations
-			deployment.Labels = host.Labels
+			if deployment.Annotations == nil {
+				deployment.Annotations = make(map[string]string)
+			}
+			for key, value := range host.Annotations {
+				deployment.Annotations[key] = value
+			}
 			if deployment.Labels == nil {
 				deployment.Labels = make(map[string]string)
 			}
+			for key, value := range host.Labels {
+				deployment.Labels[key] = value
+			}
 			deployment.Labels["app.kubernetes.io/name"] = kdexWeb
 			deployment.Labels["kdex.dev/focus-host"] = host.Name
-			deployment.Spec = r.Configuration.FocusController.Deployment
-			deployment.Spec.Selector.MatchLabels = make(map[string]string)
+			deployment.Spec = *r.getMemoizedDeployment()
+			if deployment.Spec.Selector == nil {
+				deployment.Spec.Selector = &metav1.LabelSelector{
+					MatchLabels: map[string]string{},
+				}
+			}
 			deployment.Spec.Selector.MatchLabels["app.kubernetes.io/name"] = kdexWeb
 			deployment.Spec.Selector.MatchLabels["kdex.dev/focus-host"] = host.Name
-			deployment.Spec.Template.Labels = make(map[string]string)
+
+			if deployment.Spec.Template.Labels == nil {
+				deployment.Spec.Template.Labels = make(map[string]string)
+			}
 			deployment.Spec.Template.Labels["app.kubernetes.io/name"] = kdexWeb
 			deployment.Spec.Template.Labels["kdex.dev/focus-host"] = host.Name
 
@@ -423,15 +509,7 @@ func (r *KDexHostReconciler) createOrUpdateRole(ctx context.Context, host *kdexv
 			role.Labels["app.kubernetes.io/name"] = kdexWeb
 			role.Labels["kdex.dev/focus-host"] = host.Name
 
-			role.Rules = []rbacv1.PolicyRule{}
-
-			for _, rule := range r.Configuration.FocusController.RolePolicyRules {
-				role.Rules = append(role.Rules, rbacv1.PolicyRule{
-					APIGroups: rule.APIGroups,
-					Resources: rule.Resources,
-					Verbs:     rule.Verbs,
-				})
-			}
+			role.Rules = r.getMemoizedRules()
 
 			return ctrl.SetControllerReference(host, role, r.Scheme)
 		},
