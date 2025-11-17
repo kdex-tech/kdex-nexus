@@ -4,4 +4,5 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:
 - name: controller
-  newName: k3d-registry:5000/kdex-tech/kdex-nexus
+  newName: kdex-tech/kdex-nexus
+  newTag: test-e2e
