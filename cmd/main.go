@@ -34,6 +34,7 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	"kdex.dev/crds/configuration"
+	"kdex.dev/crds/npm"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -42,7 +43,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	"kdex.dev/nexus/internal/controller"
-	"kdex.dev/nexus/internal/npm"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -197,9 +197,13 @@ func main() {
 	conf := configuration.LoadConfiguration(configFile, scheme)
 	requeueDelay := time.Duration(requeueDelaySeconds) * time.Second
 
+	registryFactory := func(secret *corev1.Secret, error func(err error, msg string, keysAndValues ...any)) npm.Registry {
+		return npm.NewRegistry(&conf, secret, error)
+	}
+
 	if err := (&controller.KDexAppReconciler{
 		Client:          mgr.GetClient(),
-		RegistryFactory: npm.NewRegistry,
+		RegistryFactory: registryFactory,
 		RequeueDelay:    requeueDelay,
 		Scheme:          mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
@@ -249,7 +253,7 @@ func main() {
 	}
 	if err := (&controller.KDexScriptLibraryReconciler{
 		Client:          mgr.GetClient(),
-		RegistryFactory: npm.NewRegistry,
+		RegistryFactory: registryFactory,
 		RequeueDelay:    requeueDelay,
 		Scheme:          mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
