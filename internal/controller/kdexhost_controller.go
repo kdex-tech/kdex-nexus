@@ -59,16 +59,14 @@ type KDexHostReconciler struct {
 
 // +kubebuilder:rbac:groups=apps,resources=deployments,                             verbs=get;list;watch;create;update;patch;delete
 
+// +kubebuilder:rbac:groups=batch,resources=jobs,                                   verbs=get;list;watch;create;update;patch;delete
+
 // +kubebuilder:rbac:groups=core,resources=configmaps,                              verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=pods,                                    verbs=get;list;watch
 // +kubebuilder:rbac:groups=core,resources=serviceaccounts,                         verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=services,                                verbs=get;list;watch;create;update;patch;delete
 
 // +kubebuilder:rbac:groups=gateway.networking.k8s.io,resources=httproutes,         verbs=get;list;watch;create;update;patch;delete
-
-// +kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses,                  verbs=get;list;watch;create;update;patch;delete
-
-// +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=rolebindings,       verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles,              verbs=get;list;watch;create;update;patch;delete
 
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexhosts,                           verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexhosts/status,                    verbs=get;update;patch
@@ -87,6 +85,11 @@ type KDexHostReconciler struct {
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdextranslations/status,             verbs=get;update;patch
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdextranslations/finalizers,         verbs=update
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexthemes,                          verbs=get;list;watch
+
+// +kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses,                  verbs=get;list;watch;create;update;patch;delete
+
+// +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=rolebindings,       verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles,              verbs=get;list;watch;create;update;patch;delete
 
 func (r *KDexHostReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, err error) {
 	var host kdexv1alpha1.KDexHost

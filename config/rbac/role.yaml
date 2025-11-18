@@ -21,6 +21,7 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - pods
   - secrets
   verbs:
   - get
@@ -30,6 +31,18 @@ rules:
   - apps
   resources:
   - deployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - batch
+  resources:
+  - jobs
   verbs:
   - create
   - delete

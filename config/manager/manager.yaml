@@ -118,12 +118,136 @@ data:
               containers:
               - image: k3d-registry:5000/kdex-tech/kdex-web:latest
                 imagePullPolicy: Always
+
+        rolePolicyRules:
+        - apiGroups:
+          - ""
+          resources:
+          - configmaps
+          - services
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - ""
+          resources:
+          - pods
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - apps
+          resources:
+          - deployments
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - batch
+          resources:
+          - jobs
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - gateway.networking.k8s.io
+          resources:
+          - httproutes
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - kdex.dev
+          resources:
+          - kdexapps
+          - kdexhosts
+          - kdexpagearchetypes
+          - kdexpagefooters
+          - kdexpageheaders
+          - kdexpagenavigations
+          - kdexscriptlibraries
+          - kdexthemes
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - kdex.dev
+          resources:
+          - kdexhostcontrollers
+          - kdexhostpackagereferences
+          - kdexpagebindings
+          - kdextranslations
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - kdex.dev
+          resources:
+          - kdexhostcontrollers/finalizers
+          - kdexhostpackagereferences/finalizers
+          - kdexpagebindings/finalizers
+          - kdextranslations/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - kdex.dev
+          resources:
+          - kdexhostcontrollers/status
+          - kdexhostpackagereferences/status
+          - kdexpagebindings/status
+          - kdextranslations/status
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - networking.k8s.io
+          resources:
+          - ingresses
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+
       defaultImageRegistry:
         host: k3d-registry:5000
         insecure: true
+
       defaultNpmRegistry:
         host: npm-registry-verdaccio.npm-registry:4873
         insecure: true
+
       theme:
         deployment:
           template:
