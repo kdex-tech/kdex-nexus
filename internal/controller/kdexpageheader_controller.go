@@ -66,7 +66,6 @@ func (r *KDexPageHeaderReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	defer func() {
 		pageHeader.Status.ObservedGeneration = pageHeader.Generation
 		if updateErr := r.Status().Update(ctx, &pageHeader); updateErr != nil {
-			log.Info("failed to update status", "err", updateErr)
 			if err == nil {
 				err = updateErr
 			}

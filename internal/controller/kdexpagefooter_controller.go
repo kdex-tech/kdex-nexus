@@ -65,7 +65,6 @@ func (r *KDexPageFooterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	defer func() {
 		pageFooter.Status.ObservedGeneration = pageFooter.Generation
 		if updateErr := r.Status().Update(ctx, &pageFooter); updateErr != nil {
-			log.Info("failed to update status", "err", updateErr)
 			if err == nil {
 				err = updateErr
 			}
