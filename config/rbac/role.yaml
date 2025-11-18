@@ -55,6 +55,7 @@ rules:
   resources:
   - kdexapps
   - kdexhostcontrollers
+  - kdexhostpackagereferences
   - kdexhosts
   - kdexpagearchetypes
   - kdexpagebindings
@@ -77,6 +78,7 @@ rules:
   resources:
   - kdexapps/finalizers
   - kdexhostcontrollers/finalizers
+  - kdexhostpackagereferences/finalizers
   - kdexhosts/finalizers
   - kdexpagearchetypes/finalizers
   - kdexpagebindings/finalizers
@@ -93,6 +95,7 @@ rules:
   resources:
   - kdexapps/status
   - kdexhostcontrollers/status
+  - kdexhostpackagereferences/status
   - kdexhosts/status
   - kdexpagearchetypes/status
   - kdexpagebindings/status
