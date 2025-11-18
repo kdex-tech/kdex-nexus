@@ -261,8 +261,9 @@ func main() {
 		os.Exit(1)
 	}
 	if err := (&controller.KDexThemeReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:       mgr.GetClient(),
+		RequeueDelay: requeueDelay,
+		Scheme:       mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "KDexTheme")
 		os.Exit(1)
