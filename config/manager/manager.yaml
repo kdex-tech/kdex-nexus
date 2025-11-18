@@ -118,7 +118,10 @@ data:
               containers:
               - image: k3d-registry:5000/kdex-tech/kdex-web:latest
                 imagePullPolicy: Always
-      defaultRegistry:
+      defaultImageRegistry:
+        host: k3d-registry:5000
+        insecure: true
+      defaultNpmRegistry:
         host: npm-registry-verdaccio.npm-registry:4873
         insecure: true
       theme:
