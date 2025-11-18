@@ -52,6 +52,16 @@ func (r *KDexThemeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	// Defer status update
+	defer func() {
+		theme.Status.ObservedGeneration = theme.Generation
+		if updateErr := r.Status().Update(ctx, &theme); updateErr != nil {
+			if err == nil {
+				err = updateErr
+			}
+		}
+	}()
+
 	kdexv1alpha1.SetConditions(
 		&theme.Status.Conditions,
 		kdexv1alpha1.ConditionStatuses{
@@ -62,16 +72,6 @@ func (r *KDexThemeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		kdexv1alpha1.ConditionReasonReconciling,
 		"Reconciling",
 	)
-
-	// Defer status update
-	defer func() {
-		theme.Status.ObservedGeneration = theme.Generation
-		if updateErr := r.Status().Update(ctx, &theme); updateErr != nil {
-			if err == nil {
-				err = updateErr
-			}
-		}
-	}()
 
 	_, shouldReturn, r1, err := ResolveScriptLibrary(ctx, r.Client, &theme, &theme.Status.Conditions, theme.Spec.ScriptLibraryRef, r.RequeueDelay)
 	if shouldReturn {

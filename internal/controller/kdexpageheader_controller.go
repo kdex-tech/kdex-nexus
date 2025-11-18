@@ -51,6 +51,16 @@ func (r *KDexPageHeaderReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	// Defer status update
+	defer func() {
+		pageHeader.Status.ObservedGeneration = pageHeader.Generation
+		if updateErr := r.Status().Update(ctx, &pageHeader); updateErr != nil {
+			if err == nil {
+				err = updateErr
+			}
+		}
+	}()
+
 	kdexv1alpha1.SetConditions(
 		&pageHeader.Status.Conditions,
 		kdexv1alpha1.ConditionStatuses{
@@ -61,16 +71,6 @@ func (r *KDexPageHeaderReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		kdexv1alpha1.ConditionReasonReconciling,
 		"Reconciling",
 	)
-
-	// Defer status update
-	defer func() {
-		pageHeader.Status.ObservedGeneration = pageHeader.Generation
-		if updateErr := r.Status().Update(ctx, &pageHeader); updateErr != nil {
-			if err == nil {
-				err = updateErr
-			}
-		}
-	}()
 
 	_, shouldReturn, r1, err := ResolveScriptLibrary(ctx, r.Client, &pageHeader, &pageHeader.Status.Conditions, pageHeader.Spec.ScriptLibraryRef, r.RequeueDelay)
 	if shouldReturn {

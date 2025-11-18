@@ -53,6 +53,16 @@ func (r *KDexPageArchetypeReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	// Defer status update
+	defer func() {
+		pageArchetype.Status.ObservedGeneration = pageArchetype.Generation
+		if updateErr := r.Status().Update(ctx, &pageArchetype); updateErr != nil {
+			if err == nil {
+				err = updateErr
+			}
+		}
+	}()
+
 	kdexv1alpha1.SetConditions(
 		&pageArchetype.Status.Conditions,
 		kdexv1alpha1.ConditionStatuses{
@@ -63,16 +73,6 @@ func (r *KDexPageArchetypeReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		kdexv1alpha1.ConditionReasonReconciling,
 		"Reconciling",
 	)
-
-	// Defer status update
-	defer func() {
-		pageArchetype.Status.ObservedGeneration = pageArchetype.Generation
-		if updateErr := r.Status().Update(ctx, &pageArchetype); updateErr != nil {
-			if err == nil {
-				err = updateErr
-			}
-		}
-	}()
 
 	_, shouldReturn, r1, err := ResolvePageFooter(ctx, r.Client, &pageArchetype, &pageArchetype.Status.Conditions, pageArchetype.Spec.DefaultFooterRef, r.RequeueDelay)
 	if shouldReturn {

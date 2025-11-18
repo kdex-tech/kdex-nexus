@@ -52,6 +52,16 @@ func (r *KDexAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	// Defer status update
+	defer func() {
+		app.Status.ObservedGeneration = app.Generation
+		if updateErr := r.Status().Update(ctx, &app); updateErr != nil {
+			if err == nil {
+				err = updateErr
+			}
+		}
+	}()
+
 	kdexv1alpha1.SetConditions(
 		&app.Status.Conditions,
 		kdexv1alpha1.ConditionStatuses{
@@ -62,16 +72,6 @@ func (r *KDexAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 		kdexv1alpha1.ConditionReasonReconciling,
 		"Reconciling",
 	)
-
-	// Defer status update
-	defer func() {
-		app.Status.ObservedGeneration = app.Generation
-		if updateErr := r.Status().Update(ctx, &app); updateErr != nil {
-			if err == nil {
-				err = updateErr
-			}
-		}
-	}()
 
 	secret, shouldReturn, r1, err := ResolveSecret(ctx, r.Client, &app, &app.Status.Conditions, app.Spec.PackageReference.SecretRef, r.RequeueDelay)
 	if shouldReturn {

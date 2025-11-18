@@ -50,6 +50,16 @@ func (r *KDexPageNavigationReconciler) Reconcile(ctx context.Context, req ctrl.R
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	// Defer status update
+	defer func() {
+		pageNavigation.Status.ObservedGeneration = pageNavigation.Generation
+		if updateErr := r.Status().Update(ctx, &pageNavigation); updateErr != nil {
+			if err == nil {
+				err = updateErr
+			}
+		}
+	}()
+
 	kdexv1alpha1.SetConditions(
 		&pageNavigation.Status.Conditions,
 		kdexv1alpha1.ConditionStatuses{
@@ -60,16 +70,6 @@ func (r *KDexPageNavigationReconciler) Reconcile(ctx context.Context, req ctrl.R
 		kdexv1alpha1.ConditionReasonReconciling,
 		"Reconciling",
 	)
-
-	// Defer status update
-	defer func() {
-		pageNavigation.Status.ObservedGeneration = pageNavigation.Generation
-		if updateErr := r.Status().Update(ctx, &pageNavigation); updateErr != nil {
-			if err == nil {
-				err = updateErr
-			}
-		}
-	}()
 
 	_, shouldReturn, r1, err := ResolveScriptLibrary(ctx, r.Client, &pageNavigation, &pageNavigation.Status.Conditions, pageNavigation.Spec.ScriptLibraryRef, r.RequeueDelay)
 	if shouldReturn {
