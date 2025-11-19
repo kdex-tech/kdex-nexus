@@ -27,9 +27,11 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apimachinery/pkg/types"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	"kdex.dev/crds/configuration"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -119,13 +121,38 @@ func (r *KDexHostReconciler) Reconcile(ctx context.Context, req ctrl.Request) (r
 		}
 	} else {
 		if controllerutil.ContainsFinalizer(&host, hostFinalizerName) {
-			hostController := &kdexv1alpha1.KDexHostController{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      host.Name,
-					Namespace: host.Namespace,
-				},
+			hostController := &kdexv1alpha1.KDexHostController{}
+			err := r.Get(ctx, req.NamespacedName, hostController)
+			if err == nil {
+				if hostController.DeletionTimestamp.IsZero() {
+					if err := r.Delete(ctx, hostController); err != nil {
+						return ctrl.Result{}, err
+					}
+				}
+				// KDexHostController still exists. We wait.
+				return ctrl.Result{Requeue: true}, nil
 			}
-			if err := r.Delete(ctx, hostController); client.IgnoreNotFound(err) != nil {
+			if !errors.IsNotFound(err) {
+				return ctrl.Result{}, err
+			}
+
+			deployment := &appsv1.Deployment{}
+			err = r.Get(ctx, req.NamespacedName, deployment)
+			if err == nil {
+				if deployment.DeletionTimestamp.IsZero() {
+					if err := r.Delete(ctx, deployment); err != nil {
+						return ctrl.Result{}, err
+					}
+				}
+				// Deployment still exists. We wait.
+				return ctrl.Result{Requeue: true}, nil
+			}
+			if !errors.IsNotFound(err) {
+				return ctrl.Result{}, err
+			}
+
+			// Deployment is gone. Clean up RBAC finalizers.
+			if err := r.cleanupRbacFinalizers(ctx, &host); err != nil {
 				return ctrl.Result{}, err
 			}
 
@@ -181,6 +208,46 @@ func (r *KDexHostReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			handler.EnqueueRequestsFromMapFunc(r.findHostsForTheme)).
 		Named("kdexhost").
 		Complete(r)
+}
+
+func (r *KDexHostReconciler) cleanupRbacFinalizers(ctx context.Context, host *kdexv1alpha1.KDexHost) error {
+	// RoleBinding
+	rb := &rbacv1.RoleBinding{}
+	if err := r.Get(ctx, types.NamespacedName{Name: host.Name, Namespace: host.Namespace}, rb); err == nil {
+		if controllerutil.RemoveFinalizer(rb, hostFinalizerName) {
+			if err := r.Update(ctx, rb); err != nil {
+				return err
+			}
+		}
+	} else if !errors.IsNotFound(err) {
+		return err
+	}
+
+	// Role
+	role := &rbacv1.Role{}
+	if err := r.Get(ctx, types.NamespacedName{Name: host.Name, Namespace: host.Namespace}, role); err == nil {
+		if controllerutil.RemoveFinalizer(role, hostFinalizerName) {
+			if err := r.Update(ctx, role); err != nil {
+				return err
+			}
+		}
+	} else if !errors.IsNotFound(err) {
+		return err
+	}
+
+	// ServiceAccount
+	sa := &corev1.ServiceAccount{}
+	if err := r.Get(ctx, types.NamespacedName{Name: host.Name, Namespace: host.Namespace}, sa); err == nil {
+		if controllerutil.RemoveFinalizer(sa, hostFinalizerName) {
+			if err := r.Update(ctx, sa); err != nil {
+				return err
+			}
+		}
+	} else if !errors.IsNotFound(err) {
+		return err
+	}
+
+	return nil
 }
 
 func (r *KDexHostReconciler) getMemoizedConfiguration() (string, error) {
@@ -570,7 +637,7 @@ func (r *KDexHostReconciler) createOrUpdateRole(ctx context.Context, host *kdexv
 			role.Labels["kdex.dev/instance"] = host.Name
 
 			role.Rules = r.getMemoizedRules()
-
+			controllerutil.AddFinalizer(role, hostFinalizerName)
 			return ctrl.SetControllerReference(host, role, r.Scheme)
 		},
 	); err != nil {
@@ -633,7 +700,7 @@ func (r *KDexHostReconciler) createOrUpdateRoleBinding(ctx context.Context, host
 					Namespace: host.Namespace,
 				},
 			}
-
+			controllerutil.AddFinalizer(roleBinding, hostFinalizerName)
 			return ctrl.SetControllerReference(host, roleBinding, r.Scheme)
 		},
 	); err != nil {
@@ -743,7 +810,7 @@ func (r *KDexHostReconciler) createOrUpdateServiceAccount(ctx context.Context, h
 
 			serviceAccount.Labels["app.kubernetes.io/name"] = kdexWeb
 			serviceAccount.Labels["kdex.dev/instance"] = host.Name
-
+			controllerutil.AddFinalizer(serviceAccount, hostFinalizerName)
 			return ctrl.SetControllerReference(host, serviceAccount, r.Scheme)
 		},
 	); err != nil {
