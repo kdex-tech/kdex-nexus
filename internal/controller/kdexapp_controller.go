@@ -56,7 +56,7 @@ func (r *KDexAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 	defer func() {
 		app.Status.ObservedGeneration = app.Generation
 		if updateErr := r.Status().Update(ctx, &app); updateErr != nil {
-			if err == nil {
+			if res == (ctrl.Result{}) {
 				err = updateErr
 			}
 		}

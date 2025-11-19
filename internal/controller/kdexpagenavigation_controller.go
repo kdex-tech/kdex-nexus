@@ -54,7 +54,7 @@ func (r *KDexPageNavigationReconciler) Reconcile(ctx context.Context, req ctrl.R
 	defer func() {
 		pageNavigation.Status.ObservedGeneration = pageNavigation.Generation
 		if updateErr := r.Status().Update(ctx, &pageNavigation); updateErr != nil {
-			if err == nil {
+			if res == (ctrl.Result{}) {
 				err = updateErr
 			}
 		}

@@ -56,7 +56,7 @@ func (r *KDexScriptLibraryReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	defer func() {
 		scriptLibrary.Status.ObservedGeneration = scriptLibrary.Generation
 		if updateErr := r.Status().Update(ctx, &scriptLibrary); updateErr != nil {
-			if err == nil {
+			if res == (ctrl.Result{}) {
 				err = updateErr
 			}
 		}

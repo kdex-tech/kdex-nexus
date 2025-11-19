@@ -57,7 +57,7 @@ func (r *KDexPageArchetypeReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	defer func() {
 		pageArchetype.Status.ObservedGeneration = pageArchetype.Generation
 		if updateErr := r.Status().Update(ctx, &pageArchetype); updateErr != nil {
-			if err == nil {
+			if res == (ctrl.Result{}) {
 				err = updateErr
 			}
 		}
