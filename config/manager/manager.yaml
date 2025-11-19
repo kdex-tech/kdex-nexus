@@ -124,6 +124,7 @@ data:
           - ""
           resources:
           - configmaps
+          - secrets
           - services
           verbs:
           - create
@@ -248,7 +249,7 @@ data:
         host: npm-registry-verdaccio.npm-registry:4873
         insecure: true
 
-      theme:
+      staticServing:
         deployment:
           template:
             spec:
