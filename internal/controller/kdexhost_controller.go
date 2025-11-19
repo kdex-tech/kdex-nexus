@@ -55,6 +55,7 @@ type KDexHostReconciler struct {
 	memoizedConfiguration string
 	memoizedDeployment    *appsv1.DeploymentSpec
 	memoizedRules         []rbacv1.PolicyRule
+	memoizedService       *corev1.ServiceSpec
 }
 
 // +kubebuilder:rbac:groups=apps,resources=deployments,                             verbs=get;list;watch;create;update;patch;delete
@@ -257,6 +258,23 @@ func (r *KDexHostReconciler) getMemoizedRules() []rbacv1.PolicyRule {
 	return rules
 }
 
+func (r *KDexHostReconciler) getMemoizedService() *corev1.ServiceSpec {
+	r.mu.RLock()
+
+	if r.memoizedService != nil {
+		r.mu.RUnlock()
+		return r.memoizedService
+	}
+
+	r.mu.RUnlock()
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	r.memoizedService = r.Configuration.FocusController.Service.DeepCopy()
+
+	return r.memoizedService
+}
+
 func (r *KDexHostReconciler) innerReconcile(ctx context.Context, host *kdexv1alpha1.KDexHost) error {
 	log := logf.FromContext(ctx)
 
@@ -328,13 +346,22 @@ func (r *KDexHostReconciler) createOrUpdateConfigMap(
 	}
 
 	if _, err := ctrl.CreateOrUpdate(ctx, r.Client, configMap, func() error {
-		configMap.Annotations = host.Annotations
-		configMap.Labels = host.Labels
+		if configMap.Annotations == nil {
+			configMap.Annotations = make(map[string]string)
+		}
+		for key, value := range host.Annotations {
+			configMap.Annotations[key] = value
+		}
 		if configMap.Labels == nil {
 			configMap.Labels = make(map[string]string)
 		}
+		for key, value := range host.Labels {
+			configMap.Labels[key] = value
+		}
+
 		configMap.Labels["app.kubernetes.io/name"] = kdexWeb
-		configMap.Labels["kdex.dev/focus-host"] = host.Name
+		configMap.Labels["kdex.dev/instance"] = host.Name
+
 		configMap.Data = map[string]string{
 			"config.yaml": configString,
 		}
@@ -369,6 +396,22 @@ func (r *KDexHostReconciler) createOrUpdateHostControllerResource(
 	}
 
 	if _, err := ctrl.CreateOrUpdate(ctx, r.Client, hostController, func() error {
+		if hostController.Annotations == nil {
+			hostController.Annotations = make(map[string]string)
+		}
+		for key, value := range host.Annotations {
+			hostController.Annotations[key] = value
+		}
+		if hostController.Labels == nil {
+			hostController.Labels = make(map[string]string)
+		}
+		for key, value := range host.Labels {
+			hostController.Labels[key] = value
+		}
+
+		hostController.Labels["app.kubernetes.io/name"] = kdexWeb
+		hostController.Labels["kdex.dev/instance"] = host.Name
+
 		hostController.Spec = kdexv1alpha1.KDexHostControllerSpec{
 			Host: host.Spec,
 		}
@@ -419,22 +462,25 @@ func (r *KDexHostReconciler) createOrUpdateDeployment(
 			for key, value := range host.Labels {
 				deployment.Labels[key] = value
 			}
+
 			deployment.Labels["app.kubernetes.io/name"] = kdexWeb
-			deployment.Labels["kdex.dev/focus-host"] = host.Name
+			deployment.Labels["kdex.dev/instance"] = host.Name
+
 			deployment.Spec = *r.getMemoizedDeployment()
+
 			if deployment.Spec.Selector == nil {
 				deployment.Spec.Selector = &metav1.LabelSelector{
 					MatchLabels: map[string]string{},
 				}
 			}
 			deployment.Spec.Selector.MatchLabels["app.kubernetes.io/name"] = kdexWeb
-			deployment.Spec.Selector.MatchLabels["kdex.dev/focus-host"] = host.Name
+			deployment.Spec.Selector.MatchLabels["kdex.dev/instance"] = host.Name
 
 			if deployment.Spec.Template.Labels == nil {
 				deployment.Spec.Template.Labels = make(map[string]string)
 			}
 			deployment.Spec.Template.Labels["app.kubernetes.io/name"] = kdexWeb
-			deployment.Spec.Template.Labels["kdex.dev/focus-host"] = host.Name
+			deployment.Spec.Template.Labels["kdex.dev/instance"] = host.Name
 
 			foundFocalHost := false
 			foundServiceName := false
@@ -466,7 +512,6 @@ func (r *KDexHostReconciler) createOrUpdateDeployment(
 			}
 
 			deployment.Spec.Template.Spec.Containers[0].Name = host.Name
-			deployment.Spec.Template.Spec.Containers[0].Ports[0].Name = host.Name
 			deployment.Spec.Template.Spec.ServiceAccountName = host.Name
 
 			for idx, volume := range deployment.Spec.Template.Spec.Volumes {
@@ -508,13 +553,21 @@ func (r *KDexHostReconciler) createOrUpdateRole(ctx context.Context, host *kdexv
 		r.Client,
 		role,
 		func() error {
-			role.Annotations = host.Annotations
-			role.Labels = host.Labels
+			if role.Annotations == nil {
+				role.Annotations = make(map[string]string)
+			}
+			for key, value := range host.Annotations {
+				role.Annotations[key] = value
+			}
 			if role.Labels == nil {
 				role.Labels = make(map[string]string)
 			}
+			for key, value := range host.Labels {
+				role.Labels[key] = value
+			}
+
 			role.Labels["app.kubernetes.io/name"] = kdexWeb
-			role.Labels["kdex.dev/focus-host"] = host.Name
+			role.Labels["kdex.dev/instance"] = host.Name
 
 			role.Rules = r.getMemoizedRules()
 
@@ -551,18 +604,28 @@ func (r *KDexHostReconciler) createOrUpdateRoleBinding(ctx context.Context, host
 		r.Client,
 		roleBinding,
 		func() error {
-			roleBinding.Annotations = host.Annotations
-			roleBinding.Labels = host.Labels
+			if roleBinding.Annotations == nil {
+				roleBinding.Annotations = make(map[string]string)
+			}
+			for key, value := range host.Annotations {
+				roleBinding.Annotations[key] = value
+			}
 			if roleBinding.Labels == nil {
 				roleBinding.Labels = make(map[string]string)
 			}
+			for key, value := range host.Labels {
+				roleBinding.Labels[key] = value
+			}
+
 			roleBinding.Labels["app.kubernetes.io/name"] = kdexWeb
-			roleBinding.Labels["kdex.dev/focus-host"] = host.Name
+			roleBinding.Labels["kdex.dev/instance"] = host.Name
+
 			roleBinding.RoleRef = rbacv1.RoleRef{
 				APIGroup: "rbac.authorization.k8s.io",
 				Kind:     "Role",
 				Name:     host.Name,
 			}
+
 			roleBinding.Subjects = []rbacv1.Subject{
 				{
 					Kind:      "ServiceAccount",
@@ -607,23 +670,30 @@ func (r *KDexHostReconciler) createOrUpdateService(
 		r.Client,
 		service,
 		func() error {
-			service.Annotations = host.Annotations
-			service.Labels = host.Labels
+			if service.Annotations == nil {
+				service.Annotations = make(map[string]string)
+			}
+			for key, value := range host.Annotations {
+				service.Annotations[key] = value
+			}
 			if service.Labels == nil {
 				service.Labels = make(map[string]string)
 			}
-			service.Labels["app.kubernetes.io/name"] = kdexWeb
-			service.Labels["kdex.dev/focus-host"] = host.Name
-			service.Spec = r.Configuration.FocusController.Service
-			service.Spec.Selector["app.kubernetes.io/name"] = kdexWeb
-			service.Spec.Selector["kdex.dev/focus-host"] = host.Name
-
-			for idx, value := range service.Spec.Ports {
-				if value.Name == "webserver" {
-					service.Spec.Ports[idx].Name = host.Name
-					service.Spec.Ports[idx].TargetPort.StrVal = host.Name
-				}
+			for key, value := range host.Labels {
+				service.Labels[key] = value
 			}
+
+			service.Labels["app.kubernetes.io/name"] = kdexWeb
+			service.Labels["kdex.dev/instance"] = host.Name
+
+			service.Spec = *r.getMemoizedService()
+
+			if service.Spec.Selector == nil {
+				service.Spec.Selector = make(map[string]string)
+			}
+
+			service.Spec.Selector["app.kubernetes.io/name"] = kdexWeb
+			service.Spec.Selector["kdex.dev/instance"] = host.Name
 
 			return ctrl.SetControllerReference(host, service, r.Scheme)
 		},
@@ -658,13 +728,21 @@ func (r *KDexHostReconciler) createOrUpdateServiceAccount(ctx context.Context, h
 		r.Client,
 		serviceAccount,
 		func() error {
-			serviceAccount.Annotations = host.Annotations
-			serviceAccount.Labels = host.Labels
+			if serviceAccount.Annotations == nil {
+				serviceAccount.Annotations = make(map[string]string)
+			}
+			for key, value := range host.Annotations {
+				serviceAccount.Annotations[key] = value
+			}
 			if serviceAccount.Labels == nil {
 				serviceAccount.Labels = make(map[string]string)
 			}
+			for key, value := range host.Labels {
+				serviceAccount.Labels[key] = value
+			}
+
 			serviceAccount.Labels["app.kubernetes.io/name"] = kdexWeb
-			serviceAccount.Labels["kdex.dev/focus-host"] = host.Name
+			serviceAccount.Labels["kdex.dev/instance"] = host.Name
 
 			return ctrl.SetControllerReference(host, serviceAccount, r.Scheme)
 		},
