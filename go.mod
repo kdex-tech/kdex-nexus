@@ -2,7 +2,7 @@ module kdex.dev/nexus
 
 go 1.24.5
 
-replace kdex.dev/crds => github.com/kdex-tech/kdex-crds v0.12.3
+replace kdex.dev/crds => github.com/kdex-tech/kdex-crds v0.12.4
 
 require (
 	github.com/onsi/ginkgo/v2 v2.27.2
