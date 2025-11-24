@@ -25,7 +25,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
-	"kdex.dev/crds/base"
 	"kdex.dev/crds/npm"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -54,16 +53,17 @@ type KDexScriptLibraryReconciler struct {
 func (r *KDexScriptLibraryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, err error) {
 	log := logf.FromContext(ctx)
 
-	var ko *base.KDexObject
+	var status *kdexv1alpha1.KDexObjectStatus
 	var spec kdexv1alpha1.KDexScriptLibrarySpec
+	var om metav1.ObjectMeta
 	var o client.Object
 
-	if req.NamespacedName.Namespace == "" {
+	if req.Namespace == "" {
 		var clusterScriptLibrary kdexv1alpha1.KDexClusterScriptLibrary
 		if err := r.Get(ctx, req.NamespacedName, &clusterScriptLibrary); err != nil {
 			return ctrl.Result{}, client.IgnoreNotFound(err)
 		}
-		ko = &clusterScriptLibrary.KDexObject
+		status = &clusterScriptLibrary.Status
 		spec = clusterScriptLibrary.Spec
 		o = &clusterScriptLibrary
 	} else {
@@ -71,14 +71,14 @@ func (r *KDexScriptLibraryReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		if err := r.Get(ctx, req.NamespacedName, &scriptLibrary); err != nil {
 			return ctrl.Result{}, client.IgnoreNotFound(err)
 		}
-		ko = &scriptLibrary.KDexObject
+		status = &scriptLibrary.Status
 		spec = scriptLibrary.Spec
 		o = &scriptLibrary
 	}
 
 	// Defer status update
 	defer func() {
-		ko.Status.ObservedGeneration = ko.Generation
+		status.ObservedGeneration = om.Generation
 		if updateErr := r.Status().Update(ctx, o); updateErr != nil {
 			if res == (ctrl.Result{}) {
 				err = updateErr
@@ -87,7 +87,7 @@ func (r *KDexScriptLibraryReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}()
 
 	kdexv1alpha1.SetConditions(
-		&ko.Status.Conditions,
+		&status.Conditions,
 		kdexv1alpha1.ConditionStatuses{
 			Degraded:    metav1.ConditionFalse,
 			Progressing: metav1.ConditionTrue,
@@ -98,14 +98,14 @@ func (r *KDexScriptLibraryReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	)
 
 	if spec.PackageReference != nil {
-		secret, shouldReturn, r1, err := ResolveSecret(ctx, r.Client, o, &ko.Status.Conditions, spec.PackageReference.SecretRef, r.RequeueDelay)
+		secret, shouldReturn, r1, err := ResolveSecret(ctx, r.Client, o, &status.Conditions, spec.PackageReference.SecretRef, r.RequeueDelay)
 		if shouldReturn {
 			return r1, err
 		}
 
 		if err := validatePackageReference(ctx, spec.PackageReference, secret, r.RegistryFactory); err != nil {
 			kdexv1alpha1.SetConditions(
-				&ko.Status.Conditions,
+				&status.Conditions,
 				kdexv1alpha1.ConditionStatuses{
 					Degraded:    metav1.ConditionTrue,
 					Progressing: metav1.ConditionFalse,
@@ -122,7 +122,7 @@ func (r *KDexScriptLibraryReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	if spec.Scripts != nil {
 		if err := validateScripts(&spec); err != nil {
 			kdexv1alpha1.SetConditions(
-				&ko.Status.Conditions,
+				&status.Conditions,
 				kdexv1alpha1.ConditionStatuses{
 					Degraded:    metav1.ConditionTrue,
 					Progressing: metav1.ConditionFalse,
@@ -137,7 +137,7 @@ func (r *KDexScriptLibraryReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	kdexv1alpha1.SetConditions(
-		&ko.Status.Conditions,
+		&status.Conditions,
 		kdexv1alpha1.ConditionStatuses{
 			Degraded:    metav1.ConditionFalse,
 			Progressing: metav1.ConditionFalse,

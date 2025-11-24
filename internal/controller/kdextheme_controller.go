@@ -26,7 +26,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
-	"kdex.dev/crds/base"
 	"kdex.dev/crds/render"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -54,16 +53,17 @@ type KDexThemeReconciler struct {
 func (r *KDexThemeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, err error) {
 	log := logf.FromContext(ctx)
 
-	var ko *base.KDexObject
+	var status *kdexv1alpha1.KDexObjectStatus
 	var spec kdexv1alpha1.KDexThemeSpec
+	var om metav1.ObjectMeta
 	var o client.Object
 
-	if req.NamespacedName.Namespace == "" {
+	if req.Namespace == "" {
 		var clusterTheme kdexv1alpha1.KDexClusterTheme
 		if err := r.Get(ctx, req.NamespacedName, &clusterTheme); err != nil {
 			return ctrl.Result{}, client.IgnoreNotFound(err)
 		}
-		ko = &clusterTheme.KDexObject
+		status = &clusterTheme.Status
 		spec = clusterTheme.Spec
 		o = &clusterTheme
 	} else {
@@ -71,14 +71,14 @@ func (r *KDexThemeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		if err := r.Get(ctx, req.NamespacedName, &theme); err != nil {
 			return ctrl.Result{}, client.IgnoreNotFound(err)
 		}
-		ko = &theme.KDexObject
+		status = &theme.Status
 		spec = theme.Spec
 		o = &theme
 	}
 
 	// Defer status update
 	defer func() {
-		ko.Status.ObservedGeneration = ko.Generation
+		status.ObservedGeneration = om.Generation
 		if updateErr := r.Status().Update(ctx, o); updateErr != nil {
 			if res == (ctrl.Result{}) {
 				err = updateErr
@@ -87,7 +87,7 @@ func (r *KDexThemeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}()
 
 	kdexv1alpha1.SetConditions(
-		&ko.Status.Conditions,
+		&status.Conditions,
 		kdexv1alpha1.ConditionStatuses{
 			Degraded:    metav1.ConditionFalse,
 			Progressing: metav1.ConditionTrue,
@@ -97,14 +97,14 @@ func (r *KDexThemeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		"Reconciling",
 	)
 
-	_, shouldReturn, r1, err := ResolveScriptLibrary(ctx, r.Client, o, &ko.Status.Conditions, spec.ScriptLibraryRef, r.RequeueDelay)
+	_, shouldReturn, r1, err := ResolveScriptLibrary(ctx, r.Client, o, &status.Conditions, spec.ScriptLibraryRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
 
 	if err := validateSpec(spec); err != nil {
 		kdexv1alpha1.SetConditions(
-			&ko.Status.Conditions,
+			&status.Conditions,
 			kdexv1alpha1.ConditionStatuses{
 				Degraded:    metav1.ConditionTrue,
 				Progressing: metav1.ConditionFalse,
@@ -118,7 +118,7 @@ func (r *KDexThemeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	kdexv1alpha1.SetConditions(
-		&ko.Status.Conditions,
+		&status.Conditions,
 		kdexv1alpha1.ConditionStatuses{
 			Degraded:    metav1.ConditionFalse,
 			Progressing: metav1.ConditionFalse,

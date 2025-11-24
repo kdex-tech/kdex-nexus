@@ -24,7 +24,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
-	"kdex.dev/crds/base"
 	"kdex.dev/crds/render"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -55,31 +54,34 @@ type KDexPageArchetypeReconciler struct {
 func (r *KDexPageArchetypeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, err error) {
 	log := logf.FromContext(ctx)
 
-	var ko *base.KDexObject
+	var status *kdexv1alpha1.KDexObjectStatus
 	var spec kdexv1alpha1.KDexPageArchetypeSpec
+	var om metav1.ObjectMeta
 	var o client.Object
 
-	if req.NamespacedName.Namespace == "" {
+	if req.Namespace == "" {
 		var clusterPageArchetype kdexv1alpha1.KDexClusterPageArchetype
 		if err := r.Get(ctx, req.NamespacedName, &clusterPageArchetype); err != nil {
 			return ctrl.Result{}, client.IgnoreNotFound(err)
 		}
-		ko = &clusterPageArchetype.KDexObject
+		status = &clusterPageArchetype.Status
 		spec = clusterPageArchetype.Spec
+		om = clusterPageArchetype.ObjectMeta
 		o = &clusterPageArchetype
 	} else {
 		var pageArchetype kdexv1alpha1.KDexPageArchetype
 		if err := r.Get(ctx, req.NamespacedName, &pageArchetype); err != nil {
 			return ctrl.Result{}, client.IgnoreNotFound(err)
 		}
-		ko = &pageArchetype.KDexObject
+		status = &pageArchetype.Status
 		spec = pageArchetype.Spec
+		om = pageArchetype.ObjectMeta
 		o = &pageArchetype
 	}
 
 	// Defer status update
 	defer func() {
-		ko.Status.ObservedGeneration = ko.Generation
+		status.ObservedGeneration = om.Generation
 		if updateErr := r.Status().Update(ctx, o); updateErr != nil {
 			if res == (ctrl.Result{}) {
 				err = updateErr
@@ -88,7 +90,7 @@ func (r *KDexPageArchetypeReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}()
 
 	kdexv1alpha1.SetConditions(
-		&ko.Status.Conditions,
+		&status.Conditions,
 		kdexv1alpha1.ConditionStatuses{
 			Degraded:    metav1.ConditionFalse,
 			Progressing: metav1.ConditionTrue,
@@ -98,22 +100,22 @@ func (r *KDexPageArchetypeReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		"Reconciling",
 	)
 
-	_, shouldReturn, r1, err := ResolvePageFooter(ctx, r.Client, o, &ko.Status.Conditions, spec.DefaultFooterRef, r.RequeueDelay)
+	_, shouldReturn, r1, err := ResolvePageFooter(ctx, r.Client, o, &status.Conditions, spec.DefaultFooterRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
 
-	_, shouldReturn, r1, err = ResolvePageHeader(ctx, r.Client, o, &ko.Status.Conditions, spec.DefaultHeaderRef, r.RequeueDelay)
+	_, shouldReturn, r1, err = ResolvePageHeader(ctx, r.Client, o, &status.Conditions, spec.DefaultHeaderRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
 
-	_, shouldReturn, response, err := ResolvePageNavigations(ctx, r.Client, o, &ko.Status.Conditions, spec.DefaultMainNavigationRef, spec.ExtraNavigations, r.RequeueDelay)
+	_, shouldReturn, response, err := ResolvePageNavigations(ctx, r.Client, o, &status.Conditions, spec.DefaultMainNavigationRef, spec.ExtraNavigations, r.RequeueDelay)
 	if shouldReturn {
 		return response, err
 	}
 
-	_, shouldReturn, r1, err = ResolveScriptLibrary(ctx, r.Client, o, &ko.Status.Conditions, spec.ScriptLibraryRef, r.RequeueDelay)
+	_, shouldReturn, r1, err = ResolveScriptLibrary(ctx, r.Client, o, &status.Conditions, spec.ScriptLibraryRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
@@ -122,7 +124,7 @@ func (r *KDexPageArchetypeReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		o.GetName(), spec.Content,
 	); err != nil {
 		kdexv1alpha1.SetConditions(
-			&ko.Status.Conditions,
+			&status.Conditions,
 			kdexv1alpha1.ConditionStatuses{
 				Degraded:    metav1.ConditionTrue,
 				Progressing: metav1.ConditionFalse,
@@ -136,7 +138,7 @@ func (r *KDexPageArchetypeReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	kdexv1alpha1.SetConditions(
-		&ko.Status.Conditions,
+		&status.Conditions,
 		kdexv1alpha1.ConditionStatuses{
 			Degraded:    metav1.ConditionFalse,
 			Progressing: metav1.ConditionFalse,

@@ -221,14 +221,6 @@ func assertResourceReady(ctx context.Context, k8sClient client.Client, name stri
 		fmt.Printf("it %v", it)
 
 		statusField := it.FieldByName("Status")
-		if statusField.IsZero() {
-			kdexObject := it.FieldByName("KDexObject")
-			fmt.Printf("kdexObject %v", kdexObject)
-
-			g.Expect(kdexObject.IsZero()).To(BeFalse())
-			statusField = kdexObject.FieldByName("Status")
-		}
-
 		fmt.Printf("statusField %v", statusField)
 
 		g.Expect(statusField.IsZero()).To(BeFalse())
