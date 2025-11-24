@@ -24,6 +24,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
+	"kdex.dev/crds/base"
 )
 
 var _ = Describe("KDexApp Controller", func() {
@@ -39,9 +40,11 @@ var _ = Describe("KDexApp Controller", func() {
 
 		It("it must not become ready if it has missing package reference", func() {
 			resource := &kdexv1alpha1.KDexApp{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      resourceName,
-					Namespace: namespace,
+				KDexObject: base.KDexObject{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      resourceName,
+						Namespace: namespace,
+					},
 				},
 				Spec: kdexv1alpha1.KDexAppSpec{
 					CustomElements: []kdexv1alpha1.CustomElement{
@@ -62,9 +65,11 @@ var _ = Describe("KDexApp Controller", func() {
 
 		It("it should become ready if it has a valid package reference", func() {
 			resource := &kdexv1alpha1.KDexApp{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      resourceName,
-					Namespace: namespace,
+				KDexObject: base.KDexObject{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      resourceName,
+						Namespace: namespace,
+					},
 				},
 				Spec: kdexv1alpha1.KDexAppSpec{
 					CustomElements: []kdexv1alpha1.CustomElement{
@@ -89,9 +94,11 @@ var _ = Describe("KDexApp Controller", func() {
 
 		It("should not become ready if it has a unscoped package reference", func() {
 			resource := &kdexv1alpha1.KDexApp{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      resourceName,
-					Namespace: namespace,
+				KDexObject: base.KDexObject{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      resourceName,
+						Namespace: namespace,
+					},
 				},
 				Spec: kdexv1alpha1.KDexAppSpec{
 					CustomElements: []kdexv1alpha1.CustomElement{
@@ -116,9 +123,11 @@ var _ = Describe("KDexApp Controller", func() {
 
 		It("it must not become ready if it has a valid package reference but the package is missing", func() {
 			resource := &kdexv1alpha1.KDexApp{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      resourceName,
-					Namespace: namespace,
+				KDexObject: base.KDexObject{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      resourceName,
+						Namespace: namespace,
+					},
 				},
 				Spec: kdexv1alpha1.KDexAppSpec{
 					CustomElements: []kdexv1alpha1.CustomElement{
@@ -143,9 +152,11 @@ var _ = Describe("KDexApp Controller", func() {
 
 		It("should not become ready when referenced secret is not found", func() {
 			resource := &kdexv1alpha1.KDexApp{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      resourceName,
-					Namespace: namespace,
+				KDexObject: base.KDexObject{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      resourceName,
+						Namespace: namespace,
+					},
 				},
 				Spec: kdexv1alpha1.KDexAppSpec{
 					CustomElements: []kdexv1alpha1.CustomElement{
@@ -173,9 +184,11 @@ var _ = Describe("KDexApp Controller", func() {
 
 		It("should become ready when referenced secret is found", func() {
 			resource := &kdexv1alpha1.KDexApp{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      resourceName,
-					Namespace: namespace,
+				KDexObject: base.KDexObject{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      resourceName,
+						Namespace: namespace,
+					},
 				},
 				Spec: kdexv1alpha1.KDexAppSpec{
 					CustomElements: []kdexv1alpha1.CustomElement{

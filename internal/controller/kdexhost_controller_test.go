@@ -24,6 +24,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
+	"kdex.dev/crds/base"
 )
 
 var _ = Describe("KDexHost Controller", func() {
@@ -39,9 +40,11 @@ var _ = Describe("KDexHost Controller", func() {
 
 		It("it must not reconcile if it has missing brandName", func() {
 			resource := &kdexv1alpha1.KDexHost{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      resourceName,
-					Namespace: namespace,
+				KDexObject: base.KDexObject{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      resourceName,
+						Namespace: namespace,
+					},
 				},
 				Spec: kdexv1alpha1.KDexHostSpec{},
 			}
@@ -51,9 +54,11 @@ var _ = Describe("KDexHost Controller", func() {
 
 		It("it must not reconcile if it has missing organization", func() {
 			resource := &kdexv1alpha1.KDexHost{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      resourceName,
-					Namespace: namespace,
+				KDexObject: base.KDexObject{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      resourceName,
+						Namespace: namespace,
+					},
 				},
 				Spec: kdexv1alpha1.KDexHostSpec{
 					BrandName: "KDex Tech",
@@ -65,9 +70,11 @@ var _ = Describe("KDexHost Controller", func() {
 
 		It("it must not reconcile if it has missing routing", func() {
 			resource := &kdexv1alpha1.KDexHost{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      resourceName,
-					Namespace: namespace,
+				KDexObject: base.KDexObject{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      resourceName,
+						Namespace: namespace,
+					},
 				},
 				Spec: kdexv1alpha1.KDexHostSpec{
 					BrandName:    "KDex Tech",
@@ -80,9 +87,11 @@ var _ = Describe("KDexHost Controller", func() {
 
 		It("it must not reconcile if it has missing routing domains", func() {
 			resource := &kdexv1alpha1.KDexHost{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      resourceName,
-					Namespace: namespace,
+				KDexObject: base.KDexObject{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      resourceName,
+						Namespace: namespace,
+					},
 				},
 				Spec: kdexv1alpha1.KDexHostSpec{
 					BrandName:    "KDex Tech",
@@ -98,9 +107,11 @@ var _ = Describe("KDexHost Controller", func() {
 
 		It("it reconciles if minimum required fields are present", func() {
 			resource := &kdexv1alpha1.KDexHost{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      resourceName,
-					Namespace: namespace,
+				KDexObject: base.KDexObject{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      resourceName,
+						Namespace: namespace,
+					},
 				},
 				Spec: kdexv1alpha1.KDexHostSpec{
 					BrandName:    "KDex Tech",
@@ -124,9 +135,11 @@ var _ = Describe("KDexHost Controller", func() {
 
 		It("it reconciles if theme reference becomes available", func() {
 			resource := &kdexv1alpha1.KDexHost{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      resourceName,
-					Namespace: namespace,
+				KDexObject: base.KDexObject{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      resourceName,
+						Namespace: namespace,
+					},
 				},
 				Spec: kdexv1alpha1.KDexHostSpec{
 					BrandName: "KDex Tech",
@@ -153,9 +166,11 @@ var _ = Describe("KDexHost Controller", func() {
 			addOrUpdateTheme(
 				ctx, k8sClient,
 				kdexv1alpha1.KDexTheme{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "non-existent-theme",
-						Namespace: namespace,
+					KDexObject: base.KDexObject{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "non-existent-theme",
+							Namespace: namespace,
+						},
 					},
 					Spec: kdexv1alpha1.KDexThemeSpec{
 						Assets: []kdexv1alpha1.Asset{
@@ -177,9 +192,11 @@ var _ = Describe("KDexHost Controller", func() {
 
 		It("it reconciles if scriptlibrary reference becomes available", func() {
 			resource := &kdexv1alpha1.KDexHost{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      resourceName,
-					Namespace: namespace,
+				KDexObject: base.KDexObject{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      resourceName,
+						Namespace: namespace,
+					},
 				},
 				Spec: kdexv1alpha1.KDexHostSpec{
 					BrandName:    "KDex Tech",
@@ -206,9 +223,11 @@ var _ = Describe("KDexHost Controller", func() {
 			addOrUpdateScriptLibrary(
 				ctx, k8sClient,
 				kdexv1alpha1.KDexScriptLibrary{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "non-existent-script-library",
-						Namespace: namespace,
+					KDexObject: base.KDexObject{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "non-existent-script-library",
+							Namespace: namespace,
+						},
 					},
 					Spec: kdexv1alpha1.KDexScriptLibrarySpec{
 						Scripts: []kdexv1alpha1.Script{

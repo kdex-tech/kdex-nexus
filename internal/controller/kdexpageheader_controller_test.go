@@ -24,6 +24,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
+	"kdex.dev/crds/base"
 )
 
 var _ = Describe("KDexPageHeader Controller", func() {
@@ -39,9 +40,11 @@ var _ = Describe("KDexPageHeader Controller", func() {
 
 		It("should successfully reconcile the resource", func() {
 			resource := &kdexv1alpha1.KDexPageHeader{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      resourceName,
-					Namespace: namespace,
+				KDexObject: base.KDexObject{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      resourceName,
+						Namespace: namespace,
+					},
 				},
 				Spec: kdexv1alpha1.KDexPageHeaderSpec{
 					Content: "<h1>Hello, World!</h1>",
@@ -59,9 +62,11 @@ var _ = Describe("KDexPageHeader Controller", func() {
 			addOrUpdatePageHeader(
 				ctx, k8sClient,
 				kdexv1alpha1.KDexPageHeader{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      resourceName,
-						Namespace: namespace,
+					KDexObject: base.KDexObject{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      resourceName,
+							Namespace: namespace,
+						},
 					},
 					Spec: kdexv1alpha1.KDexPageHeaderSpec{
 						Content: "<h1>Hello, World!</h1",
@@ -76,9 +81,11 @@ var _ = Describe("KDexPageHeader Controller", func() {
 			addOrUpdatePageHeader(
 				ctx, k8sClient,
 				kdexv1alpha1.KDexPageHeader{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      resourceName,
-						Namespace: namespace,
+					KDexObject: base.KDexObject{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      resourceName,
+							Namespace: namespace,
+						},
 					},
 					Spec: kdexv1alpha1.KDexPageHeaderSpec{
 						Content: "<h1>Hello, World!</h1>",
@@ -95,9 +102,11 @@ var _ = Describe("KDexPageHeader Controller", func() {
 			addOrUpdatePageHeader(
 				ctx, k8sClient,
 				kdexv1alpha1.KDexPageHeader{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      resourceName,
-						Namespace: namespace,
+					KDexObject: base.KDexObject{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      resourceName,
+							Namespace: namespace,
+						},
 					},
 					Spec: kdexv1alpha1.KDexPageHeaderSpec{
 						Content: "<h1>Hello, World!</h1>",
@@ -115,9 +124,11 @@ var _ = Describe("KDexPageHeader Controller", func() {
 			addOrUpdateScriptLibrary(
 				ctx, k8sClient,
 				kdexv1alpha1.KDexScriptLibrary{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "non-existent-script-library",
-						Namespace: namespace,
+					KDexObject: base.KDexObject{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "non-existent-script-library",
+							Namespace: namespace,
+						},
 					},
 					Spec: kdexv1alpha1.KDexScriptLibrarySpec{
 						Scripts: []kdexv1alpha1.Script{

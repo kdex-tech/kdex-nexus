@@ -22,12 +22,15 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
+	"kdex.dev/crds/base"
 	"kdex.dev/crds/render"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 // KDexPageFooterReconciler reconciles a KDexPageFooter object
@@ -37,23 +40,44 @@ type KDexPageFooterReconciler struct {
 	Scheme       *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagefooters,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagefooters/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagefooters/finalizers,verbs=update
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagefooters,                  verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagefooters/status,           verbs=get;update;patch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagefooters/finalizers,       verbs=update
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterpagefooters,           verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterpagefooters/status,    verbs=get;update;patch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterpagefooters/finalizers,verbs=update
+
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexscriptlibraries,verbs=get;list;watch
 
 func (r *KDexPageFooterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, err error) {
 	log := logf.FromContext(ctx)
 
-	var pageFooter kdexv1alpha1.KDexPageFooter
-	if err := r.Get(ctx, req.NamespacedName, &pageFooter); err != nil {
-		return ctrl.Result{}, client.IgnoreNotFound(err)
+	var ko *base.KDexObject
+	var spec kdexv1alpha1.KDexPageFooterSpec
+	var o client.Object
+
+	if req.NamespacedName.Namespace == "" {
+		var clusterPageFooter kdexv1alpha1.KDexClusterPageFooter
+		if err := r.Get(ctx, req.NamespacedName, &clusterPageFooter); err != nil {
+			return ctrl.Result{}, client.IgnoreNotFound(err)
+		}
+		ko = &clusterPageFooter.KDexObject
+		spec = clusterPageFooter.Spec
+		o = &clusterPageFooter
+	} else {
+		var pageFooter kdexv1alpha1.KDexPageFooter
+		if err := r.Get(ctx, req.NamespacedName, &pageFooter); err != nil {
+			return ctrl.Result{}, client.IgnoreNotFound(err)
+		}
+		ko = &pageFooter.KDexObject
+		spec = pageFooter.Spec
+		o = &pageFooter
 	}
 
 	// Defer status update
 	defer func() {
-		pageFooter.Status.ObservedGeneration = pageFooter.Generation
-		if updateErr := r.Status().Update(ctx, &pageFooter); updateErr != nil {
+		ko.Status.ObservedGeneration = ko.Generation
+		if updateErr := r.Status().Update(ctx, o); updateErr != nil {
 			if res == (ctrl.Result{}) {
 				err = updateErr
 			}
@@ -61,7 +85,7 @@ func (r *KDexPageFooterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	}()
 
 	kdexv1alpha1.SetConditions(
-		&pageFooter.Status.Conditions,
+		&ko.Status.Conditions,
 		kdexv1alpha1.ConditionStatuses{
 			Degraded:    metav1.ConditionFalse,
 			Progressing: metav1.ConditionTrue,
@@ -71,16 +95,16 @@ func (r *KDexPageFooterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		"Reconciling",
 	)
 
-	_, shouldReturn, r1, err := ResolveScriptLibrary(ctx, r.Client, &pageFooter, &pageFooter.Status.Conditions, pageFooter.Spec.ScriptLibraryRef, r.RequeueDelay)
+	_, shouldReturn, r1, err := ResolveScriptLibrary(ctx, r.Client, o, &ko.Status.Conditions, spec.ScriptLibraryRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
 
 	if err := render.ValidateContent(
-		pageFooter.Name, pageFooter.Spec.Content,
+		o.GetName(), spec.Content,
 	); err != nil {
 		kdexv1alpha1.SetConditions(
-			&pageFooter.Status.Conditions,
+			&ko.Status.Conditions,
 			kdexv1alpha1.ConditionStatuses{
 				Degraded:    metav1.ConditionTrue,
 				Progressing: metav1.ConditionFalse,
@@ -94,7 +118,7 @@ func (r *KDexPageFooterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	}
 
 	kdexv1alpha1.SetConditions(
-		&pageFooter.Status.Conditions,
+		&ko.Status.Conditions,
 		kdexv1alpha1.ConditionStatuses{
 			Degraded:    metav1.ConditionFalse,
 			Progressing: metav1.ConditionFalse,
@@ -113,6 +137,12 @@ func (r *KDexPageFooterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 func (r *KDexPageFooterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&kdexv1alpha1.KDexPageFooter{}).
+		Watches(
+			&kdexv1alpha1.KDexClusterPageFooter{},
+			handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, o client.Object) []reconcile.Request {
+				return []reconcile.Request{{NamespacedName: types.NamespacedName{Name: o.GetName()}}}
+			}),
+		).
 		Watches(
 			&kdexv1alpha1.KDexScriptLibrary{},
 			handler.EnqueueRequestsFromMapFunc(r.findPageFootersForScriptLibrary),

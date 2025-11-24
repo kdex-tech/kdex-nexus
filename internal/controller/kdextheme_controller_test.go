@@ -23,6 +23,7 @@ import (
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
+	"kdex.dev/crds/base"
 )
 
 var _ = Describe("KDexTheme Controller", func() {
@@ -38,9 +39,11 @@ var _ = Describe("KDexTheme Controller", func() {
 
 		It("should not reconcile without assets", func() {
 			resource := &kdexv1alpha1.KDexTheme{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      resourceName,
-					Namespace: namespace,
+				KDexObject: base.KDexObject{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      resourceName,
+						Namespace: namespace,
+					},
 				},
 				Spec: kdexv1alpha1.KDexThemeSpec{},
 			}
@@ -50,9 +53,11 @@ var _ = Describe("KDexTheme Controller", func() {
 
 		It("should reconcile with only absolute assets references", func() {
 			resource := &kdexv1alpha1.KDexTheme{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      resourceName,
-					Namespace: namespace,
+				KDexObject: base.KDexObject{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      resourceName,
+						Namespace: namespace,
+					},
 				},
 				Spec: kdexv1alpha1.KDexThemeSpec{
 					Assets: []kdexv1alpha1.Asset{
@@ -75,9 +80,11 @@ var _ = Describe("KDexTheme Controller", func() {
 
 		It("should not reconcile with relative assets but no image specified", func() {
 			resource := &kdexv1alpha1.KDexTheme{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      resourceName,
-					Namespace: namespace,
+				KDexObject: base.KDexObject{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      resourceName,
+						Namespace: namespace,
+					},
 				},
 				Spec: kdexv1alpha1.KDexThemeSpec{
 					Assets: []kdexv1alpha1.Asset{
@@ -102,9 +109,11 @@ var _ = Describe("KDexTheme Controller", func() {
 			addOrUpdateTheme(
 				ctx, k8sClient,
 				kdexv1alpha1.KDexTheme{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      resourceName,
-						Namespace: namespace,
+					KDexObject: base.KDexObject{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      resourceName,
+							Namespace: namespace,
+						},
 					},
 					Spec: kdexv1alpha1.KDexThemeSpec{
 						Assets: []kdexv1alpha1.Asset{
@@ -126,9 +135,11 @@ var _ = Describe("KDexTheme Controller", func() {
 			addOrUpdateTheme(
 				ctx, k8sClient,
 				kdexv1alpha1.KDexTheme{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      resourceName,
-						Namespace: namespace,
+					KDexObject: base.KDexObject{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      resourceName,
+							Namespace: namespace,
+						},
 					},
 					Spec: kdexv1alpha1.KDexThemeSpec{
 						Assets: []kdexv1alpha1.Asset{
@@ -150,9 +161,11 @@ var _ = Describe("KDexTheme Controller", func() {
 
 		It("should not reconcile with image but no routePath", func() {
 			resource := &kdexv1alpha1.KDexTheme{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      resourceName,
-					Namespace: namespace,
+				KDexObject: base.KDexObject{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      resourceName,
+						Namespace: namespace,
+					},
 				},
 				Spec: kdexv1alpha1.KDexThemeSpec{
 					Assets: []kdexv1alpha1.Asset{
@@ -176,9 +189,11 @@ var _ = Describe("KDexTheme Controller", func() {
 
 		It("should not reconcile with no image but routePath", func() {
 			resource := &kdexv1alpha1.KDexTheme{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      resourceName,
-					Namespace: namespace,
+				KDexObject: base.KDexObject{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      resourceName,
+						Namespace: namespace,
+					},
 				},
 				Spec: kdexv1alpha1.KDexThemeSpec{
 					Assets: []kdexv1alpha1.Asset{
@@ -202,9 +217,11 @@ var _ = Describe("KDexTheme Controller", func() {
 
 		It("should not reconcile with image, routePath and relative assets that are not prefixed by routePath", func() {
 			resource := &kdexv1alpha1.KDexTheme{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      resourceName,
-					Namespace: namespace,
+				KDexObject: base.KDexObject{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      resourceName,
+						Namespace: namespace,
+					},
 				},
 				Spec: kdexv1alpha1.KDexThemeSpec{
 					Assets: []kdexv1alpha1.Asset{

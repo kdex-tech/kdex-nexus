@@ -33,6 +33,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/types"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
+	"kdex.dev/crds/base"
 	"kdex.dev/crds/configuration"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -456,9 +457,11 @@ func (r *KDexHostReconciler) createOrUpdateHostControllerResource(
 	host *kdexv1alpha1.KDexHost,
 ) error {
 	hostController := &kdexv1alpha1.KDexHostController{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      host.Name,
-			Namespace: host.Namespace,
+		KDexObject: base.KDexObject{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      host.Name,
+				Namespace: host.Namespace,
+			},
 		},
 	}
 

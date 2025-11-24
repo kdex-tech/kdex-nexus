@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -217,25 +218,32 @@ func assertResourceReady(ctx context.Context, k8sClient client.Client, name stri
 		err := k8sClient.Get(ctx, typeNamespacedName, checkResource)
 		g.Expect(err).NotTo(HaveOccurred())
 		it := reflect.ValueOf(checkResource).Elem()
+		fmt.Printf("it %v", it)
+
 		statusField := it.FieldByName("Status")
-		g.Expect(statusField.IsValid()).To(BeTrue())
-		conditionsField := statusField.FieldByName("Conditions")
-		g.Expect(conditionsField.IsValid()).To(BeTrue())
-		conditions, ok := conditionsField.Interface().([]metav1.Condition)
-		g.Expect(ok).To(BeTrue())
-		if ready {
-			g.Expect(
-				meta.IsStatusConditionTrue(
-					conditions, string(kdexv1alpha1.ConditionTypeReady),
-				),
-			).To(BeTrue())
-		} else {
-			g.Expect(
-				meta.IsStatusConditionFalse(
-					conditions, string(kdexv1alpha1.ConditionTypeReady),
-				),
-			).To(BeTrue())
+		if statusField.IsZero() {
+			kdexObject := it.FieldByName("KDexObject")
+			fmt.Printf("kdexObject %v", kdexObject)
+
+			g.Expect(kdexObject.IsZero()).To(BeFalse())
+			statusField = kdexObject.FieldByName("Status")
 		}
+
+		fmt.Printf("statusField %v", statusField)
+
+		g.Expect(statusField.IsZero()).To(BeFalse())
+		conditionsField := statusField.FieldByName("Conditions")
+
+		g.Expect(conditionsField.IsZero()).To(BeFalse())
+		conditions, ok := conditionsField.Interface().([]metav1.Condition)
+
+		g.Expect(ok).To(BeTrue())
+
+		g.Expect(
+			meta.IsStatusConditionTrue(
+				conditions, string(kdexv1alpha1.ConditionTypeReady),
+			),
+		).To(BeEquivalentTo(ready))
 	}
 
 	Eventually(check, "5s").Should(Succeed())

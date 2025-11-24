@@ -23,12 +23,15 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
+	"kdex.dev/crds/base"
 	"kdex.dev/crds/npm"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 // KDexAppReconciler reconciles a KDexApp object
@@ -39,23 +42,44 @@ type KDexAppReconciler struct {
 	Scheme          *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexapps,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexapps/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexapps/finalizers,verbs=update
+// +kubebuilder:rbac:groups=core,resources=secrets,                       verbs=get;list;watch
+
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexapps,                  verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexapps/status,           verbs=get;update;patch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexapps/finalizers,       verbs=update
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterapps,           verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterapps/status,    verbs=get;update;patch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterapps/finalizers,verbs=update
 
 func (r *KDexAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, err error) {
 	log := logf.FromContext(ctx)
 
-	var app kdexv1alpha1.KDexApp
-	if err := r.Get(ctx, req.NamespacedName, &app); err != nil {
-		return ctrl.Result{}, client.IgnoreNotFound(err)
+	var ko *base.KDexObject
+	var spec kdexv1alpha1.KDexAppSpec
+	var o client.Object
+
+	if req.NamespacedName.Namespace == "" {
+		var clusterApp kdexv1alpha1.KDexClusterApp
+		if err := r.Get(ctx, req.NamespacedName, &clusterApp); err != nil {
+			return ctrl.Result{}, client.IgnoreNotFound(err)
+		}
+		ko = &clusterApp.KDexObject
+		spec = clusterApp.Spec
+		o = &clusterApp
+	} else {
+		var app kdexv1alpha1.KDexApp
+		if err := r.Get(ctx, req.NamespacedName, &app); err != nil {
+			return ctrl.Result{}, client.IgnoreNotFound(err)
+		}
+		ko = &app.KDexObject
+		spec = app.Spec
+		o = &app
 	}
 
 	// Defer status update
 	defer func() {
-		app.Status.ObservedGeneration = app.Generation
-		if updateErr := r.Status().Update(ctx, &app); updateErr != nil {
+		ko.Status.ObservedGeneration = ko.Generation
+		if updateErr := r.Status().Update(ctx, o); updateErr != nil {
 			if res == (ctrl.Result{}) {
 				err = updateErr
 			}
@@ -63,7 +87,7 @@ func (r *KDexAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 	}()
 
 	kdexv1alpha1.SetConditions(
-		&app.Status.Conditions,
+		&ko.Status.Conditions,
 		kdexv1alpha1.ConditionStatuses{
 			Degraded:    metav1.ConditionFalse,
 			Progressing: metav1.ConditionTrue,
@@ -73,14 +97,14 @@ func (r *KDexAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 		"Reconciling",
 	)
 
-	secret, shouldReturn, r1, err := ResolveSecret(ctx, r.Client, &app, &app.Status.Conditions, app.Spec.PackageReference.SecretRef, r.RequeueDelay)
+	secret, shouldReturn, r1, err := ResolveSecret(ctx, r.Client, o, &ko.Status.Conditions, spec.PackageReference.SecretRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
 
-	if err := validatePackageReference(ctx, &app.Spec.PackageReference, secret, r.RegistryFactory); err != nil {
+	if err := validatePackageReference(ctx, &spec.PackageReference, secret, r.RegistryFactory); err != nil {
 		kdexv1alpha1.SetConditions(
-			&app.Status.Conditions,
+			&ko.Status.Conditions,
 			kdexv1alpha1.ConditionStatuses{
 				Degraded:    metav1.ConditionTrue,
 				Progressing: metav1.ConditionFalse,
@@ -94,7 +118,7 @@ func (r *KDexAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 	}
 
 	kdexv1alpha1.SetConditions(
-		&app.Status.Conditions,
+		&ko.Status.Conditions,
 		kdexv1alpha1.ConditionStatuses{
 			Degraded:    metav1.ConditionFalse,
 			Progressing: metav1.ConditionFalse,
@@ -113,6 +137,12 @@ func (r *KDexAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 func (r *KDexAppReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&kdexv1alpha1.KDexApp{}).
+		Watches(
+			&kdexv1alpha1.KDexClusterApp{},
+			handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, o client.Object) []reconcile.Request {
+				return []reconcile.Request{{NamespacedName: types.NamespacedName{Name: o.GetName()}}}
+			}),
+		).
 		Watches(
 			&corev1.Secret{},
 			handler.EnqueueRequestsFromMapFunc(r.findAppsForSecret),

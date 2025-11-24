@@ -24,12 +24,15 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
+	"kdex.dev/crds/base"
 	"kdex.dev/crds/render"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 // KDexThemeReconciler reconciles a KDexTheme object
@@ -39,23 +42,44 @@ type KDexThemeReconciler struct {
 	Scheme       *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexthemes,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexthemes/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexthemes/finalizers,verbs=update
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexthemes,                  verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexthemes/status,           verbs=get;update;patch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexthemes/finalizers,       verbs=update
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterthemes,           verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterthemes/status,    verbs=get;update;patch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterthemes/finalizers,verbs=update
+
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexscriptlibraries,verbs=get;list;watch
 
 func (r *KDexThemeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, err error) {
 	log := logf.FromContext(ctx)
 
-	var theme kdexv1alpha1.KDexTheme
-	if err := r.Get(ctx, req.NamespacedName, &theme); err != nil {
-		return ctrl.Result{}, client.IgnoreNotFound(err)
+	var ko *base.KDexObject
+	var spec kdexv1alpha1.KDexThemeSpec
+	var o client.Object
+
+	if req.NamespacedName.Namespace == "" {
+		var clusterTheme kdexv1alpha1.KDexClusterTheme
+		if err := r.Get(ctx, req.NamespacedName, &clusterTheme); err != nil {
+			return ctrl.Result{}, client.IgnoreNotFound(err)
+		}
+		ko = &clusterTheme.KDexObject
+		spec = clusterTheme.Spec
+		o = &clusterTheme
+	} else {
+		var theme kdexv1alpha1.KDexTheme
+		if err := r.Get(ctx, req.NamespacedName, &theme); err != nil {
+			return ctrl.Result{}, client.IgnoreNotFound(err)
+		}
+		ko = &theme.KDexObject
+		spec = theme.Spec
+		o = &theme
 	}
 
 	// Defer status update
 	defer func() {
-		theme.Status.ObservedGeneration = theme.Generation
-		if updateErr := r.Status().Update(ctx, &theme); updateErr != nil {
+		ko.Status.ObservedGeneration = ko.Generation
+		if updateErr := r.Status().Update(ctx, o); updateErr != nil {
 			if res == (ctrl.Result{}) {
 				err = updateErr
 			}
@@ -63,7 +87,7 @@ func (r *KDexThemeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}()
 
 	kdexv1alpha1.SetConditions(
-		&theme.Status.Conditions,
+		&ko.Status.Conditions,
 		kdexv1alpha1.ConditionStatuses{
 			Degraded:    metav1.ConditionFalse,
 			Progressing: metav1.ConditionTrue,
@@ -73,14 +97,14 @@ func (r *KDexThemeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		"Reconciling",
 	)
 
-	_, shouldReturn, r1, err := ResolveScriptLibrary(ctx, r.Client, &theme, &theme.Status.Conditions, theme.Spec.ScriptLibraryRef, r.RequeueDelay)
+	_, shouldReturn, r1, err := ResolveScriptLibrary(ctx, r.Client, o, &ko.Status.Conditions, spec.ScriptLibraryRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
 
-	if err := validateSpec(theme.Spec); err != nil {
+	if err := validateSpec(spec); err != nil {
 		kdexv1alpha1.SetConditions(
-			&theme.Status.Conditions,
+			&ko.Status.Conditions,
 			kdexv1alpha1.ConditionStatuses{
 				Degraded:    metav1.ConditionTrue,
 				Progressing: metav1.ConditionFalse,
@@ -94,7 +118,7 @@ func (r *KDexThemeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	kdexv1alpha1.SetConditions(
-		&theme.Status.Conditions,
+		&ko.Status.Conditions,
 		kdexv1alpha1.ConditionStatuses{
 			Degraded:    metav1.ConditionFalse,
 			Progressing: metav1.ConditionFalse,
@@ -113,6 +137,12 @@ func (r *KDexThemeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 func (r *KDexThemeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&kdexv1alpha1.KDexTheme{}).
+		Watches(
+			&kdexv1alpha1.KDexClusterTheme{},
+			handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, o client.Object) []reconcile.Request {
+				return []reconcile.Request{{NamespacedName: types.NamespacedName{Name: o.GetName()}}}
+			}),
+		).
 		Watches(
 			&kdexv1alpha1.KDexScriptLibrary{},
 			handler.EnqueueRequestsFromMapFunc(r.findThemesForScriptLibrary),

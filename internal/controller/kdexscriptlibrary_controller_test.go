@@ -24,6 +24,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
+	"kdex.dev/crds/base"
 )
 
 var _ = Describe("KDexScriptLibrary Controller", func() {
@@ -39,9 +40,11 @@ var _ = Describe("KDexScriptLibrary Controller", func() {
 
 		It("it must not become ready if it has empty script reference", func() {
 			resource := &kdexv1alpha1.KDexScriptLibrary{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      resourceName,
-					Namespace: namespace,
+				KDexObject: base.KDexObject{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      resourceName,
+						Namespace: namespace,
+					},
 				},
 				Spec: kdexv1alpha1.KDexScriptLibrarySpec{},
 			}
@@ -51,9 +54,11 @@ var _ = Describe("KDexScriptLibrary Controller", func() {
 
 		It("it should become ready if library has a valid package reference", func() {
 			resource := &kdexv1alpha1.KDexScriptLibrary{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      resourceName,
-					Namespace: namespace,
+				KDexObject: base.KDexObject{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      resourceName,
+						Namespace: namespace,
+					},
 				},
 				Spec: kdexv1alpha1.KDexScriptLibrarySpec{
 					PackageReference: &kdexv1alpha1.PackageReference{
@@ -72,9 +77,11 @@ var _ = Describe("KDexScriptLibrary Controller", func() {
 
 		It("it should become ready if library has a both package reference and scripts", func() {
 			resource := &kdexv1alpha1.KDexScriptLibrary{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      resourceName,
-					Namespace: namespace,
+				KDexObject: base.KDexObject{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      resourceName,
+						Namespace: namespace,
+					},
 				},
 				Spec: kdexv1alpha1.KDexScriptLibrarySpec{
 					PackageReference: &kdexv1alpha1.PackageReference{
@@ -99,9 +106,11 @@ var _ = Describe("KDexScriptLibrary Controller", func() {
 
 		It("should not become ready when referenced secret is not found", func() {
 			resource := &kdexv1alpha1.KDexScriptLibrary{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      resourceName,
-					Namespace: namespace,
+				KDexObject: base.KDexObject{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      resourceName,
+						Namespace: namespace,
+					},
 				},
 				Spec: kdexv1alpha1.KDexScriptLibrarySpec{
 					PackageReference: &kdexv1alpha1.PackageReference{
@@ -123,9 +132,11 @@ var _ = Describe("KDexScriptLibrary Controller", func() {
 
 		It("should become ready when referenced secret is found", func() {
 			resource := &kdexv1alpha1.KDexScriptLibrary{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      resourceName,
-					Namespace: namespace,
+				KDexObject: base.KDexObject{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      resourceName,
+						Namespace: namespace,
+					},
 				},
 				Spec: kdexv1alpha1.KDexScriptLibrarySpec{
 					PackageReference: &kdexv1alpha1.PackageReference{

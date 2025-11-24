@@ -67,6 +67,13 @@ rules:
   - kdex.dev
   resources:
   - kdexapps
+  - kdexclusterapps
+  - kdexclusterpagearchetypes
+  - kdexclusterpagefooters
+  - kdexclusterpageheaders
+  - kdexclusterpagenavigations
+  - kdexclusterscriptlibraries
+  - kdexclusterthemes
   - kdexhostcontrollers
   - kdexhostpackagereferences
   - kdexhosts
@@ -90,6 +97,13 @@ rules:
   - kdex.dev
   resources:
   - kdexapps/finalizers
+  - kdexclusterapps/finalizers
+  - kdexclusterpagearchetypes/finalizers
+  - kdexclusterpagefooters/finalizers
+  - kdexclusterpageheaders/finalizers
+  - kdexclusterpagenavigations/finalizers
+  - kdexclusterscriptlibraries/finalizers
+  - kdexclusterthemes/finalizers
   - kdexhostcontrollers/finalizers
   - kdexhostpackagereferences/finalizers
   - kdexhosts/finalizers
@@ -107,6 +121,13 @@ rules:
   - kdex.dev
   resources:
   - kdexapps/status
+  - kdexclusterapps/status
+  - kdexclusterpagearchetypes/status
+  - kdexclusterpagefooters/status
+  - kdexclusterpageheaders/status
+  - kdexclusterpagenavigations/status
+  - kdexclusterscriptlibraries/status
+  - kdexclusterthemes/status
   - kdexhostcontrollers/status
   - kdexhostpackagereferences/status
   - kdexhosts/status

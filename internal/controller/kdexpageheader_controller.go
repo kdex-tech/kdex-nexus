@@ -22,12 +22,15 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
+	"kdex.dev/crds/base"
 	"kdex.dev/crds/render"
 )
 
@@ -38,23 +41,44 @@ type KDexPageHeaderReconciler struct {
 	Scheme       *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpageheaders,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpageheaders/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpageheaders/finalizers,verbs=update
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpageheaders,                  verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpageheaders/status,           verbs=get;update;patch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpageheaders/finalizers,       verbs=update
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterpageheaders,           verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterpageheaders/status,    verbs=get;update;patch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterpageheaders/finalizers,verbs=update
+
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexscriptlibraries,verbs=get;list;watch
 
 func (r *KDexPageHeaderReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, err error) {
 	log := logf.FromContext(ctx)
 
-	var pageHeader kdexv1alpha1.KDexPageHeader
-	if err := r.Get(ctx, req.NamespacedName, &pageHeader); err != nil {
-		return ctrl.Result{}, client.IgnoreNotFound(err)
+	var ko *base.KDexObject
+	var spec kdexv1alpha1.KDexPageHeaderSpec
+	var o client.Object
+
+	if req.NamespacedName.Namespace == "" {
+		var clusterPageHeader kdexv1alpha1.KDexClusterPageHeader
+		if err := r.Get(ctx, req.NamespacedName, &clusterPageHeader); err != nil {
+			return ctrl.Result{}, client.IgnoreNotFound(err)
+		}
+		ko = &clusterPageHeader.KDexObject
+		spec = clusterPageHeader.Spec
+		o = &clusterPageHeader
+	} else {
+		var pageHeader kdexv1alpha1.KDexPageHeader
+		if err := r.Get(ctx, req.NamespacedName, &pageHeader); err != nil {
+			return ctrl.Result{}, client.IgnoreNotFound(err)
+		}
+		ko = &pageHeader.KDexObject
+		spec = pageHeader.Spec
+		o = &pageHeader
 	}
 
 	// Defer status update
 	defer func() {
-		pageHeader.Status.ObservedGeneration = pageHeader.Generation
-		if updateErr := r.Status().Update(ctx, &pageHeader); updateErr != nil {
+		ko.Status.ObservedGeneration = ko.Generation
+		if updateErr := r.Status().Update(ctx, o); updateErr != nil {
 			if res == (ctrl.Result{}) {
 				err = updateErr
 			}
@@ -62,7 +86,7 @@ func (r *KDexPageHeaderReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	}()
 
 	kdexv1alpha1.SetConditions(
-		&pageHeader.Status.Conditions,
+		&ko.Status.Conditions,
 		kdexv1alpha1.ConditionStatuses{
 			Degraded:    metav1.ConditionFalse,
 			Progressing: metav1.ConditionTrue,
@@ -72,16 +96,16 @@ func (r *KDexPageHeaderReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		"Reconciling",
 	)
 
-	_, shouldReturn, r1, err := ResolveScriptLibrary(ctx, r.Client, &pageHeader, &pageHeader.Status.Conditions, pageHeader.Spec.ScriptLibraryRef, r.RequeueDelay)
+	_, shouldReturn, r1, err := ResolveScriptLibrary(ctx, r.Client, o, &ko.Status.Conditions, spec.ScriptLibraryRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
 
 	if err := render.ValidateContent(
-		pageHeader.Name, pageHeader.Spec.Content,
+		o.GetName(), spec.Content,
 	); err != nil {
 		kdexv1alpha1.SetConditions(
-			&pageHeader.Status.Conditions,
+			&ko.Status.Conditions,
 			kdexv1alpha1.ConditionStatuses{
 				Degraded:    metav1.ConditionTrue,
 				Progressing: metav1.ConditionFalse,
@@ -95,7 +119,7 @@ func (r *KDexPageHeaderReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	}
 
 	kdexv1alpha1.SetConditions(
-		&pageHeader.Status.Conditions,
+		&ko.Status.Conditions,
 		kdexv1alpha1.ConditionStatuses{
 			Degraded:    metav1.ConditionFalse,
 			Progressing: metav1.ConditionFalse,
@@ -114,6 +138,12 @@ func (r *KDexPageHeaderReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 func (r *KDexPageHeaderReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&kdexv1alpha1.KDexPageHeader{}).
+		Watches(
+			&kdexv1alpha1.KDexClusterPageHeader{},
+			handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, o client.Object) []reconcile.Request {
+				return []reconcile.Request{{NamespacedName: types.NamespacedName{Name: o.GetName()}}}
+			}),
+		).
 		Watches(
 			&kdexv1alpha1.KDexScriptLibrary{},
 			handler.EnqueueRequestsFromMapFunc(r.findPageHeadersForScriptLibrary),
