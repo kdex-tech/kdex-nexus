@@ -194,8 +194,9 @@ var _ = BeforeSuite(func() {
 
 	// Page Navigation
 	pageNavigationReconciler := &KDexPageNavigationReconciler{
-		Client: k8sClient,
-		Scheme: k8sClient.Scheme(),
+		Client:       k8sClient,
+		RequeueDelay: 0,
+		Scheme:       k8sClient.Scheme(),
 	}
 	err = pageNavigationReconciler.SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
@@ -212,8 +213,9 @@ var _ = BeforeSuite(func() {
 
 	// Theme
 	themeReconciler := &KDexThemeReconciler{
-		Client: k8sClient,
-		Scheme: k8sClient.Scheme(),
+		Client:       k8sClient,
+		RequeueDelay: 0,
+		Scheme:       k8sClient.Scheme(),
 	}
 	err = themeReconciler.SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())

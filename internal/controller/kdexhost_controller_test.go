@@ -21,7 +21,6 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 )
@@ -130,7 +129,8 @@ var _ = Describe("KDexHost Controller", func() {
 				},
 				Spec: kdexv1alpha1.KDexHostSpec{
 					BrandName: "KDex Tech",
-					DefaultThemeRef: &v1.LocalObjectReference{
+					DefaultThemeRef: &kdexv1alpha1.KDexObjectReference{
+						Kind: "KDexTheme",
 						Name: "non-existent-theme",
 					},
 					ModulePolicy: kdexv1alpha1.StrictModulePolicy,
@@ -191,7 +191,8 @@ var _ = Describe("KDexHost Controller", func() {
 						},
 						Strategy: kdexv1alpha1.IngressRoutingStrategy,
 					},
-					ScriptLibraryRef: &v1.LocalObjectReference{
+					ScriptLibraryRef: &kdexv1alpha1.KDexObjectReference{
+						Kind: "KDexScriptLibrary",
 						Name: "non-existent-script-library",
 					},
 				},

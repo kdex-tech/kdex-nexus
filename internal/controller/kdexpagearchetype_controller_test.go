@@ -21,7 +21,6 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 )
@@ -63,8 +62,9 @@ var _ = Describe("KDexPageArchetype Controller", func() {
 				},
 				Spec: kdexv1alpha1.KDexPageArchetypeSpec{
 					Content: "<h1>Hello, World!</h1>",
-					ExtraNavigations: map[string]*corev1.LocalObjectReference{
+					ExtraNavigations: map[string]*kdexv1alpha1.KDexObjectReference{
 						"non-existent-navigation": {
+							Kind: "KDexPageNavigation",
 							Name: "non-existent-navigation",
 						},
 					},
@@ -102,7 +102,8 @@ var _ = Describe("KDexPageArchetype Controller", func() {
 				},
 				Spec: kdexv1alpha1.KDexPageArchetypeSpec{
 					Content: "<h1>Hello, World!</h1>",
-					DefaultMainNavigationRef: &corev1.LocalObjectReference{
+					DefaultMainNavigationRef: &kdexv1alpha1.KDexObjectReference{
+						Kind: "KDexPageNavigation",
 						Name: "non-existent-main-navigation",
 					},
 				},
@@ -139,7 +140,8 @@ var _ = Describe("KDexPageArchetype Controller", func() {
 				},
 				Spec: kdexv1alpha1.KDexPageArchetypeSpec{
 					Content: "<h1>Hello, World!</h1>",
-					DefaultFooterRef: &corev1.LocalObjectReference{
+					DefaultFooterRef: &kdexv1alpha1.KDexObjectReference{
+						Kind: "KDexPageFooter",
 						Name: "non-existent-footer",
 					},
 				},
@@ -176,7 +178,8 @@ var _ = Describe("KDexPageArchetype Controller", func() {
 				},
 				Spec: kdexv1alpha1.KDexPageArchetypeSpec{
 					Content: "<h1>Hello, World!</h1>",
-					DefaultHeaderRef: &corev1.LocalObjectReference{
+					DefaultHeaderRef: &kdexv1alpha1.KDexObjectReference{
+						Kind: "KDexPageHeader",
 						Name: "non-existent-header",
 					},
 				},
@@ -231,7 +234,8 @@ var _ = Describe("KDexPageArchetype Controller", func() {
 				},
 				Spec: kdexv1alpha1.KDexPageArchetypeSpec{
 					Content: "<h1>Hello, World!</h1>",
-					ScriptLibraryRef: &corev1.LocalObjectReference{
+					ScriptLibraryRef: &kdexv1alpha1.KDexObjectReference{
+						Kind: "KDexScriptLibrary",
 						Name: "non-existent-script-library",
 					},
 				},

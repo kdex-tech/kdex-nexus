@@ -2,7 +2,6 @@ package controller
 
 import (
 	"context"
-	"fmt"
 	"reflect"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -218,10 +217,8 @@ func assertResourceReady(ctx context.Context, k8sClient client.Client, name stri
 		err := k8sClient.Get(ctx, typeNamespacedName, checkResource)
 		g.Expect(err).NotTo(HaveOccurred())
 		it := reflect.ValueOf(checkResource).Elem()
-		fmt.Printf("it %v", it)
 
 		statusField := it.FieldByName("Status")
-		fmt.Printf("statusField %v", statusField)
 
 		g.Expect(statusField.IsZero()).To(BeFalse())
 		conditionsField := statusField.FieldByName("Conditions")

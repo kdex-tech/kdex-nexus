@@ -100,12 +100,12 @@ func (r *KDexPageArchetypeReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		"Reconciling",
 	)
 
-	_, shouldReturn, r1, err := ResolvePageFooter(ctx, r.Client, o, &status.Conditions, spec.DefaultFooterRef, r.RequeueDelay)
+	_, shouldReturn, r1, err := ResolveKDexObjectReference(ctx, r.Client, o, &status.Conditions, spec.DefaultFooterRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
 
-	_, shouldReturn, r1, err = ResolvePageHeader(ctx, r.Client, o, &status.Conditions, spec.DefaultHeaderRef, r.RequeueDelay)
+	_, shouldReturn, r1, err = ResolveKDexObjectReference(ctx, r.Client, o, &status.Conditions, spec.DefaultHeaderRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
@@ -115,7 +115,7 @@ func (r *KDexPageArchetypeReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return response, err
 	}
 
-	_, shouldReturn, r1, err = ResolveScriptLibrary(ctx, r.Client, o, &status.Conditions, spec.ScriptLibraryRef, r.RequeueDelay)
+	_, shouldReturn, r1, err = ResolveKDexObjectReference(ctx, r.Client, o, &status.Conditions, spec.ScriptLibraryRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}

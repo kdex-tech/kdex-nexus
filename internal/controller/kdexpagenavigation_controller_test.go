@@ -21,7 +21,6 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 )
@@ -101,7 +100,8 @@ var _ = Describe("KDexPageNavigation Controller", func() {
 					},
 					Spec: kdexv1alpha1.KDexPageNavigationSpec{
 						Content: "<h1>Hello, World!</h1>",
-						ScriptLibraryRef: &corev1.LocalObjectReference{
+						ScriptLibraryRef: &kdexv1alpha1.KDexObjectReference{
+							Kind: "KDexScriptLibrary",
 							Name: "non-existent-script-library",
 						},
 					},
