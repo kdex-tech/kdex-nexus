@@ -9,6 +9,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	meta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
@@ -291,4 +292,34 @@ func ResolveSecret(
 	}
 
 	return &secret, false, ctrl.Result{}, nil
+}
+
+func isReady(
+	referred client.Object,
+	referredConditions *[]metav1.Condition,
+	requeueDelay time.Duration,
+) (bool, ctrl.Result, error) {
+	t := reflect.TypeOf(referred)
+	if t == nil {
+		return false, ctrl.Result{}, fmt.Errorf("referred is nil")
+	}
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+
+	if !meta.IsStatusConditionTrue(*referredConditions, string(kdexv1alpha1.ConditionTypeReady)) {
+		meta.SetStatusCondition(
+			referredConditions,
+			*kdexv1alpha1.NewCondition(
+				kdexv1alpha1.ConditionTypeReady,
+				metav1.ConditionFalse,
+				kdexv1alpha1.ConditionReasonReconcileError,
+				fmt.Sprintf("referenced %s %s is not ready", t.Name(), referred.GetName()),
+			),
+		)
+
+		return false, ctrl.Result{RequeueAfter: requeueDelay}, nil
+	}
+
+	return true, ctrl.Result{}, nil
 }
