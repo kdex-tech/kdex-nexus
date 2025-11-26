@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -74,6 +75,10 @@ func (r *KDexPageNavigationReconciler) Reconcile(ctx context.Context, req ctrl.R
 		o = &pageNavigation
 	}
 
+	if status.Attributes == nil {
+		status.Attributes = make(map[string]string)
+	}
+
 	// Defer status update
 	defer func() {
 		status.ObservedGeneration = om.Generation
@@ -95,9 +100,13 @@ func (r *KDexPageNavigationReconciler) Reconcile(ctx context.Context, req ctrl.R
 		"Reconciling",
 	)
 
-	_, shouldReturn, r1, err := ResolveKDexObjectReference(ctx, r.Client, o, &status.Conditions, spec.ScriptLibraryRef, r.RequeueDelay)
+	scriptLibraryObj, shouldReturn, r1, err := ResolveKDexObjectReference(ctx, r.Client, o, &status.Conditions, spec.ScriptLibraryRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
+	}
+
+	if scriptLibraryObj != nil {
+		status.Attributes["scriptLibrary.generation"] = fmt.Sprintf("%d", scriptLibraryObj.GetGeneration())
 	}
 
 	if err := render.ValidateContent(

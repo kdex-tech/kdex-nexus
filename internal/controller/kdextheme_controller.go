@@ -76,6 +76,10 @@ func (r *KDexThemeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		o = &theme
 	}
 
+	if status.Attributes == nil {
+		status.Attributes = make(map[string]string)
+	}
+
 	// Defer status update
 	defer func() {
 		status.ObservedGeneration = om.Generation
@@ -97,9 +101,13 @@ func (r *KDexThemeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		"Reconciling",
 	)
 
-	_, shouldReturn, r1, err := ResolveKDexObjectReference(ctx, r.Client, o, &status.Conditions, spec.ScriptLibraryRef, r.RequeueDelay)
+	scriptLibraryObj, shouldReturn, r1, err := ResolveKDexObjectReference(ctx, r.Client, o, &status.Conditions, spec.ScriptLibraryRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
+	}
+
+	if scriptLibraryObj != nil {
+		status.Attributes["scriptLibrary.generation"] = fmt.Sprintf("%d", scriptLibraryObj.GetGeneration())
 	}
 
 	if err := validateSpec(spec); err != nil {

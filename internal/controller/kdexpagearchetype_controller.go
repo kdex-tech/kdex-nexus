@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -79,6 +80,10 @@ func (r *KDexPageArchetypeReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		o = &pageArchetype
 	}
 
+	if status.Attributes == nil {
+		status.Attributes = make(map[string]string)
+	}
+
 	// Defer status update
 	defer func() {
 		status.ObservedGeneration = om.Generation
@@ -100,24 +105,40 @@ func (r *KDexPageArchetypeReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		"Reconciling",
 	)
 
-	_, shouldReturn, r1, err := ResolveKDexObjectReference(ctx, r.Client, o, &status.Conditions, spec.DefaultFooterRef, r.RequeueDelay)
+	footerObj, shouldReturn, r1, err := ResolveKDexObjectReference(ctx, r.Client, o, &status.Conditions, spec.DefaultFooterRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
 
-	_, shouldReturn, r1, err = ResolveKDexObjectReference(ctx, r.Client, o, &status.Conditions, spec.DefaultHeaderRef, r.RequeueDelay)
+	if footerObj != nil {
+		status.Attributes["footer.generation"] = fmt.Sprintf("%d", footerObj.GetGeneration())
+	}
+
+	headerObj, shouldReturn, r1, err := ResolveKDexObjectReference(ctx, r.Client, o, &status.Conditions, spec.DefaultHeaderRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
 
-	_, shouldReturn, response, err := ResolvePageNavigations(ctx, r.Client, o, &status.Conditions, spec.DefaultMainNavigationRef, spec.ExtraNavigations, r.RequeueDelay)
+	if headerObj != nil {
+		status.Attributes["header.generation"] = fmt.Sprintf("%d", headerObj.GetGeneration())
+	}
+
+	navigations, shouldReturn, response, err := ResolvePageNavigations(ctx, r.Client, o, &status.Conditions, spec.DefaultMainNavigationRef, spec.ExtraNavigations, r.RequeueDelay)
 	if shouldReturn {
 		return response, err
 	}
 
-	_, shouldReturn, r1, err = ResolveKDexObjectReference(ctx, r.Client, o, &status.Conditions, spec.ScriptLibraryRef, r.RequeueDelay)
+	for k, navigation := range navigations {
+		status.Attributes[k+".navigation.generation"] = fmt.Sprintf("%d", navigation.GetGeneration())
+	}
+
+	scriptLibraryObj, shouldReturn, r1, err := ResolveKDexObjectReference(ctx, r.Client, o, &status.Conditions, spec.ScriptLibraryRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
+	}
+
+	if scriptLibraryObj != nil {
+		status.Attributes["scriptLibrary.generation"] = fmt.Sprintf("%d", scriptLibraryObj.GetGeneration())
 	}
 
 	if err := render.ValidateContent(
@@ -167,13 +188,25 @@ func (r *KDexPageArchetypeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			&kdexv1alpha1.KDexPageFooter{},
 			handler.EnqueueRequestsFromMapFunc(r.findPageArchetypesForPageFooter)).
 		Watches(
+			&kdexv1alpha1.KDexClusterPageFooter{},
+			handler.EnqueueRequestsFromMapFunc(r.findPageArchetypesForPageFooter)).
+		Watches(
 			&kdexv1alpha1.KDexPageHeader{},
+			handler.EnqueueRequestsFromMapFunc(r.findPageArchetypesForPageHeader)).
+		Watches(
+			&kdexv1alpha1.KDexClusterPageHeader{},
 			handler.EnqueueRequestsFromMapFunc(r.findPageArchetypesForPageHeader)).
 		Watches(
 			&kdexv1alpha1.KDexPageNavigation{},
 			handler.EnqueueRequestsFromMapFunc(r.findPageArchetypesForPageNavigations)).
 		Watches(
+			&kdexv1alpha1.KDexClusterPageNavigation{},
+			handler.EnqueueRequestsFromMapFunc(r.findPageArchetypesForPageNavigations)).
+		Watches(
 			&kdexv1alpha1.KDexScriptLibrary{},
+			handler.EnqueueRequestsFromMapFunc(r.findPageArchetypesForScriptLibrary)).
+		Watches(
+			&kdexv1alpha1.KDexClusterScriptLibrary{},
 			handler.EnqueueRequestsFromMapFunc(r.findPageArchetypesForScriptLibrary)).
 		Named("kdexpagearchetype").
 		Complete(r)

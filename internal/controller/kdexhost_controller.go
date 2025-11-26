@@ -101,6 +101,10 @@ func (r *KDexHostReconciler) Reconcile(ctx context.Context, req ctrl.Request) (r
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	if host.Status.Attributes == nil {
+		host.Status.Attributes = make(map[string]string)
+	}
+
 	// Defer status update
 	defer func() {
 		host.Status.ObservedGeneration = host.Generation
@@ -175,14 +179,22 @@ func (r *KDexHostReconciler) Reconcile(ctx context.Context, req ctrl.Request) (r
 		"Reconciling",
 	)
 
-	_, shouldReturn, r1, err := ResolveKDexObjectReference(ctx, r.Client, &host, &host.Status.Conditions, host.Spec.DefaultThemeRef, r.RequeueDelay)
+	themeObj, shouldReturn, r1, err := ResolveKDexObjectReference(ctx, r.Client, &host, &host.Status.Conditions, host.Spec.DefaultThemeRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
 
-	_, shouldReturn, r1, err = ResolveKDexObjectReference(ctx, r.Client, &host, &host.Status.Conditions, host.Spec.ScriptLibraryRef, r.RequeueDelay)
+	if themeObj != nil {
+		host.Status.Attributes["theme.generation"] = fmt.Sprintf("%d", themeObj.GetGeneration())
+	}
+
+	scriptLibraryObj, shouldReturn, r1, err := ResolveKDexObjectReference(ctx, r.Client, &host, &host.Status.Conditions, host.Spec.ScriptLibraryRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
+	}
+
+	if scriptLibraryObj != nil {
+		host.Status.Attributes["scriptLibrary.generation"] = fmt.Sprintf("%d", scriptLibraryObj.GetGeneration())
 	}
 
 	return ctrl.Result{}, r.innerReconcile(ctx, &host)
@@ -204,7 +216,14 @@ func (r *KDexHostReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			handler.EnqueueRequestsFromMapFunc(r.findHostsForScriptLibrary),
 		).
 		Watches(
+			&kdexv1alpha1.KDexClusterScriptLibrary{},
+			handler.EnqueueRequestsFromMapFunc(r.findHostsForScriptLibrary),
+		).
+		Watches(
 			&kdexv1alpha1.KDexTheme{},
+			handler.EnqueueRequestsFromMapFunc(r.findHostsForTheme)).
+		Watches(
+			&kdexv1alpha1.KDexClusterTheme{},
 			handler.EnqueueRequestsFromMapFunc(r.findHostsForTheme)).
 		Named("kdexhost").
 		Complete(r)

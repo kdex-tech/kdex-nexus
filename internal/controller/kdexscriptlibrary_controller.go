@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -76,6 +77,10 @@ func (r *KDexScriptLibraryReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		o = &scriptLibrary
 	}
 
+	if status.Attributes == nil {
+		status.Attributes = make(map[string]string)
+	}
+
 	// Defer status update
 	defer func() {
 		status.ObservedGeneration = om.Generation
@@ -101,6 +106,10 @@ func (r *KDexScriptLibraryReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		secret, shouldReturn, r1, err := ResolveSecret(ctx, r.Client, o, &status.Conditions, spec.PackageReference.SecretRef, r.RequeueDelay)
 		if shouldReturn {
 			return r1, err
+		}
+
+		if secret != nil {
+			status.Attributes["secret.generation"] = fmt.Sprintf("%d", secret.Generation)
 		}
 
 		if err := validatePackageReference(ctx, spec.PackageReference, secret, r.RegistryFactory); err != nil {
