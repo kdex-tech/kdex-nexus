@@ -85,9 +85,8 @@ func (r *KDexPageFooterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	defer func() {
 		status.ObservedGeneration = om.Generation
 		if updateErr := r.Status().Update(ctx, o); updateErr != nil {
-			if res == (ctrl.Result{}) {
-				err = updateErr
-			}
+			err = updateErr
+			res = ctrl.Result{}
 		}
 	}()
 
@@ -156,6 +155,10 @@ func (r *KDexPageFooterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		).
 		Watches(
 			&kdexv1alpha1.KDexScriptLibrary{},
+			handler.EnqueueRequestsFromMapFunc(r.findPageFootersForScriptLibrary),
+		).
+		Watches(
+			&kdexv1alpha1.KDexClusterScriptLibrary{},
 			handler.EnqueueRequestsFromMapFunc(r.findPageFootersForScriptLibrary),
 		).
 		Named("kdexpagefooter").

@@ -87,9 +87,8 @@ func (r *KDexAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 	defer func() {
 		status.ObservedGeneration = om.Generation
 		if updateErr := r.Status().Update(ctx, o); updateErr != nil {
-			if res == (ctrl.Result{}) {
-				err = updateErr
-			}
+			err = updateErr
+			res = ctrl.Result{}
 		}
 	}()
 

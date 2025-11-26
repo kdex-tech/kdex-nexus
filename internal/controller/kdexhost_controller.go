@@ -109,9 +109,8 @@ func (r *KDexHostReconciler) Reconcile(ctx context.Context, req ctrl.Request) (r
 	defer func() {
 		host.Status.ObservedGeneration = host.Generation
 		if updateErr := r.Status().Update(ctx, &host); updateErr != nil {
-			if res == (ctrl.Result{}) {
-				err = updateErr
-			}
+			err = updateErr
+			res = ctrl.Result{}
 		}
 	}()
 

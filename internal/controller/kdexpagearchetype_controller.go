@@ -88,9 +88,8 @@ func (r *KDexPageArchetypeReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	defer func() {
 		status.ObservedGeneration = om.Generation
 		if updateErr := r.Status().Update(ctx, o); updateErr != nil {
-			if res == (ctrl.Result{}) {
-				err = updateErr
-			}
+			err = updateErr
+			res = ctrl.Result{}
 		}
 	}()
 

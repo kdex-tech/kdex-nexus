@@ -84,9 +84,8 @@ func (r *KDexPageHeaderReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	defer func() {
 		status.ObservedGeneration = om.Generation
 		if updateErr := r.Status().Update(ctx, o); updateErr != nil {
-			if res == (ctrl.Result{}) {
-				err = updateErr
-			}
+			err = updateErr
+			res = ctrl.Result{}
 		}
 	}()
 
@@ -155,6 +154,10 @@ func (r *KDexPageHeaderReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		).
 		Watches(
 			&kdexv1alpha1.KDexScriptLibrary{},
+			handler.EnqueueRequestsFromMapFunc(r.findPageHeadersForScriptLibrary),
+		).
+		Watches(
+			&kdexv1alpha1.KDexClusterScriptLibrary{},
 			handler.EnqueueRequestsFromMapFunc(r.findPageHeadersForScriptLibrary),
 		).
 		Named("kdexpageheader").
