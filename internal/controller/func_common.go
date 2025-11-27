@@ -15,7 +15,7 @@ func validatePackageReference(
 	ctx context.Context,
 	packageReference *kdexv1alpha1.PackageReference,
 	secret *corev1.Secret,
-	registryFactory func(secret *corev1.Secret, error func(err error, msg string, keysAndValues ...any)) npm.Registry,
+	registryFactory func(secret *corev1.Secret, error func(err error, msg string, keysAndValues ...any)) (npm.Registry, error),
 ) error {
 	log := logf.FromContext(ctx)
 
@@ -23,7 +23,10 @@ func validatePackageReference(
 		return fmt.Errorf("invalid package name, must be scoped with @scope/name: %s", packageReference.Name)
 	}
 
-	registry := registryFactory(secret, log.Error)
+	registry, err := registryFactory(secret, log.Error)
+	if err != nil {
+		return err
+	}
 
 	return registry.ValidatePackage(
 		packageReference.Name,

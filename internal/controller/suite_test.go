@@ -138,8 +138,8 @@ var _ = BeforeSuite(func() {
 	registryFactory := func(
 		secret *corev1.Secret,
 		error func(err error, msg string, keysAndValues ...any),
-	) npm.Registry {
-		return &MockRegistry{}
+	) (npm.Registry, error) {
+		return &MockRegistry{}, nil
 	}
 
 	configuration := configuration.LoadConfiguration("/config.yaml", scheme.Scheme)

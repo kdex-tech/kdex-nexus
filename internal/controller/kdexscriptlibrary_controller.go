@@ -37,7 +37,7 @@ import (
 // KDexScriptLibraryReconciler reconciles a KDexScriptLibrary object
 type KDexScriptLibraryReconciler struct {
 	client.Client
-	RegistryFactory func(secret *corev1.Secret, error func(err error, msg string, keysAndValues ...any)) npm.Registry
+	RegistryFactory func(secret *corev1.Secret, error func(err error, msg string, keysAndValues ...any)) (npm.Registry, error)
 	RequeueDelay    time.Duration
 	Scheme          *runtime.Scheme
 }
