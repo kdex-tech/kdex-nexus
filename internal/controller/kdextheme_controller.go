@@ -24,14 +24,11 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	"kdex.dev/crds/render"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 // KDexThemeReconciler reconciles a KDexTheme object
@@ -146,14 +143,13 @@ func (r *KDexThemeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&kdexv1alpha1.KDexTheme{}).
 		Watches(
 			&kdexv1alpha1.KDexClusterTheme{},
-			handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, o client.Object) []reconcile.Request {
-				return []reconcile.Request{{NamespacedName: types.NamespacedName{Name: o.GetName()}}}
-			}),
-		).
+			LikeNamedHandler).
 		Watches(
 			&kdexv1alpha1.KDexScriptLibrary{},
-			handler.EnqueueRequestsFromMapFunc(r.findThemesForScriptLibrary),
-		).
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexTheme{}, &kdexv1alpha1.KDexThemeList{}, "{.Spec.ScriptLibraryRef}")).
+		Watches(
+			&kdexv1alpha1.KDexClusterScriptLibrary{},
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexTheme{}, &kdexv1alpha1.KDexThemeList{}, "{.Spec.ScriptLibraryRef}")).
 		Named("kdextheme").
 		Complete(r)
 }

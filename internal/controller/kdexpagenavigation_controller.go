@@ -23,14 +23,11 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	"kdex.dev/crds/render"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 // KDexPageNavigationReconciler reconciles a KDexPageNavigation object
@@ -147,18 +144,13 @@ func (r *KDexPageNavigationReconciler) SetupWithManager(mgr ctrl.Manager) error 
 		For(&kdexv1alpha1.KDexPageNavigation{}).
 		Watches(
 			&kdexv1alpha1.KDexClusterPageNavigation{},
-			handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, o client.Object) []reconcile.Request {
-				return []reconcile.Request{{NamespacedName: types.NamespacedName{Name: o.GetName()}}}
-			}),
-		).
+			LikeNamedHandler).
 		Watches(
 			&kdexv1alpha1.KDexScriptLibrary{},
-			handler.EnqueueRequestsFromMapFunc(r.findPageNavigationsForScriptLibrary),
-		).
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexPageNavigation{}, &kdexv1alpha1.KDexPageNavigationList{}, "{.Spec.ScriptLibraryRef}")).
 		Watches(
 			&kdexv1alpha1.KDexClusterScriptLibrary{},
-			handler.EnqueueRequestsFromMapFunc(r.findPageNavigationsForScriptLibrary),
-		).
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexPageNavigation{}, &kdexv1alpha1.KDexPageNavigationList{}, "{.Spec.ScriptLibraryRef}")).
 		Named("kdexpagenavigation").
 		Complete(r)
 }

@@ -37,7 +37,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -212,18 +211,16 @@ func (r *KDexHostReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&rbacv1.RoleBinding{}).
 		Watches(
 			&kdexv1alpha1.KDexScriptLibrary{},
-			handler.EnqueueRequestsFromMapFunc(r.findHostsForScriptLibrary),
-		).
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexHost{}, &kdexv1alpha1.KDexHostList{}, "{.Spec.ScriptLibraryRef}")).
 		Watches(
 			&kdexv1alpha1.KDexClusterScriptLibrary{},
-			handler.EnqueueRequestsFromMapFunc(r.findHostsForScriptLibrary),
-		).
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexHost{}, &kdexv1alpha1.KDexHostList{}, "{.Spec.ScriptLibraryRef}")).
 		Watches(
 			&kdexv1alpha1.KDexTheme{},
-			handler.EnqueueRequestsFromMapFunc(r.findHostsForTheme)).
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexHost{}, &kdexv1alpha1.KDexHostList{}, "{.Spec.DefaultThemeRef}")).
 		Watches(
 			&kdexv1alpha1.KDexClusterTheme{},
-			handler.EnqueueRequestsFromMapFunc(r.findHostsForTheme)).
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexHost{}, &kdexv1alpha1.KDexHostList{}, "{.Spec.DefaultThemeRef}")).
 		Named("kdexhost").
 		Complete(r)
 }

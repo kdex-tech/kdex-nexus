@@ -23,14 +23,11 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	"kdex.dev/crds/render"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 // KDexPageArchetypeReconciler reconciles a KDexPageArchetype object
@@ -179,34 +176,31 @@ func (r *KDexPageArchetypeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&kdexv1alpha1.KDexPageArchetype{}).
 		Watches(
 			&kdexv1alpha1.KDexClusterPageArchetype{},
-			handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, o client.Object) []reconcile.Request {
-				return []reconcile.Request{{NamespacedName: types.NamespacedName{Name: o.GetName()}}}
-			}),
-		).
+			LikeNamedHandler).
 		Watches(
 			&kdexv1alpha1.KDexPageFooter{},
-			handler.EnqueueRequestsFromMapFunc(r.findPageArchetypesForPageFooter)).
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexPageArchetype{}, &kdexv1alpha1.KDexPageArchetypeList{}, "{.Spec.DefaultFooterRef}")).
 		Watches(
 			&kdexv1alpha1.KDexClusterPageFooter{},
-			handler.EnqueueRequestsFromMapFunc(r.findPageArchetypesForPageFooter)).
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexPageArchetype{}, &kdexv1alpha1.KDexPageArchetypeList{}, "{.Spec.DefaultFooterRef}")).
 		Watches(
 			&kdexv1alpha1.KDexPageHeader{},
-			handler.EnqueueRequestsFromMapFunc(r.findPageArchetypesForPageHeader)).
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexPageArchetype{}, &kdexv1alpha1.KDexPageArchetypeList{}, "{.Spec.DefaultHeaderRef}")).
 		Watches(
 			&kdexv1alpha1.KDexClusterPageHeader{},
-			handler.EnqueueRequestsFromMapFunc(r.findPageArchetypesForPageHeader)).
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexPageArchetype{}, &kdexv1alpha1.KDexPageArchetypeList{}, "{.Spec.DefaultHeaderRef}")).
 		Watches(
 			&kdexv1alpha1.KDexPageNavigation{},
-			handler.EnqueueRequestsFromMapFunc(r.findPageArchetypesForPageNavigations)).
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexPageArchetype{}, &kdexv1alpha1.KDexPageArchetypeList{}, "{.Spec.DefaultMainNavigationRef}{.Spec.ExtraNavigations.*}")).
 		Watches(
 			&kdexv1alpha1.KDexClusterPageNavigation{},
-			handler.EnqueueRequestsFromMapFunc(r.findPageArchetypesForPageNavigations)).
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexPageArchetype{}, &kdexv1alpha1.KDexPageArchetypeList{}, "{.Spec.DefaultMainNavigationRef}{.Spec.ExtraNavigations.*}")).
 		Watches(
 			&kdexv1alpha1.KDexScriptLibrary{},
-			handler.EnqueueRequestsFromMapFunc(r.findPageArchetypesForScriptLibrary)).
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexPageArchetype{}, &kdexv1alpha1.KDexPageArchetypeList{}, "{.Spec.ScriptLibraryRef}")).
 		Watches(
 			&kdexv1alpha1.KDexClusterScriptLibrary{},
-			handler.EnqueueRequestsFromMapFunc(r.findPageArchetypesForScriptLibrary)).
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexPageArchetype{}, &kdexv1alpha1.KDexPageArchetypeList{}, "{.Spec.ScriptLibraryRef}")).
 		Named("kdexpagearchetype").
 		Complete(r)
 }

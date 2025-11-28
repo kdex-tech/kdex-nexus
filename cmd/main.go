@@ -197,7 +197,9 @@ func main() {
 	conf := configuration.LoadConfiguration(configFile, scheme)
 	requeueDelay := time.Duration(requeueDelaySeconds) * time.Second
 
-	registryFactory := func(secret *corev1.Secret, error func(err error, msg string, keysAndValues ...any)) (npm.Registry, error) {
+	registryFactory := func(
+		secret *corev1.Secret, error func(err error, msg string, keysAndValues ...any),
+	) (npm.Registry, error) {
 		return npm.NewRegistry(&conf, secret, error)
 	}
 
