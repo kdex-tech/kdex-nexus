@@ -182,7 +182,12 @@ data:
           - kdex.dev
           resources:
           - kdexapps
-          - kdexhosts
+          - kdexclusterapps
+          - kdexclusterpagearchetypes
+          - kdexclusterpagefooters
+          - kdexclusterpageheaders
+          - kdexclusterpagenavigations
+          - kdexclusterscriptlibraries
           - kdexpagearchetypes
           - kdexpagefooters
           - kdexpageheaders
