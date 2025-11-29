@@ -14,29 +14,26 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
+	"kdex.dev/nexus/internal/page"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
-
-type ResolvedContentEntry struct {
-	Content string
-	App     *kdexv1alpha1.KDexApp
-}
 
 func ResolveContents(
 	ctx context.Context,
 	c client.Client,
 	pageBinding *kdexv1alpha1.KDexPageBinding,
 	requeueDelay time.Duration,
-) (map[string]ResolvedContentEntry, bool, ctrl.Result, error) {
-	contents := make(map[string]ResolvedContentEntry)
+) (map[string]page.ResolvedContentEntry, bool, ctrl.Result, error) {
+	contents := make(map[string]page.ResolvedContentEntry)
 
 	for _, contentEntry := range pageBinding.Spec.ContentEntries {
 		appRef := contentEntry.AppRef
 		if appRef == nil {
-			contents[contentEntry.Slot] = ResolvedContentEntry{
+			contents[contentEntry.Slot] = page.ResolvedContentEntry{
 				Content: contentEntry.RawHTML,
+				Slot:    contentEntry.Slot,
 			}
 
 			continue
@@ -47,8 +44,21 @@ func ResolveContents(
 			return nil, shouldReturn, r1, err
 		}
 
-		contents[contentEntry.Slot] = ResolvedContentEntry{
-			App: app.(*kdexv1alpha1.KDexApp),
+		var appSpec *kdexv1alpha1.KDexAppSpec
+
+		switch v := app.(type) {
+		case *kdexv1alpha1.KDexApp:
+			appSpec = &v.Spec
+		case *kdexv1alpha1.KDexClusterApp:
+			appSpec = &v.Spec
+		}
+
+		contents[contentEntry.Slot] = page.ResolvedContentEntry{
+			App:               appSpec,
+			AppName:           app.GetName(),
+			AppGeneration:     fmt.Sprintf("%d", app.GetGeneration()),
+			CustomElementName: contentEntry.CustomElementName,
+			Slot:              contentEntry.Slot,
 		}
 	}
 
@@ -106,8 +116,8 @@ func ResolvePageNavigations(
 	navigationRef *kdexv1alpha1.KDexObjectReference,
 	extraNavigations map[string]*kdexv1alpha1.KDexObjectReference,
 	requeueDelay time.Duration,
-) (map[string]*kdexv1alpha1.KDexPageNavigation, bool, ctrl.Result, error) {
-	navigations := make(map[string]*kdexv1alpha1.KDexPageNavigation)
+) (map[string]page.ResolvedNavigation, bool, ctrl.Result, error) {
+	navigations := make(map[string]page.ResolvedNavigation)
 
 	navigation, shouldReturn, response, err := ResolveKDexObjectReference(
 		ctx, c, object, objectConditions, navigationRef, requeueDelay)
@@ -117,7 +127,20 @@ func ResolvePageNavigations(
 	}
 
 	if navigation != nil {
-		navigations["main"] = navigation.(*kdexv1alpha1.KDexPageNavigation)
+		var navigationSpec *kdexv1alpha1.KDexPageNavigationSpec
+
+		switch v := navigation.(type) {
+		case *kdexv1alpha1.KDexPageNavigation:
+			navigationSpec = &v.Spec
+		case *kdexv1alpha1.KDexClusterPageNavigation:
+			navigationSpec = &v.Spec
+		}
+
+		navigations["main"] = page.ResolvedNavigation{
+			Generation: navigation.GetGeneration(),
+			Name:       navigation.GetName(),
+			Spec:       navigationSpec,
+		}
 	}
 
 	if extraNavigations == nil {
@@ -133,7 +156,20 @@ func ResolvePageNavigations(
 		}
 
 		if navigation != nil {
-			navigations[navigationName] = navigation.(*kdexv1alpha1.KDexPageNavigation)
+			var navigationSpec *kdexv1alpha1.KDexPageNavigationSpec
+
+			switch v := navigation.(type) {
+			case *kdexv1alpha1.KDexPageNavigation:
+				navigationSpec = &v.Spec
+			case *kdexv1alpha1.KDexClusterPageNavigation:
+				navigationSpec = &v.Spec
+			}
+
+			navigations[navigationName] = page.ResolvedNavigation{
+				Generation: navigation.GetGeneration(),
+				Name:       navigation.GetName(),
+				Spec:       navigationSpec,
+			}
 		}
 	}
 

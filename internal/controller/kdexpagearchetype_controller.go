@@ -125,7 +125,7 @@ func (r *KDexPageArchetypeReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	for k, navigation := range navigations {
-		status.Attributes[k+".navigation.generation"] = fmt.Sprintf("%d", navigation.GetGeneration())
+		status.Attributes[k+".navigation.generation"] = fmt.Sprintf("%d", navigation.Generation)
 	}
 
 	scriptLibraryObj, shouldReturn, r1, err := ResolveKDexObjectReference(ctx, r.Client, o, &status.Conditions, spec.ScriptLibraryRef, r.RequeueDelay)
