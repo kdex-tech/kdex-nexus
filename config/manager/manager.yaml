@@ -111,140 +111,17 @@ metadata:
   namespace: system
 data:
     config.yaml: |
-      controller:
+      hostController:
         deployment:
           template:
             spec:
               containers:
               - image: k3d-registry:5000/kdex-tech/kdex-web:latest
                 imagePullPolicy: Always
-
-        rolePolicyRules:
-        - apiGroups:
-          - ""
-          resources:
-          - configmaps
-          - secrets
-          - services
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - ""
-          resources:
-          - pods
-          verbs:
-          - get
-          - list
-          - watch
-        - apiGroups:
-          - apps
-          resources:
-          - deployments
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - batch
-          resources:
-          - jobs
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - gateway.networking.k8s.io
-          resources:
-          - httproutes
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - kdex.dev
-          resources:
-          - kdexapps
-          - kdexclusterapps
-          - kdexclusterpagearchetypes
-          - kdexclusterpagefooters
-          - kdexclusterpageheaders
-          - kdexclusterpagenavigations
-          - kdexclusterscriptlibraries
-          - kdexpagearchetypes
-          - kdexpagefooters
-          - kdexpageheaders
-          - kdexpagenavigations
-          - kdexscriptlibraries
-          - kdexthemes
-          verbs:
-          - get
-          - list
-          - watch
-        - apiGroups:
-          - kdex.dev
-          resources:
-          - kdexhostcontrollers
-          - kdexhostpackagereferences
-          - kdexpagebindings
-          - kdextranslations
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - kdex.dev
-          resources:
-          - kdexhostcontrollers/finalizers
-          - kdexhostpackagereferences/finalizers
-          - kdexpagebindings/finalizers
-          - kdextranslations/finalizers
-          verbs:
-          - update
-        - apiGroups:
-          - kdex.dev
-          resources:
-          - kdexhostcontrollers/status
-          - kdexhostpackagereferences/status
-          - kdexpagebindings/status
-          - kdextranslations/status
-          verbs:
-          - get
-          - patch
-          - update
-        - apiGroups:
-          - networking.k8s.io
-          resources:
-          - ingresses
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
+        roleRef:
+          apiGroup: rbac.authorization.k8s.io
+          kind: ClusterRole
+          name: kdex-nexus-host-controller-role
 
       defaultImageRegistry:
         host: k3d-registry:5000

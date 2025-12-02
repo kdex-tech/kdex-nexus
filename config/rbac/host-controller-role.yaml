@@ -2,13 +2,13 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: manager-role
+  name: host-controller-role
 rules:
 - apiGroups:
   - ""
   resources:
   - configmaps
-  - serviceaccounts
+  - secrets
   - services
   verbs:
   - create
@@ -22,7 +22,6 @@ rules:
   - ""
   resources:
   - pods
-  - secrets
   verbs:
   - get
   - list
@@ -73,17 +72,22 @@ rules:
   - kdexclusterpageheaders
   - kdexclusterpagenavigations
   - kdexclusterscriptlibraries
-  - kdexclusterthemes
-  - kdexhostcontrollers
-  - kdexhostpackagereferences
-  - kdexhosts
   - kdexpagearchetypes
-  - kdexpagebindings
   - kdexpagefooters
   - kdexpageheaders
   - kdexpagenavigations
   - kdexscriptlibraries
   - kdexthemes
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - kdex.dev
+  resources:
+  - kdexhostcontrollers
+  - kdexhostpackagereferences
+  - kdexpagebindings
   - kdextranslations
   verbs:
   - create
@@ -96,48 +100,18 @@ rules:
 - apiGroups:
   - kdex.dev
   resources:
-  - kdexapps/finalizers
-  - kdexclusterapps/finalizers
-  - kdexclusterpagearchetypes/finalizers
-  - kdexclusterpagefooters/finalizers
-  - kdexclusterpageheaders/finalizers
-  - kdexclusterpagenavigations/finalizers
-  - kdexclusterscriptlibraries/finalizers
-  - kdexclusterthemes/finalizers
   - kdexhostcontrollers/finalizers
   - kdexhostpackagereferences/finalizers
-  - kdexhosts/finalizers
-  - kdexpagearchetypes/finalizers
   - kdexpagebindings/finalizers
-  - kdexpagefooters/finalizers
-  - kdexpageheaders/finalizers
-  - kdexpagenavigations/finalizers
-  - kdexscriptlibraries/finalizers
-  - kdexthemes/finalizers
   - kdextranslations/finalizers
   verbs:
   - update
 - apiGroups:
   - kdex.dev
   resources:
-  - kdexapps/status
-  - kdexclusterapps/status
-  - kdexclusterpagearchetypes/status
-  - kdexclusterpagefooters/status
-  - kdexclusterpageheaders/status
-  - kdexclusterpagenavigations/status
-  - kdexclusterscriptlibraries/status
-  - kdexclusterthemes/status
   - kdexhostcontrollers/status
   - kdexhostpackagereferences/status
-  - kdexhosts/status
-  - kdexpagearchetypes/status
   - kdexpagebindings/status
-  - kdexpagefooters/status
-  - kdexpageheaders/status
-  - kdexpagenavigations/status
-  - kdexscriptlibraries/status
-  - kdexthemes/status
   - kdextranslations/status
   verbs:
   - get
@@ -154,24 +128,4 @@ rules:
   - list
   - patch
   - update
-  - watch
-- apiGroups:
-  - rbac.authorization.k8s.io
-  resources:
-  - clusterrolebindings
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - rbac.authorization.k8s.io
-  resources:
-  - clusterroles
-  verbs:
-  - get
-  - list
   - watch
