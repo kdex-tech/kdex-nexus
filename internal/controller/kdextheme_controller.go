@@ -62,6 +62,7 @@ func (r *KDexThemeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		}
 		status = &clusterTheme.Status
 		spec = clusterTheme.Spec
+		om = clusterTheme.ObjectMeta
 		o = &clusterTheme
 	} else {
 		var theme kdexv1alpha1.KDexTheme
@@ -70,6 +71,7 @@ func (r *KDexThemeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		}
 		status = &theme.Status
 		spec = theme.Spec
+		om = theme.ObjectMeta
 		o = &theme
 	}
 

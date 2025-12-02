@@ -63,6 +63,7 @@ func (r *KDexScriptLibraryReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		}
 		status = &clusterScriptLibrary.Status
 		spec = clusterScriptLibrary.Spec
+		om = clusterScriptLibrary.ObjectMeta
 		o = &clusterScriptLibrary
 	} else {
 		var scriptLibrary kdexv1alpha1.KDexScriptLibrary
@@ -71,6 +72,7 @@ func (r *KDexScriptLibraryReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		}
 		status = &scriptLibrary.Status
 		spec = scriptLibrary.Spec
+		om = scriptLibrary.ObjectMeta
 		o = &scriptLibrary
 	}
 

@@ -62,6 +62,7 @@ func (r *KDexPageHeaderReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		}
 		status = &clusterPageHeader.Status
 		spec = clusterPageHeader.Spec
+		om = clusterPageHeader.ObjectMeta
 		o = &clusterPageHeader
 	} else {
 		var pageHeader kdexv1alpha1.KDexPageHeader
@@ -70,6 +71,7 @@ func (r *KDexPageHeaderReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		}
 		status = &pageHeader.Status
 		spec = pageHeader.Spec
+		om = pageHeader.ObjectMeta
 		o = &pageHeader
 	}
 

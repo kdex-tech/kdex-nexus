@@ -61,6 +61,7 @@ func (r *KDexPageNavigationReconciler) Reconcile(ctx context.Context, req ctrl.R
 		}
 		status = &clusterPageNavigation.Status
 		spec = clusterPageNavigation.Spec
+		om = clusterPageNavigation.ObjectMeta
 		o = &clusterPageNavigation
 	} else {
 		var pageNavigation kdexv1alpha1.KDexPageNavigation
@@ -69,6 +70,7 @@ func (r *KDexPageNavigationReconciler) Reconcile(ctx context.Context, req ctrl.R
 		}
 		status = &pageNavigation.Status
 		spec = pageNavigation.Spec
+		om = pageNavigation.ObjectMeta
 		o = &pageNavigation
 	}
 
