@@ -153,6 +153,9 @@ func (r *KDexPageFooterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Watches(
 			&kdexv1alpha1.KDexClusterScriptLibrary{},
 			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexPageFooter{}, &kdexv1alpha1.KDexPageFooterList{}, "{.Spec.ScriptLibraryRef}")).
+		Watches(
+			&kdexv1alpha1.KDexClusterScriptLibrary{},
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexClusterPageFooter{}, &kdexv1alpha1.KDexClusterPageFooterList{}, "{.Spec.ScriptLibraryRef}")).
 		Named("kdexpagefooter").
 		Complete(r)
 }

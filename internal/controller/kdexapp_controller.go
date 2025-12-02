@@ -150,6 +150,9 @@ func (r *KDexAppReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Watches(
 			&corev1.Secret{},
 			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexApp{}, &kdexv1alpha1.KDexAppList{}, "{.Spec.PackageReference.SecretRef}")).
+		Watches(
+			&corev1.Secret{},
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexClusterApp{}, &kdexv1alpha1.KDexClusterAppList{}, "{.Spec.PackageReference.SecretRef}")).
 		Named("kdexapp").
 		Complete(r)
 }

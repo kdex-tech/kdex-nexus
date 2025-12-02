@@ -169,6 +169,9 @@ func (r *KDexScriptLibraryReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Watches(
 			&corev1.Secret{},
 			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexScriptLibrary{}, &kdexv1alpha1.KDexScriptLibraryList{}, "{.Spec.PackageReference.SecretRef}")).
+		Watches(
+			&corev1.Secret{},
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexClusterScriptLibrary{}, &kdexv1alpha1.KDexClusterScriptLibraryList{}, "{.Spec.PackageReference.SecretRef}")).
 		Named("kdexscriptlibrary").
 		Complete(r)
 }

@@ -152,6 +152,9 @@ func (r *KDexThemeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Watches(
 			&kdexv1alpha1.KDexClusterScriptLibrary{},
 			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexTheme{}, &kdexv1alpha1.KDexThemeList{}, "{.Spec.ScriptLibraryRef}")).
+		Watches(
+			&kdexv1alpha1.KDexClusterScriptLibrary{},
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexClusterTheme{}, &kdexv1alpha1.KDexClusterThemeList{}, "{.Spec.ScriptLibraryRef}")).
 		Named("kdextheme").
 		Complete(r)
 }

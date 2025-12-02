@@ -154,6 +154,9 @@ func (r *KDexPageHeaderReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Watches(
 			&kdexv1alpha1.KDexClusterScriptLibrary{},
 			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexPageHeader{}, &kdexv1alpha1.KDexPageHeaderList{}, "{.Spec.ScriptLibraryRef}")).
+		Watches(
+			&kdexv1alpha1.KDexClusterScriptLibrary{},
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexClusterPageHeader{}, &kdexv1alpha1.KDexClusterPageHeaderList{}, "{.Spec.ScriptLibraryRef}")).
 		Named("kdexpageheader").
 		Complete(r)
 }

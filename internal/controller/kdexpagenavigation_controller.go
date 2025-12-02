@@ -153,6 +153,9 @@ func (r *KDexPageNavigationReconciler) SetupWithManager(mgr ctrl.Manager) error 
 		Watches(
 			&kdexv1alpha1.KDexClusterScriptLibrary{},
 			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexPageNavigation{}, &kdexv1alpha1.KDexPageNavigationList{}, "{.Spec.ScriptLibraryRef}")).
+		Watches(
+			&kdexv1alpha1.KDexClusterScriptLibrary{},
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexClusterPageNavigation{}, &kdexv1alpha1.KDexClusterPageNavigationList{}, "{.Spec.ScriptLibraryRef}")).
 		Named("kdexpagenavigation").
 		Complete(r)
 }
