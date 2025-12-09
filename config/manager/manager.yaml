@@ -121,7 +121,7 @@ data:
               containers:
               - args:
                 - --zap-encoder=console
-                - --zap-log-level=1
+                - --zap-log-level=2
                 - --zap-stacktrace-level=error
                 image: k3d-registry:5000/kdex-tech/kdex-web:latest
                 imagePullPolicy: Always
