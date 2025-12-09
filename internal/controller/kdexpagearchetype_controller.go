@@ -88,6 +88,8 @@ func (r *KDexPageArchetypeReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			err = updateErr
 			res = ctrl.Result{}
 		}
+
+		log.V(3).Info("status", "status", status, "err", err, "res", res)
 	}()
 
 	kdexv1alpha1.SetConditions(
@@ -165,7 +167,7 @@ func (r *KDexPageArchetypeReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		"Reconciliation successful",
 	)
 
-	log.Info("reconciled KDexPageArchetype")
+	log.V(2).Info("reconciled")
 
 	return ctrl.Result{}, nil
 }

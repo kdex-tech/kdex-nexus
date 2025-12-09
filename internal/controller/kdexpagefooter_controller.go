@@ -85,6 +85,8 @@ func (r *KDexPageFooterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 			err = updateErr
 			res = ctrl.Result{}
 		}
+
+		log.V(3).Info("status", "status", status, "err", err, "res", res)
 	}()
 
 	kdexv1alpha1.SetConditions(
@@ -135,7 +137,7 @@ func (r *KDexPageFooterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		"Reconciliation successful",
 	)
 
-	log.Info("reconciled KDexPageFooter")
+	log.V(2).Info("reconciled")
 
 	return ctrl.Result{}, nil
 }

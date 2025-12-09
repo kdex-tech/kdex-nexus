@@ -105,6 +105,8 @@ type KDexHostReconciler struct {
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterrolebindings,verbs=get;list;watch;create;update;patch;delete
 
 func (r *KDexHostReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, err error) {
+	log := logf.FromContext(ctx)
+
 	var host kdexv1alpha1.KDexHost
 	if err := r.Get(ctx, req.NamespacedName, &host); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
@@ -121,6 +123,8 @@ func (r *KDexHostReconciler) Reconcile(ctx context.Context, req ctrl.Request) (r
 			err = updateErr
 			res = ctrl.Result{}
 		}
+
+		log.V(3).Info("status", "status", host.Status, "err", err, "res", res)
 	}()
 
 	if host.DeletionTimestamp.IsZero() {
@@ -350,7 +354,7 @@ func (r *KDexHostReconciler) innerReconcile(ctx context.Context, host *kdexv1alp
 		"Reconciliation successful",
 	)
 
-	log.Info("reconciled KDexHost")
+	log.V(2).Info("reconciled")
 
 	return nil
 }
