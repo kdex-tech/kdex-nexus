@@ -637,7 +637,7 @@ func (r *KDexHostReconciler) createOrUpdateClusterRoleBinding(ctx context.Contex
 			}
 
 			controllerutil.AddFinalizer(clusterRoleBinding, hostFinalizerName)
-			return nil //ctrl.SetControllerReference(host, clusterRoleBinding, r.Scheme)
+			return nil
 		},
 	); err != nil {
 		kdexv1alpha1.SetConditions(
