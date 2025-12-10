@@ -64,7 +64,7 @@ spec:
           - --leader-elect
           - --health-probe-bind-address=:8081
           - --zap-encoder=console
-          - --zap-log-level=1
+          - --zap-log-level=error
           - --zap-stacktrace-level=error
         image: controller:latest
         name: manager
@@ -121,7 +121,7 @@ data:
               containers:
               - args:
                 - --zap-encoder=console
-                - --zap-log-level=2
+                - --zap-log-level=error
                 - --zap-stacktrace-level=error
                 image: k3d-registry:5000/kdex-tech/kdex-web:latest
                 imagePullPolicy: Always
