@@ -333,13 +333,33 @@ func (r *KDexHostReconciler) getMemoizedService() *corev1.ServiceSpec {
 }
 
 func (r *KDexHostReconciler) innerReconcile(ctx context.Context, host *kdexv1alpha1.KDexHost) error {
-	log := logf.FromContext(ctx)
-
-	if err := r.createOrUpdateHostController(ctx, host); err != nil {
+	configMapOp, err := r.createOrUpdateConfigMap(ctx, host)
+	if err != nil {
 		return err
 	}
 
-	if err := r.createOrUpdateHostControllerResource(ctx, host); err != nil {
+	serviceAccountOp, err := r.createOrUpdateServiceAccount(ctx, host)
+	if err != nil {
+		return err
+	}
+
+	clusterRoleBindingOp, err := r.createOrUpdateClusterRoleBinding(ctx, host)
+	if err != nil {
+		return err
+	}
+
+	deploymentOp, err := r.createOrUpdateDeployment(ctx, host)
+	if err != nil {
+		return err
+	}
+
+	serviceOp, err := r.createOrUpdateService(ctx, host)
+	if err != nil {
+		return err
+	}
+
+	hostControllerOp, err := r.createOrUpdateHostControllerResource(ctx, host)
+	if err != nil {
 		return err
 	}
 
@@ -354,41 +374,28 @@ func (r *KDexHostReconciler) innerReconcile(ctx context.Context, host *kdexv1alp
 		"Reconciliation successful",
 	)
 
-	log.V(2).Info("reconciled")
+	log := logf.FromContext(ctx)
+
+	log.V(2).Info(
+		"reconciled",
+		"configMapOp", configMapOp,
+		"serviceAccountOp", serviceAccountOp,
+		"clusterRoleBindingOp", clusterRoleBindingOp,
+		"deploymentOp", deploymentOp,
+		"serviceOp", serviceOp,
+		"hostControllerOp", hostControllerOp,
+	)
 
 	return nil
-}
-
-func (r *KDexHostReconciler) createOrUpdateHostController(
-	ctx context.Context,
-	host *kdexv1alpha1.KDexHost,
-) error {
-	if err := r.createOrUpdateConfigMap(ctx, host); err != nil {
-		return err
-	}
-
-	if err := r.createOrUpdateServiceAccount(ctx, host); err != nil {
-		return err
-	}
-
-	if err := r.createOrUpdateClusterRoleBinding(ctx, host); err != nil {
-		return err
-	}
-
-	if err := r.createOrUpdateDeployment(ctx, host); err != nil {
-		return err
-	}
-
-	return r.createOrUpdateService(ctx, host)
 }
 
 func (r *KDexHostReconciler) createOrUpdateConfigMap(
 	ctx context.Context,
 	host *kdexv1alpha1.KDexHost,
-) error {
+) (controllerutil.OperationResult, error) {
 	configString, err := r.getMemoizedConfiguration()
 	if err != nil {
-		return err
+		return controllerutil.OperationResultNone, err
 	}
 
 	configMap := &corev1.ConfigMap{
@@ -398,7 +405,7 @@ func (r *KDexHostReconciler) createOrUpdateConfigMap(
 		},
 	}
 
-	if _, err := ctrl.CreateOrUpdate(ctx, r.Client, configMap, func() error {
+	op, err := ctrl.CreateOrUpdate(ctx, r.Client, configMap, func() error {
 		if configMap.CreationTimestamp.IsZero() {
 			if configMap.Annotations == nil {
 				configMap.Annotations = make(map[string]string)
@@ -422,7 +429,9 @@ func (r *KDexHostReconciler) createOrUpdateConfigMap(
 		}
 
 		return ctrl.SetControllerReference(host, configMap, r.Scheme)
-	}); err != nil {
+	})
+
+	if err != nil {
 		kdexv1alpha1.SetConditions(
 			&host.Status.Conditions,
 			kdexv1alpha1.ConditionStatuses{
@@ -433,16 +442,16 @@ func (r *KDexHostReconciler) createOrUpdateConfigMap(
 			kdexv1alpha1.ConditionReasonReconcileError,
 			err.Error(),
 		)
-		return err
+		return controllerutil.OperationResultNone, err
 	}
 
-	return nil
+	return op, nil
 }
 
 func (r *KDexHostReconciler) createOrUpdateHostControllerResource(
 	ctx context.Context,
 	host *kdexv1alpha1.KDexHost,
-) error {
+) (controllerutil.OperationResult, error) {
 	hostController := &kdexv1alpha1.KDexHostController{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      host.Name,
@@ -450,7 +459,7 @@ func (r *KDexHostReconciler) createOrUpdateHostControllerResource(
 		},
 	}
 
-	if _, err := ctrl.CreateOrUpdate(ctx, r.Client, hostController, func() error {
+	op, err := ctrl.CreateOrUpdate(ctx, r.Client, hostController, func() error {
 		if hostController.CreationTimestamp.IsZero() {
 			if hostController.Annotations == nil {
 				hostController.Annotations = make(map[string]string)
@@ -472,8 +481,11 @@ func (r *KDexHostReconciler) createOrUpdateHostControllerResource(
 		hostController.Spec = kdexv1alpha1.KDexHostControllerSpec{
 			Host: *host.Spec.DeepCopy(),
 		}
+
 		return ctrl.SetControllerReference(host, hostController, r.Scheme)
-	}); err != nil {
+	})
+
+	if err != nil {
 		kdexv1alpha1.SetConditions(
 			&host.Status.Conditions,
 			kdexv1alpha1.ConditionStatuses{
@@ -485,16 +497,16 @@ func (r *KDexHostReconciler) createOrUpdateHostControllerResource(
 			err.Error(),
 		)
 
-		return err
+		return controllerutil.OperationResultNone, err
 	}
 
-	return nil
+	return op, nil
 }
 
 func (r *KDexHostReconciler) createOrUpdateDeployment(
 	ctx context.Context,
 	host *kdexv1alpha1.KDexHost,
-) error {
+) (controllerutil.OperationResult, error) {
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      host.Name,
@@ -502,7 +514,7 @@ func (r *KDexHostReconciler) createOrUpdateDeployment(
 		},
 	}
 
-	if _, err := ctrl.CreateOrUpdate(
+	op, err := ctrl.CreateOrUpdate(
 		ctx,
 		r.Client,
 		deployment,
@@ -583,7 +595,9 @@ func (r *KDexHostReconciler) createOrUpdateDeployment(
 
 			return ctrl.SetControllerReference(host, deployment, r.Scheme)
 		},
-	); err != nil {
+	)
+
+	if err != nil {
 		kdexv1alpha1.SetConditions(
 			&host.Status.Conditions,
 			kdexv1alpha1.ConditionStatuses{
@@ -595,20 +609,23 @@ func (r *KDexHostReconciler) createOrUpdateDeployment(
 			err.Error(),
 		)
 
-		return err
+		return controllerutil.OperationResultNone, err
 	}
 
-	return nil
+	return op, nil
 }
 
-func (r *KDexHostReconciler) createOrUpdateClusterRoleBinding(ctx context.Context, host *kdexv1alpha1.KDexHost) error {
+func (r *KDexHostReconciler) createOrUpdateClusterRoleBinding(
+	ctx context.Context,
+	host *kdexv1alpha1.KDexHost,
+) (controllerutil.OperationResult, error) {
 	clusterRoleBinding := &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: fmt.Sprintf("%s-%s", host.Name, host.Namespace),
 		},
 	}
 
-	if _, err := ctrl.CreateOrUpdate(
+	op, err := ctrl.CreateOrUpdate(
 		ctx,
 		r.Client,
 		clusterRoleBinding,
@@ -643,7 +660,9 @@ func (r *KDexHostReconciler) createOrUpdateClusterRoleBinding(ctx context.Contex
 			controllerutil.AddFinalizer(clusterRoleBinding, hostFinalizerName)
 			return nil
 		},
-	); err != nil {
+	)
+
+	if err != nil {
 		kdexv1alpha1.SetConditions(
 			&host.Status.Conditions,
 			kdexv1alpha1.ConditionStatuses{
@@ -655,16 +674,16 @@ func (r *KDexHostReconciler) createOrUpdateClusterRoleBinding(ctx context.Contex
 			err.Error(),
 		)
 
-		return err
+		return controllerutil.OperationResultNone, err
 	}
 
-	return nil
+	return op, nil
 }
 
 func (r *KDexHostReconciler) createOrUpdateService(
 	ctx context.Context,
 	host *kdexv1alpha1.KDexHost,
-) error {
+) (controllerutil.OperationResult, error) {
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      host.Name,
@@ -672,7 +691,7 @@ func (r *KDexHostReconciler) createOrUpdateService(
 		},
 	}
 
-	if _, err := ctrl.CreateOrUpdate(
+	op, err := ctrl.CreateOrUpdate(
 		ctx,
 		r.Client,
 		service,
@@ -706,7 +725,9 @@ func (r *KDexHostReconciler) createOrUpdateService(
 
 			return ctrl.SetControllerReference(host, service, r.Scheme)
 		},
-	); err != nil {
+	)
+
+	if err != nil {
 		kdexv1alpha1.SetConditions(
 			&host.Status.Conditions,
 			kdexv1alpha1.ConditionStatuses{
@@ -718,13 +739,16 @@ func (r *KDexHostReconciler) createOrUpdateService(
 			err.Error(),
 		)
 
-		return err
+		return controllerutil.OperationResultNone, err
 	}
 
-	return nil
+	return op, nil
 }
 
-func (r *KDexHostReconciler) createOrUpdateServiceAccount(ctx context.Context, host *kdexv1alpha1.KDexHost) error {
+func (r *KDexHostReconciler) createOrUpdateServiceAccount(
+	ctx context.Context,
+	host *kdexv1alpha1.KDexHost,
+) (controllerutil.OperationResult, error) {
 	serviceAccount := &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      host.Name,
@@ -732,7 +756,7 @@ func (r *KDexHostReconciler) createOrUpdateServiceAccount(ctx context.Context, h
 		},
 	}
 
-	if _, err := ctrl.CreateOrUpdate(
+	op, err := ctrl.CreateOrUpdate(
 		ctx,
 		r.Client,
 		serviceAccount,
@@ -758,7 +782,9 @@ func (r *KDexHostReconciler) createOrUpdateServiceAccount(ctx context.Context, h
 			controllerutil.AddFinalizer(serviceAccount, hostFinalizerName)
 			return ctrl.SetControllerReference(host, serviceAccount, r.Scheme)
 		},
-	); err != nil {
+	)
+
+	if err != nil {
 		kdexv1alpha1.SetConditions(
 			&host.Status.Conditions,
 			kdexv1alpha1.ConditionStatuses{
@@ -770,8 +796,8 @@ func (r *KDexHostReconciler) createOrUpdateServiceAccount(ctx context.Context, h
 			err.Error(),
 		)
 
-		return err
+		return controllerutil.OperationResultNone, err
 	}
 
-	return nil
+	return op, nil
 }
