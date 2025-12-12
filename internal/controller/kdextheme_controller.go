@@ -28,7 +28,9 @@ import (
 	"kdex.dev/crds/render"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 // KDexThemeReconciler reconciles a KDexTheme object
@@ -157,6 +159,9 @@ func (r *KDexThemeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Watches(
 			&kdexv1alpha1.KDexClusterScriptLibrary{},
 			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexClusterTheme{}, &kdexv1alpha1.KDexClusterThemeList{}, "{.Spec.ScriptLibraryRef}")).
+		WithOptions(controller.TypedOptions[reconcile.Request]{
+			LogConstructor: LogConstructor("kdextheme", mgr),
+		}).
 		Named("kdextheme").
 		Complete(r)
 }

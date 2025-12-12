@@ -28,7 +28,9 @@ import (
 	"kdex.dev/crds/npm"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 // KDexScriptLibraryReconciler reconciles a KDexScriptLibrary object
@@ -174,6 +176,9 @@ func (r *KDexScriptLibraryReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Watches(
 			&corev1.Secret{},
 			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexClusterScriptLibrary{}, &kdexv1alpha1.KDexClusterScriptLibraryList{}, "{.Spec.PackageReference.SecretRef}")).
+		WithOptions(controller.TypedOptions[reconcile.Request]{
+			LogConstructor: LogConstructor("kdexscriptlibrary", mgr),
+		}).
 		Named("kdexscriptlibrary").
 		Complete(r)
 }

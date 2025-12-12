@@ -27,7 +27,9 @@ import (
 	"kdex.dev/crds/render"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 // KDexPageFooterReconciler reconciles a KDexPageFooter object
@@ -158,6 +160,9 @@ func (r *KDexPageFooterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Watches(
 			&kdexv1alpha1.KDexClusterScriptLibrary{},
 			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexClusterPageFooter{}, &kdexv1alpha1.KDexClusterPageFooterList{}, "{.Spec.ScriptLibraryRef}")).
+		WithOptions(controller.TypedOptions[reconcile.Request]{
+			LogConstructor: LogConstructor("kdexpagefooter", mgr),
+		}).
 		Named("kdexpagefooter").
 		Complete(r)
 }

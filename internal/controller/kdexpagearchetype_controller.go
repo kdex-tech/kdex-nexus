@@ -27,7 +27,9 @@ import (
 	"kdex.dev/crds/render"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 // KDexPageArchetypeReconciler reconciles a KDexPageArchetype object
@@ -215,6 +217,9 @@ func (r *KDexPageArchetypeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Watches(
 			&kdexv1alpha1.KDexClusterScriptLibrary{},
 			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexClusterPageArchetype{}, &kdexv1alpha1.KDexClusterPageArchetypeList{}, "{.Spec.ScriptLibraryRef}")).
+		WithOptions(controller.TypedOptions[reconcile.Request]{
+			LogConstructor: LogConstructor("kdexpagearchetype", mgr),
+		}).
 		Named("kdexpagearchetype").
 		Complete(r)
 }

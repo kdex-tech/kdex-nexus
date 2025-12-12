@@ -34,6 +34,7 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	"kdex.dev/crds/configuration"
+	kdexlog "kdex.dev/crds/log"
 	"kdex.dev/crds/npm"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
@@ -64,6 +65,7 @@ func init() {
 // nolint:gocyclo
 func main() {
 	var configFile string
+	namedLogLevels := make(kdexlog.NamedLogLevelPairs)
 	var requeueDelaySeconds int
 
 	var metricsAddr string
@@ -76,6 +78,7 @@ func main() {
 	var tlsOpts []func(*tls.Config)
 
 	flag.StringVar(&configFile, "config-file", "/config.yaml", "The path to a configuration yaml file.")
+	flag.Var(&namedLogLevels, "named-log-level", "Specify a named log level pair (format: NAME=LEVEL) (can be used multiple times)")
 	flag.IntVar(&requeueDelaySeconds, "requeue-delay-seconds", 15, "Set the delay for requeuing reconciliation loops")
 
 	flag.StringVar(&metricsAddr, "metrics-bind-address", "0", "The address the metrics endpoint binds to. "+
@@ -101,7 +104,11 @@ func main() {
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
 
-	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+	logger, err := kdexlog.New(&opts, namedLogLevels)
+	if err != nil {
+		panic(err)
+	}
+	ctrl.SetLogger(logger)
 
 	// if the enable-http2 flag is false (the default), http/2 should be disabled
 	// due to its vulnerabilities. More specifically, disabling http/2 will

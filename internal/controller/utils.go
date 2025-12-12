@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	meta "k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -13,6 +14,7 @@ import (
 	"k8s.io/client-go/util/jsonpath"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	"kdex.dev/crds/npm"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -148,6 +150,16 @@ func MakeHandlerByReferencePath(
 		}
 		return requests
 	})
+}
+
+func LogConstructor(name string, mgr ctrl.Manager) func(request *reconcile.Request) logr.Logger {
+	return func(request *reconcile.Request) logr.Logger {
+		l := mgr.GetControllerOptions().Logger.WithName(name)
+		if request != nil {
+			l = l.WithValues("namespace", request.Namespace, "name", request.Name)
+		}
+		return l
+	}
 }
 
 func getKind(obj client.Object, scheme *runtime.Scheme) (string, error) {
