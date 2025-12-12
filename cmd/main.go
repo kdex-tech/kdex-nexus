@@ -79,7 +79,8 @@ func main() {
 	var tlsOpts []func(*tls.Config)
 
 	flag.StringVar(&configFile, "config-file", "/config.yaml", "The path to a configuration yaml file.")
-	flag.Var(&namedLogLevels, "named-log-level", "Specify a named log level pair (format: NAME=LEVEL) (can be used multiple times)")
+	flag.Var(&namedLogLevels, "named-log-level", "Specify a named log level pair (format: NAME=LEVEL) (can be used "+
+		"multiple times)")
 	flag.IntVar(&requeueDelaySeconds, "requeue-delay-seconds", 15, "Set the delay for requeuing reconciliation loops")
 
 	flag.StringVar(&metricsAddr, "metrics-bind-address", "0", "The address the metrics endpoint binds to. "+
