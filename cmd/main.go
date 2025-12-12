@@ -37,6 +37,7 @@ import (
 	kdexlog "kdex.dev/crds/log"
 	"kdex.dev/crds/npm"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
@@ -178,12 +179,16 @@ func main() {
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                 scheme,
-		Metrics:                metricsServerOptions,
-		WebhookServer:          webhookServer,
+		Controller: config.Controller{
+			Logger: logger,
+		},
 		HealthProbeBindAddress: probeAddr,
+		Metrics:                metricsServerOptions,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "65a8acfa.kdex.dev",
+		Logger:                 logger,
+		Scheme:                 scheme,
+		WebhookServer:          webhookServer,
 		// LeaderElectionReleaseOnCancel defines if the leader should step down voluntarily
 		// when the Manager ends. This requires the binary to immediately end when the
 		// Manager is stopped, otherwise, this setting is unsafe. Setting this significantly
