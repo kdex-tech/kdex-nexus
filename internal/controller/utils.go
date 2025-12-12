@@ -44,10 +44,7 @@ func MakeHandlerByReferencePath(
 	}
 
 	log := logf.Log.WithName(
-		"WATCH",
-	).WithValues(
-		"watcherKind", watcherKind,
-		"referencePath", referencePath,
+		strings.ToLower(watcherKind),
 	)
 
 	return handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, o client.Object) []reconcile.Request {
