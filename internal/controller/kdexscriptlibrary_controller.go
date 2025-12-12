@@ -90,7 +90,7 @@ func (r *KDexScriptLibraryReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			res = ctrl.Result{}
 		}
 
-		log.V(3).Info("status", "status", status, "err", err, "res", res)
+		log.V(1).Info("status", "status", status, "err", err, "res", res)
 	}()
 
 	kdexv1alpha1.SetConditions(
@@ -158,7 +158,7 @@ func (r *KDexScriptLibraryReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		"Reconciliation successful",
 	)
 
-	log.V(2).Info("reconciled")
+	log.V(1).Info("reconciled")
 
 	return ctrl.Result{}, nil
 }

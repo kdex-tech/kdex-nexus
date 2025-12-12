@@ -126,7 +126,7 @@ func (r *KDexHostReconciler) Reconcile(ctx context.Context, req ctrl.Request) (r
 			res = ctrl.Result{}
 		}
 
-		log.V(3).Info("status", "status", host.Status, "err", err, "res", res)
+		log.V(1).Info("status", "status", host.Status, "err", err, "res", res)
 	}()
 
 	if host.DeletionTimestamp.IsZero() {
@@ -381,7 +381,7 @@ func (r *KDexHostReconciler) innerReconcile(ctx context.Context, host *kdexv1alp
 
 	log := logf.FromContext(ctx)
 
-	log.V(2).Info(
+	log.V(1).Info(
 		"reconciled",
 		"configMapOp", configMapOp,
 		"serviceAccountOp", serviceAccountOp,
