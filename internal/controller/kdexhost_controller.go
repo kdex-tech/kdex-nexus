@@ -556,9 +556,9 @@ func (r *KDexHostReconciler) createOrUpdateDeployment(
 				}
 				deployment.Spec.Template.Labels["app.kubernetes.io/name"] = kdexWeb
 				deployment.Spec.Template.Labels["kdex.dev/instance"] = host.Name
-			}
 
-			deployment.Spec.Template.Spec = *r.getMemoizedDeployment().Template.Spec.DeepCopy()
+				deployment.Spec.Template.Spec = *r.getMemoizedDeployment().Template.Spec.DeepCopy()
+			}
 
 			foundFocalHost := false
 			foundServiceName := false
