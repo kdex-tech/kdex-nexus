@@ -120,8 +120,11 @@ data:
             spec:
               containers:
               - args:
+                - --named-log-level=hosts.pages=error
+                - --named-log-level=hosts=debug
+                - --named-log-level=kdexpagebinding=debug
                 - --zap-encoder=console
-                - --zap-log-level=debug
+                - --zap-log-level=info
                 - --zap-stacktrace-level=error
                 image: k3d-registry:5000/kdex-tech/kdex-web:latest
                 imagePullPolicy: Always
