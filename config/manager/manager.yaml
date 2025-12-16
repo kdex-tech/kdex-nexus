@@ -122,7 +122,6 @@ data:
               - args:
                 - --named-log-level=hosts.pages=error
                 - --named-log-level=hosts=debug
-                - --named-log-level=kdexpagebinding=debug
                 - --zap-encoder=console
                 - --zap-log-level=info
                 - --zap-stacktrace-level=error
