@@ -57,10 +57,12 @@ var _ = Describe("KDexTheme Controller", func() {
 				Spec: kdexv1alpha1.KDexThemeSpec{
 					Assets: []kdexv1alpha1.Asset{
 						{
-							Attributes: map[string]string{
-								"rel": "stylesheet",
+							LinkDef: kdexv1alpha1.LinkDef{
+								Attributes: map[string]string{
+									"rel": "stylesheet",
+								},
+								LinkHref: "http://kdex.dev/style.css",
 							},
-							LinkHref: "http://kdex.dev/style.css",
 						},
 					},
 				},
@@ -82,10 +84,12 @@ var _ = Describe("KDexTheme Controller", func() {
 				Spec: kdexv1alpha1.KDexThemeSpec{
 					Assets: []kdexv1alpha1.Asset{
 						{
-							Attributes: map[string]string{
-								"rel": "stylesheet",
+							LinkDef: kdexv1alpha1.LinkDef{
+								Attributes: map[string]string{
+									"rel": "stylesheet",
+								},
+								LinkHref: "/style.css",
 							},
-							LinkHref: "/style.css",
 						},
 					},
 				},
@@ -109,10 +113,12 @@ var _ = Describe("KDexTheme Controller", func() {
 					Spec: kdexv1alpha1.KDexThemeSpec{
 						Assets: []kdexv1alpha1.Asset{
 							{
-								Attributes: map[string]string{
-									"!": `"`,
+								LinkDef: kdexv1alpha1.LinkDef{
+									Attributes: map[string]string{
+										"!": `"`,
+									},
+									LinkHref: `"`,
 								},
-								LinkHref: `"`,
 							},
 						},
 					},
@@ -133,10 +139,12 @@ var _ = Describe("KDexTheme Controller", func() {
 					Spec: kdexv1alpha1.KDexThemeSpec{
 						Assets: []kdexv1alpha1.Asset{
 							{
-								Attributes: map[string]string{
-									"rel": "stylesheet",
+								LinkDef: kdexv1alpha1.LinkDef{
+									Attributes: map[string]string{
+										"rel": "stylesheet",
+									},
+									LinkHref: "http://kdex.dev/style.css",
 								},
-								LinkHref: "http://kdex.dev/style.css",
 							},
 						},
 					},
@@ -157,13 +165,17 @@ var _ = Describe("KDexTheme Controller", func() {
 				Spec: kdexv1alpha1.KDexThemeSpec{
 					Assets: []kdexv1alpha1.Asset{
 						{
-							Attributes: map[string]string{
-								"rel": "stylesheet",
+							LinkDef: kdexv1alpha1.LinkDef{
+								Attributes: map[string]string{
+									"rel": "stylesheet",
+								},
+								LinkHref: "/style.css",
 							},
-							LinkHref: "/style.css",
 						},
 					},
-					Image: "foo/bar",
+					WebServer: kdexv1alpha1.WebServer{
+						StaticImage: "foo/bar",
+					},
 				},
 			}
 
@@ -183,13 +195,17 @@ var _ = Describe("KDexTheme Controller", func() {
 				Spec: kdexv1alpha1.KDexThemeSpec{
 					Assets: []kdexv1alpha1.Asset{
 						{
-							Attributes: map[string]string{
-								"rel": "stylesheet",
+							LinkDef: kdexv1alpha1.LinkDef{
+								Attributes: map[string]string{
+									"rel": "stylesheet",
+								},
+								LinkHref: "/style.css",
 							},
-							LinkHref: "/style.css",
 						},
 					},
-					RoutePath: "/theme",
+					WebServer: kdexv1alpha1.WebServer{
+						IngressPath: "/theme",
+					},
 				},
 			}
 
@@ -209,14 +225,18 @@ var _ = Describe("KDexTheme Controller", func() {
 				Spec: kdexv1alpha1.KDexThemeSpec{
 					Assets: []kdexv1alpha1.Asset{
 						{
-							Attributes: map[string]string{
-								"rel": "stylesheet",
+							LinkDef: kdexv1alpha1.LinkDef{
+								Attributes: map[string]string{
+									"rel": "stylesheet",
+								},
+								LinkHref: "/style.css",
 							},
-							LinkHref: "/style.css",
 						},
 					},
-					Image:     "foo/bar",
-					RoutePath: "/theme",
+					WebServer: kdexv1alpha1.WebServer{
+						IngressPath: "/theme",
+						StaticImage: "foo/bar",
+					},
 				},
 			}
 

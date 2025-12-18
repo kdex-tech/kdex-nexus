@@ -19,13 +19,11 @@ package controller
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
-	"kdex.dev/crds/render"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -112,7 +110,22 @@ func (r *KDexThemeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		status.Attributes["scriptLibrary.generation"] = fmt.Sprintf("%d", scriptLibraryObj.GetGeneration())
 	}
 
-	if err := validateSpec(spec); err != nil {
+	if err := validateResourceProvider(&spec); err != nil {
+		kdexv1alpha1.SetConditions(
+			&status.Conditions,
+			kdexv1alpha1.ConditionStatuses{
+				Degraded:    metav1.ConditionTrue,
+				Progressing: metav1.ConditionFalse,
+				Ready:       metav1.ConditionFalse,
+			},
+			kdexv1alpha1.ConditionReasonReconcileError,
+			err.Error(),
+		)
+
+		return ctrl.Result{}, err
+	}
+
+	if err := validateAssets(spec.Assets); err != nil {
 		kdexv1alpha1.SetConditions(
 			&status.Conditions,
 			kdexv1alpha1.ConditionStatuses{
@@ -164,47 +177,4 @@ func (r *KDexThemeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		}).
 		Named("kdextheme").
 		Complete(r)
-}
-
-func validateSpec(spec kdexv1alpha1.KDexThemeSpec) error {
-	if spec.Image == "" || spec.RoutePath == "" {
-		for _, asset := range spec.Assets {
-			if asset.LinkHref == "" && asset.Style != "" {
-				continue
-			}
-
-			if asset.LinkHref != "" && !strings.Contains(asset.LinkHref, "://") {
-				return fmt.Errorf("linkHref %s contains relative url but no theme image was provided", asset.LinkHref)
-			}
-		}
-	}
-
-	if spec.Image != "" && spec.RoutePath == "" {
-		return fmt.Errorf("routePath must be specified when an image is specified")
-	}
-
-	if spec.Image != "" && spec.RoutePath != "" {
-		for _, asset := range spec.Assets {
-			if asset.LinkHref == "" && asset.Style != "" {
-				continue
-			}
-
-			if asset.LinkHref != "" &&
-				!strings.Contains(asset.LinkHref, "://") &&
-				!strings.HasPrefix(asset.LinkHref, spec.RoutePath) {
-
-				return fmt.Errorf("linkHref %s is not prefixed by %s", asset.LinkHref, spec.RoutePath)
-			}
-		}
-	}
-
-	renderer := render.Renderer{}
-
-	_, err := renderer.RenderOne(
-		"theme-assets",
-		spec.String(),
-		render.DefaultTemplateData(),
-	)
-
-	return err
 }

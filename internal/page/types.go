@@ -8,6 +8,7 @@ type ResolvedContentEntry struct {
 	App               *kdexv1alpha1.KDexAppSpec
 	AppName           string
 	AppGeneration     string
+	Attributes        map[string]string
 	Content           string
 	CustomElementName string
 	Slot              string

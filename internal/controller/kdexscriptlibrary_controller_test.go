@@ -81,7 +81,7 @@ var _ = Describe("KDexScriptLibrary Controller", func() {
 						Name:    "@my-scope/my-package",
 						Version: "1.0.0",
 					},
-					Scripts: []kdexv1alpha1.Script{
+					Scripts: []kdexv1alpha1.ScriptDef{
 						{
 							FootScript: false,
 							Script:     `console.log('test');`,

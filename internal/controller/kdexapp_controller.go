@@ -113,6 +113,21 @@ func (r *KDexAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 		status.Attributes["secret.generation"] = fmt.Sprintf("%d", secret.Generation)
 	}
 
+	if err := validateResourceProvider(&spec); err != nil {
+		kdexv1alpha1.SetConditions(
+			&status.Conditions,
+			kdexv1alpha1.ConditionStatuses{
+				Degraded:    metav1.ConditionTrue,
+				Progressing: metav1.ConditionFalse,
+				Ready:       metav1.ConditionFalse,
+			},
+			kdexv1alpha1.ConditionReasonReconcileError,
+			err.Error(),
+		)
+
+		return ctrl.Result{}, err
+	}
+
 	if err := validatePackageReference(ctx, &spec.PackageReference, secret, r.RegistryFactory); err != nil {
 		kdexv1alpha1.SetConditions(
 			&status.Conditions,

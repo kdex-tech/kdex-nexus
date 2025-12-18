@@ -16,7 +16,7 @@ func Test_validateScripts(t *testing.T) {
 		{
 			name: "basic script",
 			scriptReference: &kdexv1alpha1.KDexScriptLibrarySpec{
-				Scripts: []kdexv1alpha1.Script{
+				Scripts: []kdexv1alpha1.ScriptDef{
 					{
 						Script: `console.log('test');`,
 					},
@@ -27,7 +27,7 @@ func Test_validateScripts(t *testing.T) {
 		{
 			name: "basic script fail",
 			scriptReference: &kdexv1alpha1.KDexScriptLibrarySpec{
-				Scripts: []kdexv1alpha1.Script{
+				Scripts: []kdexv1alpha1.ScriptDef{
 					{
 						Script: `console.log('test`,
 					},

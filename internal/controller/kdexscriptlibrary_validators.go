@@ -27,7 +27,7 @@ func validateScripts(scriptReference *kdexv1alpha1.KDexScriptLibrarySpec) error 
 	}
 
 	for _, script := range scriptReference.Scripts {
-		output := script.ToScriptTag(false)
+		output := script.ToTag()
 		if output != "" {
 			buffer.WriteString(separator)
 			separator = "\n"
@@ -44,7 +44,7 @@ func validateScripts(scriptReference *kdexv1alpha1.KDexScriptLibrarySpec) error 
 	separator = ""
 
 	for _, script := range scriptReference.Scripts {
-		output := script.ToScriptTag(true)
+		output := script.ToTag()
 		if output != "" {
 			buffer.WriteString(separator)
 			separator = "\n"

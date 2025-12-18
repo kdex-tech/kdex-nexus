@@ -120,7 +120,7 @@ var _ = Describe("KDexPageNavigation Controller", func() {
 						Namespace: namespace,
 					},
 					Spec: kdexv1alpha1.KDexScriptLibrarySpec{
-						Scripts: []kdexv1alpha1.Script{
+						Scripts: []kdexv1alpha1.ScriptDef{
 							{
 								Script: "console.log('test');",
 							},

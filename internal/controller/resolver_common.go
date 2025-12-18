@@ -29,17 +29,19 @@ func ResolveContents(
 	contents := make(map[string]page.ResolvedContentEntry)
 
 	for _, contentEntry := range pageBinding.Spec.ContentEntries {
-		appRef := contentEntry.AppRef
-		if appRef == nil {
+		rawEntry := contentEntry.ContentEntryStatic.RawHTML
+		if rawEntry == "" {
 			contents[contentEntry.Slot] = page.ResolvedContentEntry{
-				Content: contentEntry.RawHTML,
+				Content: rawEntry,
 				Slot:    contentEntry.Slot,
 			}
 
 			continue
 		}
 
-		app, shouldReturn, r1, err := ResolveKDexObjectReference(ctx, c, pageBinding, &pageBinding.Status.Conditions, appRef, requeueDelay)
+		appEntry := contentEntry.ContentEntryApp
+
+		app, shouldReturn, r1, err := ResolveKDexObjectReference(ctx, c, pageBinding, &pageBinding.Status.Conditions, &appEntry.AppRef, requeueDelay)
 		if shouldReturn {
 			return nil, shouldReturn, r1, err
 		}
@@ -57,7 +59,8 @@ func ResolveContents(
 			App:               appSpec,
 			AppName:           app.GetName(),
 			AppGeneration:     fmt.Sprintf("%d", app.GetGeneration()),
-			CustomElementName: contentEntry.CustomElementName,
+			Attributes:        appEntry.Attributes,
+			CustomElementName: appEntry.CustomElementName,
 			Slot:              contentEntry.Slot,
 		}
 	}

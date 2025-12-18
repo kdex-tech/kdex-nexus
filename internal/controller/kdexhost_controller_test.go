@@ -160,9 +160,11 @@ var _ = Describe("KDexHost Controller", func() {
 					Spec: kdexv1alpha1.KDexThemeSpec{
 						Assets: []kdexv1alpha1.Asset{
 							{
-								LinkHref: "http://foo.bar/style.css",
-								Attributes: map[string]string{
-									"rel": "stylesheet",
+								LinkDef: kdexv1alpha1.LinkDef{
+									LinkHref: "http://foo.bar/style.css",
+									Attributes: map[string]string{
+										"rel": "stylesheet",
+									},
 								},
 							},
 						},
@@ -212,7 +214,7 @@ var _ = Describe("KDexHost Controller", func() {
 						Namespace: namespace,
 					},
 					Spec: kdexv1alpha1.KDexScriptLibrarySpec{
-						Scripts: []kdexv1alpha1.Script{
+						Scripts: []kdexv1alpha1.ScriptDef{
 							{
 								Attributes: map[string]string{
 									"type": "text/module",
