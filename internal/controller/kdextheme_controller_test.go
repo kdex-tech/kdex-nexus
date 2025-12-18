@@ -57,7 +57,7 @@ var _ = Describe("KDexTheme Controller", func() {
 				Spec: kdexv1alpha1.KDexThemeSpec{
 					Assets: []kdexv1alpha1.Asset{
 						{
-							LinkDef: kdexv1alpha1.LinkDef{
+							LinkDef: &kdexv1alpha1.LinkDef{
 								Attributes: map[string]string{
 									"rel": "stylesheet",
 								},
@@ -84,7 +84,7 @@ var _ = Describe("KDexTheme Controller", func() {
 				Spec: kdexv1alpha1.KDexThemeSpec{
 					Assets: []kdexv1alpha1.Asset{
 						{
-							LinkDef: kdexv1alpha1.LinkDef{
+							LinkDef: &kdexv1alpha1.LinkDef{
 								Attributes: map[string]string{
 									"rel": "stylesheet",
 								},
@@ -113,7 +113,7 @@ var _ = Describe("KDexTheme Controller", func() {
 					Spec: kdexv1alpha1.KDexThemeSpec{
 						Assets: []kdexv1alpha1.Asset{
 							{
-								LinkDef: kdexv1alpha1.LinkDef{
+								LinkDef: &kdexv1alpha1.LinkDef{
 									Attributes: map[string]string{
 										"!": `"`,
 									},
@@ -139,7 +139,7 @@ var _ = Describe("KDexTheme Controller", func() {
 					Spec: kdexv1alpha1.KDexThemeSpec{
 						Assets: []kdexv1alpha1.Asset{
 							{
-								LinkDef: kdexv1alpha1.LinkDef{
+								LinkDef: &kdexv1alpha1.LinkDef{
 									Attributes: map[string]string{
 										"rel": "stylesheet",
 									},
@@ -165,7 +165,7 @@ var _ = Describe("KDexTheme Controller", func() {
 				Spec: kdexv1alpha1.KDexThemeSpec{
 					Assets: []kdexv1alpha1.Asset{
 						{
-							LinkDef: kdexv1alpha1.LinkDef{
+							LinkDef: &kdexv1alpha1.LinkDef{
 								Attributes: map[string]string{
 									"rel": "stylesheet",
 								},
@@ -195,7 +195,7 @@ var _ = Describe("KDexTheme Controller", func() {
 				Spec: kdexv1alpha1.KDexThemeSpec{
 					Assets: []kdexv1alpha1.Asset{
 						{
-							LinkDef: kdexv1alpha1.LinkDef{
+							LinkDef: &kdexv1alpha1.LinkDef{
 								Attributes: map[string]string{
 									"rel": "stylesheet",
 								},
@@ -223,9 +223,9 @@ var _ = Describe("KDexTheme Controller", func() {
 					Namespace: namespace,
 				},
 				Spec: kdexv1alpha1.KDexThemeSpec{
-					Assets: []kdexv1alpha1.Asset{
+					Assets: kdexv1alpha1.Assets{
 						{
-							LinkDef: kdexv1alpha1.LinkDef{
+							LinkDef: &kdexv1alpha1.LinkDef{
 								Attributes: map[string]string{
 									"rel": "stylesheet",
 								},
