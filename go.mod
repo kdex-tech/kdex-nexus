@@ -2,7 +2,7 @@ module kdex.dev/nexus
 
 go 1.25.0
 
-replace kdex.dev/crds => github.com/kdex-tech/kdex-crds v0.13.18
+replace kdex.dev/crds => github.com/kdex-tech/kdex-crds v0.13.19
 
 require (
 	github.com/go-logr/logr v1.4.3
@@ -113,7 +113,7 @@ require (
 	k8s.io/component-base v0.35.0 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20251125145642-4e65d59e963e // indirect
-	k8s.io/utils v0.0.0-20251218160917-61b37f7a4624 // indirect
+	k8s.io/utils v0.0.0-20251219084037-98d557b7f1e7 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.34.0 // indirect
 	sigs.k8s.io/gateway-api v1.4.1 // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
