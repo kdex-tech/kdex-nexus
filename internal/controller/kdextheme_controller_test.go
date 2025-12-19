@@ -42,7 +42,10 @@ var _ = Describe("KDexTheme Controller", func() {
 					Name:      resourceName,
 					Namespace: namespace,
 				},
-				Spec: kdexv1alpha1.KDexThemeSpec{},
+				Spec: kdexv1alpha1.KDexThemeSpec{
+					Assets:    kdexv1alpha1.Assets{},
+					WebServer: kdexv1alpha1.WebServer{},
+				},
 			}
 
 			Expect(k8sClient.Create(ctx, resource)).NotTo(Succeed())
@@ -57,14 +60,13 @@ var _ = Describe("KDexTheme Controller", func() {
 				Spec: kdexv1alpha1.KDexThemeSpec{
 					Assets: []kdexv1alpha1.Asset{
 						{
-							LinkDef: &kdexv1alpha1.LinkDef{
-								Attributes: map[string]string{
-									"rel": "stylesheet",
-								},
-								LinkHref: "http://kdex.dev/style.css",
+							Attributes: map[string]string{
+								"rel": "stylesheet",
 							},
+							LinkHref: "http://kdex.dev/style.css",
 						},
 					},
+					WebServer: kdexv1alpha1.WebServer{},
 				},
 			}
 
@@ -84,12 +86,10 @@ var _ = Describe("KDexTheme Controller", func() {
 				Spec: kdexv1alpha1.KDexThemeSpec{
 					Assets: []kdexv1alpha1.Asset{
 						{
-							LinkDef: &kdexv1alpha1.LinkDef{
-								Attributes: map[string]string{
-									"rel": "stylesheet",
-								},
-								LinkHref: "/style.css",
+							Attributes: map[string]string{
+								"rel": "stylesheet",
 							},
+							LinkHref: "/style.css",
 						},
 					},
 				},
@@ -113,12 +113,10 @@ var _ = Describe("KDexTheme Controller", func() {
 					Spec: kdexv1alpha1.KDexThemeSpec{
 						Assets: []kdexv1alpha1.Asset{
 							{
-								LinkDef: &kdexv1alpha1.LinkDef{
-									Attributes: map[string]string{
-										"!": `"`,
-									},
-									LinkHref: `"`,
+								Attributes: map[string]string{
+									"!": `"`,
 								},
+								LinkHref: `"`,
 							},
 						},
 					},
@@ -139,12 +137,10 @@ var _ = Describe("KDexTheme Controller", func() {
 					Spec: kdexv1alpha1.KDexThemeSpec{
 						Assets: []kdexv1alpha1.Asset{
 							{
-								LinkDef: &kdexv1alpha1.LinkDef{
-									Attributes: map[string]string{
-										"rel": "stylesheet",
-									},
-									LinkHref: "http://kdex.dev/style.css",
+								Attributes: map[string]string{
+									"rel": "stylesheet",
 								},
+								LinkHref: "http://kdex.dev/style.css",
 							},
 						},
 					},
@@ -156,7 +152,7 @@ var _ = Describe("KDexTheme Controller", func() {
 				&kdexv1alpha1.KDexTheme{}, true)
 		})
 
-		It("should not reconcile with image but no routePath", func() {
+		It("should not reconcile with image but no ingressPath", func() {
 			resource := &kdexv1alpha1.KDexTheme{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
@@ -165,12 +161,10 @@ var _ = Describe("KDexTheme Controller", func() {
 				Spec: kdexv1alpha1.KDexThemeSpec{
 					Assets: []kdexv1alpha1.Asset{
 						{
-							LinkDef: &kdexv1alpha1.LinkDef{
-								Attributes: map[string]string{
-									"rel": "stylesheet",
-								},
-								LinkHref: "/style.css",
+							Attributes: map[string]string{
+								"rel": "stylesheet",
 							},
+							LinkHref: "/style.css",
 						},
 					},
 					WebServer: kdexv1alpha1.WebServer{
@@ -186,7 +180,7 @@ var _ = Describe("KDexTheme Controller", func() {
 				&kdexv1alpha1.KDexTheme{}, false)
 		})
 
-		It("should not reconcile with no image but routePath", func() {
+		It("should not reconcile with no image but ingressPath", func() {
 			resource := &kdexv1alpha1.KDexTheme{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
@@ -195,12 +189,10 @@ var _ = Describe("KDexTheme Controller", func() {
 				Spec: kdexv1alpha1.KDexThemeSpec{
 					Assets: []kdexv1alpha1.Asset{
 						{
-							LinkDef: &kdexv1alpha1.LinkDef{
-								Attributes: map[string]string{
-									"rel": "stylesheet",
-								},
-								LinkHref: "/style.css",
+							Attributes: map[string]string{
+								"rel": "stylesheet",
 							},
+							LinkHref: "/style.css",
 						},
 					},
 					WebServer: kdexv1alpha1.WebServer{
@@ -216,7 +208,7 @@ var _ = Describe("KDexTheme Controller", func() {
 				&kdexv1alpha1.KDexTheme{}, false)
 		})
 
-		It("should not reconcile with image, routePath and relative assets that are not prefixed by routePath", func() {
+		It("should not reconcile with image, ingressPath and relative assets that are not prefixed by ingressPath", func() {
 			resource := &kdexv1alpha1.KDexTheme{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
@@ -225,12 +217,10 @@ var _ = Describe("KDexTheme Controller", func() {
 				Spec: kdexv1alpha1.KDexThemeSpec{
 					Assets: kdexv1alpha1.Assets{
 						{
-							LinkDef: &kdexv1alpha1.LinkDef{
-								Attributes: map[string]string{
-									"rel": "stylesheet",
-								},
-								LinkHref: "/style.css",
+							Attributes: map[string]string{
+								"rel": "stylesheet",
 							},
+							LinkHref: "/style.css",
 						},
 					},
 					WebServer: kdexv1alpha1.WebServer{
