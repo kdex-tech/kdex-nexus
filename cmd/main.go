@@ -43,8 +43,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	"kdex.dev/nexus/internal/controller"
+	nexuswebhook "kdex.dev/nexus/internal/webhook"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -208,6 +210,28 @@ func main() {
 	}
 
 	conf := configuration.LoadConfiguration(configFile, scheme)
+
+	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+		mgr.GetWebhookServer().Register("/mutate-kdex-dev-v1alpha1-kdexapps", &admission.Webhook{
+			Handler: &nexuswebhook.KDexAppDefaulter{
+				Client:        mgr.GetClient(),
+				Configuration: conf,
+			},
+		})
+		mgr.GetWebhookServer().Register("/mutate-kdex-dev-v1alpha1-kdexhosts", &admission.Webhook{
+			Handler: &nexuswebhook.KDexHostDefaulter{
+				Client:        mgr.GetClient(),
+				Configuration: conf,
+			},
+		})
+		mgr.GetWebhookServer().Register("/mutate-kdex-dev-v1alpha1-kdexthemes", &admission.Webhook{
+			Handler: &nexuswebhook.KDexThemeDefaulter{
+				Client:        mgr.GetClient(),
+				Configuration: conf,
+			},
+		})
+	}
+
 	requeueDelay := time.Duration(requeueDelaySeconds) * time.Second
 
 	registryFactory := func(

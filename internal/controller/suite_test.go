@@ -45,6 +45,10 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+
+	nexuswebhook "kdex.dev/nexus/internal/webhook"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -111,6 +115,9 @@ var _ = BeforeSuite(func() {
 	testEnv = &envtest.Environment{
 		CRDDirectoryPaths:     []string{}, // No local CRDs initially
 		ErrorIfCRDPathMissing: true,
+		WebhookInstallOptions: envtest.WebhookInstallOptions{
+			Paths: []string{filepath.Join("..", "..", "config", "webhook", "manifests.yaml")},
+		},
 	}
 
 	kdexCrdVersion := getCRDModuleVersion()
@@ -158,6 +165,10 @@ var _ = BeforeSuite(func() {
 		},
 		Logger: logger,
 		Scheme: scheme.Scheme,
+		WebhookServer: webhook.NewServer(webhook.Options{
+			Port:    testEnv.WebhookInstallOptions.LocalServingPort,
+			CertDir: testEnv.WebhookInstallOptions.LocalServingCertDir,
+		}),
 	})
 	Expect(err).NotTo(HaveOccurred())
 
@@ -170,6 +181,36 @@ var _ = BeforeSuite(func() {
 
 	configuration := configuration.LoadConfiguration("/config.yaml", scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
+
+	webhookHandler := &nexuswebhook.KDexAppDefaulter{
+		Client:        k8sManager.GetClient(),
+		Configuration: configuration,
+	}
+	_ = webhookHandler.InjectDecoder(admission.NewDecoder(scheme.Scheme))
+
+	k8sManager.GetWebhookServer().Register("/mutate-kdex-dev-v1alpha1-kdexapps", &admission.Webhook{
+		Handler: webhookHandler,
+	})
+
+	hostWebhookHandler := &nexuswebhook.KDexHostDefaulter{
+		Client:        k8sManager.GetClient(),
+		Configuration: configuration,
+	}
+	_ = hostWebhookHandler.InjectDecoder(admission.NewDecoder(scheme.Scheme))
+
+	k8sManager.GetWebhookServer().Register("/mutate-kdex-dev-v1alpha1-kdexhosts", &admission.Webhook{
+		Handler: hostWebhookHandler,
+	})
+
+	themeWebhookHandler := &nexuswebhook.KDexThemeDefaulter{
+		Client:        k8sManager.GetClient(),
+		Configuration: configuration,
+	}
+	_ = themeWebhookHandler.InjectDecoder(admission.NewDecoder(scheme.Scheme))
+
+	k8sManager.GetWebhookServer().Register("/mutate-kdex-dev-v1alpha1-kdexthemes", &admission.Webhook{
+		Handler: themeWebhookHandler,
+	})
 
 	// App
 	appReconciler := &KDexAppReconciler{
