@@ -36,7 +36,7 @@ var _ = Describe("KDexPageHeader Controller", func() {
 			cleanupResources(namespace)
 		})
 
-		It("should successfully reconcile the resource", func() {
+		It("should successfully reconcile the resource with valid content", func() {
 			resource := &kdexv1alpha1.KDexPageHeader{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
@@ -54,40 +54,18 @@ var _ = Describe("KDexPageHeader Controller", func() {
 				&kdexv1alpha1.KDexPageHeader{}, true)
 		})
 
-		It("should successfully reconcile after template becomes valid html", func() {
-			addOrUpdatePageHeader(
-				ctx, k8sClient,
-				kdexv1alpha1.KDexPageHeader{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      resourceName,
-						Namespace: namespace,
-					},
-					Spec: kdexv1alpha1.KDexPageHeaderSpec{
-						Content: "<h1>Hello, World!</h1",
-					},
+		It("should not validate with invalid content", func() {
+			resource := &kdexv1alpha1.KDexPageHeader{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: namespace,
 				},
-			)
-
-			assertResourceReady(
-				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.KDexPageHeader{}, false)
-
-			addOrUpdatePageHeader(
-				ctx, k8sClient,
-				kdexv1alpha1.KDexPageHeader{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      resourceName,
-						Namespace: namespace,
-					},
-					Spec: kdexv1alpha1.KDexPageHeaderSpec{
-						Content: "<h1>Hello, World!</h1>",
-					},
+				Spec: kdexv1alpha1.KDexPageHeaderSpec{
+					Content: "<h1>Hello, World!</h1",
 				},
-			)
+			}
 
-			assertResourceReady(
-				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.KDexPageHeader{}, true)
+			Expect(k8sClient.Create(ctx, resource)).NotTo(Succeed())
 		})
 
 		It("should successfully reconcile after script library becomes available", func() {

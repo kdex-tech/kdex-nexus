@@ -21,10 +21,12 @@ import (
 	"fmt"
 	"time"
 
+	"os"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
-	"kdex.dev/crds/render"
+	nexuswebhook "kdex.dev/nexus/internal/webhook"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -111,23 +113,6 @@ func (r *KDexPageFooterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		status.Attributes["scriptLibrary.generation"] = fmt.Sprintf("%d", scriptLibraryObj.GetGeneration())
 	}
 
-	if err := render.ValidateContent(
-		o.GetName(), spec.Content,
-	); err != nil {
-		kdexv1alpha1.SetConditions(
-			&status.Conditions,
-			kdexv1alpha1.ConditionStatuses{
-				Degraded:    metav1.ConditionTrue,
-				Progressing: metav1.ConditionFalse,
-				Ready:       metav1.ConditionFalse,
-			},
-			kdexv1alpha1.ConditionReasonReconcileError,
-			err.Error(),
-		)
-
-		return ctrl.Result{}, err
-	}
-
 	kdexv1alpha1.SetConditions(
 		&status.Conditions,
 		kdexv1alpha1.ConditionStatuses{
@@ -146,6 +131,24 @@ func (r *KDexPageFooterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *KDexPageFooterReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+		err := ctrl.NewWebhookManagedBy(mgr).
+			For(&kdexv1alpha1.KDexPageFooter{}).
+			WithValidator(&nexuswebhook.PageContentValidator{}).
+			Complete()
+		if err != nil {
+			return err
+		}
+
+		err = ctrl.NewWebhookManagedBy(mgr).
+			For(&kdexv1alpha1.KDexClusterPageFooter{}).
+			WithValidator(&nexuswebhook.PageContentValidator{}).
+			Complete()
+		if err != nil {
+			return err
+		}
+	}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&kdexv1alpha1.KDexPageFooter{}).
 		Watches(

@@ -36,7 +36,7 @@ var _ = Describe("KDexPageNavigation Controller", func() {
 			cleanupResources(namespace)
 		})
 
-		It("should successfully reconcile the resource", func() {
+		It("should successfully reconcile the resource with valid content", func() {
 			resource := &kdexv1alpha1.KDexPageNavigation{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
@@ -54,40 +54,18 @@ var _ = Describe("KDexPageNavigation Controller", func() {
 				&kdexv1alpha1.KDexPageNavigation{}, true)
 		})
 
-		It("should successfully reconcile after template becomes valid html", func() {
-			addOrUpdatePageNavigation(
-				ctx, k8sClient,
-				kdexv1alpha1.KDexPageNavigation{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      resourceName,
-						Namespace: namespace,
-					},
-					Spec: kdexv1alpha1.KDexPageNavigationSpec{
-						Content: "<h1>Hello, World!</h1",
-					},
+		It("should not validate with invalid content", func() {
+			resource := &kdexv1alpha1.KDexPageNavigation{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: namespace,
 				},
-			)
-
-			assertResourceReady(
-				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.KDexPageNavigation{}, false)
-
-			addOrUpdatePageNavigation(
-				ctx, k8sClient,
-				kdexv1alpha1.KDexPageNavigation{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      resourceName,
-						Namespace: namespace,
-					},
-					Spec: kdexv1alpha1.KDexPageNavigationSpec{
-						Content: "<h1>Hello, World!</h1>",
-					},
+				Spec: kdexv1alpha1.KDexPageNavigationSpec{
+					Content: "<h1>Hello, World!</h1",
 				},
-			)
+			}
 
-			assertResourceReady(
-				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.KDexPageNavigation{}, true)
+			Expect(k8sClient.Create(ctx, resource)).NotTo(Succeed())
 		})
 
 		It("should successfully reconcile after script library becomes available", func() {

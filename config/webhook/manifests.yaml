@@ -210,3 +210,163 @@ webhooks:
     resources:
     - kdexthemes
   sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-kdex-dev-v1alpha1-kdexclusterpagearchetype
+  failurePolicy: Fail
+  name: validation.kdexclusterpagearchetype.kdex.dev
+  rules:
+  - apiGroups:
+    - kdex.dev
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - kdexclusterpagearchetypes
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-kdex-dev-v1alpha1-kdexclusterpagefooter
+  failurePolicy: Fail
+  name: validation.kdexclusterpagefooter.kdex.dev
+  rules:
+  - apiGroups:
+    - kdex.dev
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - kdexclusterpagefooters
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-kdex-dev-v1alpha1-kdexclusterpageheader
+  failurePolicy: Fail
+  name: validation.kdexclusterpageheader.kdex.dev
+  rules:
+  - apiGroups:
+    - kdex.dev
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - kdexclusterpageheaders
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-kdex-dev-v1alpha1-kdexclusterpagenavigation
+  failurePolicy: Fail
+  name: validation.kdexclusterpagenavigation.kdex.dev
+  rules:
+  - apiGroups:
+    - kdex.dev
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - kdexclusterpagenavigations
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-kdex-dev-v1alpha1-kdexpagearchetype
+  failurePolicy: Fail
+  name: validation.kdexpagearchetype.kdex.dev
+  rules:
+  - apiGroups:
+    - kdex.dev
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - kdexpagearchetypes
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-kdex-dev-v1alpha1-kdexpagefooter
+  failurePolicy: Fail
+  name: validation.kdexpagefooter.kdex.dev
+  rules:
+  - apiGroups:
+    - kdex.dev
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - kdexpagefooters
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-kdex-dev-v1alpha1-kdexpageheader
+  failurePolicy: Fail
+  name: validation.kdexpageheader.kdex.dev
+  rules:
+  - apiGroups:
+    - kdex.dev
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - kdexpageheaders
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-kdex-dev-v1alpha1-kdexpagenavigation
+  failurePolicy: Fail
+  name: validation.kdexpagenavigation.kdex.dev
+  rules:
+  - apiGroups:
+    - kdex.dev
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - kdexpagenavigations
+  sideEffects: None

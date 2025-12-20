@@ -47,11 +47,7 @@ var _ = Describe("KDexPageArchetype Controller", func() {
 				},
 			}
 
-			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
-
-			assertResourceReady(
-				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.KDexPageArchetype{}, false)
+			Expect(k8sClient.Create(ctx, resource)).NotTo(Succeed())
 		})
 
 		It("should not reconcile with missing extra navigation", func() {
