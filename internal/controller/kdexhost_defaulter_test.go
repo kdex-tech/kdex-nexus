@@ -10,7 +10,7 @@ import (
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 )
 
-var _ = Describe("KDexHost Webhook", func() {
+var _ = Describe("KDexHost Defaulter", func() {
 	Context("When creating a KDexHost", func() {
 		const namespace = "default"
 		const resourceName = "test-host-webhook-resource"

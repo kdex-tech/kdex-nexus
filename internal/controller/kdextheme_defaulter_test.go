@@ -10,7 +10,7 @@ import (
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 )
 
-var _ = Describe("KDexTheme Webhook", func() {
+var _ = Describe("KDexTheme Defaulter", func() {
 	Context("When creating a KDexTheme", func() {
 		const namespace = "default"
 		const resourceName = "test-theme-webhook-resource"
@@ -29,7 +29,7 @@ var _ = Describe("KDexTheme Webhook", func() {
 				},
 				Spec: kdexv1alpha1.KDexThemeSpec{
 					Assets: []kdexv1alpha1.Asset{
-						{LinkHref: "styles.css"},
+						{LinkHref: "http://foo.bar/styles.css"},
 					},
 				},
 			}
@@ -50,10 +50,11 @@ var _ = Describe("KDexTheme Webhook", func() {
 				},
 				Spec: kdexv1alpha1.KDexThemeSpec{
 					Assets: []kdexv1alpha1.Asset{
-						{LinkHref: "styles.css"},
+						{LinkHref: "/custom/styles.css"},
 					},
 					WebServer: kdexv1alpha1.WebServer{
 						IngressPath: "/custom",
+						StaticImage: "kdex/theme:1.2.3",
 					},
 				},
 			}

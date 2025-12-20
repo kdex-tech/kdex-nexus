@@ -19,11 +19,14 @@ package controller
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
+	"kdex.dev/nexus/internal/validation"
+	nexuswebhook "kdex.dev/nexus/internal/webhook"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -110,7 +113,7 @@ func (r *KDexThemeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		status.Attributes["scriptLibrary.generation"] = fmt.Sprintf("%d", scriptLibraryObj.GetGeneration())
 	}
 
-	if err := validateResourceProvider(&spec); err != nil {
+	if err := validation.ValidateAssets(spec.Assets); err != nil {
 		kdexv1alpha1.SetConditions(
 			&status.Conditions,
 			kdexv1alpha1.ConditionStatuses{
@@ -125,7 +128,7 @@ func (r *KDexThemeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
-	if err := validateAssets(spec.Assets); err != nil {
+	if err := validation.ValidateResourceProvider(&spec); err != nil {
 		kdexv1alpha1.SetConditions(
 			&status.Conditions,
 			kdexv1alpha1.ConditionStatuses{
@@ -158,6 +161,28 @@ func (r *KDexThemeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *KDexThemeReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+		err := ctrl.NewWebhookManagedBy(mgr).
+			For(&kdexv1alpha1.KDexTheme{}).
+			WithDefaulter(&nexuswebhook.KDexThemeDefaulter{}).
+			WithValidator(&nexuswebhook.KDexThemeValidator{}).
+			Complete()
+
+		if err != nil {
+			return err
+		}
+
+		err = ctrl.NewWebhookManagedBy(mgr).
+			For(&kdexv1alpha1.KDexClusterTheme{}).
+			WithDefaulter(&nexuswebhook.KDexThemeDefaulter{}).
+			WithValidator(&nexuswebhook.KDexThemeValidator{}).
+			Complete()
+
+		if err != nil {
+			return err
+		}
+	}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&kdexv1alpha1.KDexTheme{}).
 		Watches(

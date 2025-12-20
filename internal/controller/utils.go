@@ -2,7 +2,6 @@ package controller
 
 import (
 	"context"
-	"fmt"
 	"reflect"
 	"strings"
 
@@ -13,9 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/jsonpath"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
-	"kdex.dev/crds/npm"
-	"kdex.dev/crds/render"
-	kdexresource "kdex.dev/crds/resource"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
@@ -174,66 +170,4 @@ func getKind(obj client.Object, scheme *runtime.Scheme) (string, error) {
 		return "", err
 	}
 	return gvk.Kind, nil
-}
-
-func validatePackageReference(
-	ctx context.Context,
-	packageReference *kdexv1alpha1.PackageReference,
-	secret *corev1.Secret,
-	registryFactory func(secret *corev1.Secret, error func(err error, msg string, keysAndValues ...any)) (npm.Registry, error),
-) error {
-	log := logf.FromContext(ctx)
-
-	if !strings.HasPrefix(packageReference.Name, "@") || !strings.Contains(packageReference.Name, "/") {
-		return fmt.Errorf("invalid package name, must be scoped with @scope/name: %s", packageReference.Name)
-	}
-
-	registry, err := registryFactory(secret, log.Error)
-	if err != nil {
-		return err
-	}
-
-	return registry.ValidatePackage(
-		packageReference.Name,
-		packageReference.Version,
-	)
-}
-
-func validateAssets(assets kdexv1alpha1.Assets) error {
-	renderer := render.Renderer{}
-
-	_, err := renderer.RenderOne(
-		"theme-assets",
-		assets.String(),
-		render.DefaultTemplateData(),
-	)
-
-	return err
-}
-
-func validateResourceProvider(resourceProvider kdexresource.ResourceProvider) error {
-	if resourceProvider.GetResourceImage() == "" {
-		for _, url := range resourceProvider.GetResourceURLs() {
-			if url != "" && !strings.Contains(url, "://") {
-				return fmt.Errorf("%s contains relative url but no image was provided", url)
-			}
-		}
-	}
-
-	if resourceProvider.GetResourceImage() != "" && resourceProvider.GetResourcePath() == "" {
-		return fmt.Errorf("ingressPath must be specified when an image is specified")
-	}
-
-	if resourceProvider.GetResourceImage() != "" && resourceProvider.GetResourcePath() != "" {
-		for _, url := range resourceProvider.GetResourceURLs() {
-			if url != "" &&
-				!strings.Contains(url, "://") &&
-				!strings.HasPrefix(url, resourceProvider.GetResourcePath()) {
-
-				return fmt.Errorf("%s is not prefixed by ingressPath: %s", url, resourceProvider.GetResourcePath())
-			}
-		}
-	}
-
-	return nil
 }

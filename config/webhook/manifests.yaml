@@ -10,9 +10,9 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /mutate-kdex-dev-v1alpha1-kdexapps
+      path: /mutate-kdex-dev-v1alpha1-kdexapp
   failurePolicy: Fail
-  name: kdexapps.kdex.dev
+  name: mutate.kdexapp.kdex.dev
   rules:
   - apiGroups:
     - kdex.dev
@@ -30,9 +30,49 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /mutate-kdex-dev-v1alpha1-kdexhosts
+      path: /mutate-kdex-dev-v1alpha1-kdexclusterapp
   failurePolicy: Fail
-  name: kdexhosts.kdex.dev
+  name: mutate.kdexclusterapp.kdex.dev
+  rules:
+  - apiGroups:
+    - kdex.dev
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - kdexclusterapps
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /mutate-kdex-dev-v1alpha1-kdexclustertheme
+  failurePolicy: Fail
+  name: mutate.kdexclustertheme.kdex.dev
+  rules:
+  - apiGroups:
+    - kdex.dev
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - kdexclusterthemes
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /mutate-kdex-dev-v1alpha1-kdexhost
+  failurePolicy: Fail
+  name: mutate.kdexhost.kdex.dev
   rules:
   - apiGroups:
     - kdex.dev
@@ -50,9 +90,115 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /mutate-kdex-dev-v1alpha1-kdexthemes
+      path: /mutate-kdex-dev-v1alpha1-kdextheme
   failurePolicy: Fail
-  name: kdexthemes.kdex.dev
+  name: mutate.kdextheme.kdex.dev
+  rules:
+  - apiGroups:
+    - kdex.dev
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - kdexthemes
+  sideEffects: None
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: validating-webhook-configuration
+webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-kdex-dev-v1alpha1-kdexapp
+  failurePolicy: Fail
+  name: validate.kdexapp.kdex.dev
+  rules:
+  - apiGroups:
+    - kdex.dev
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - kdexapps
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-kdex-dev-v1alpha1-kdexclusterapp
+  failurePolicy: Fail
+  name: validate.kdexclusterapp.kdex.dev
+  rules:
+  - apiGroups:
+    - kdex.dev
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - kdexclusterapps
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-kdex-dev-v1alpha1-kdexclustertheme
+  failurePolicy: Fail
+  name: validate.kdexclustertheme.kdex.dev
+  rules:
+  - apiGroups:
+    - kdex.dev
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - kdexclusterthemes
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-kdex-dev-v1alpha1-kdexhost
+  failurePolicy: Fail
+  name: validate.kdexhost.kdex.dev
+  rules:
+  - apiGroups:
+    - kdex.dev
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - kdexhosts
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-kdex-dev-v1alpha1-kdextheme
+  failurePolicy: Fail
+  name: validate.kdextheme.kdex.dev
   rules:
   - apiGroups:
     - kdex.dev

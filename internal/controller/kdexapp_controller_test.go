@@ -53,11 +53,7 @@ var _ = Describe("KDexApp Controller", func() {
 				},
 			}
 
-			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
-
-			assertResourceReady(
-				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.KDexApp{}, false)
+			Expect(k8sClient.Create(ctx, resource)).NotTo(Succeed())
 		})
 
 		It("it should become ready if it has a valid package reference", func() {
@@ -107,11 +103,7 @@ var _ = Describe("KDexApp Controller", func() {
 				},
 			}
 
-			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
-
-			assertResourceReady(
-				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.KDexApp{}, false)
+			Expect(k8sClient.Create(ctx, resource)).NotTo(Succeed())
 		})
 
 		It("it must not become ready if it has a valid package reference but the package is missing", func() {
@@ -155,7 +147,7 @@ var _ = Describe("KDexApp Controller", func() {
 						},
 					},
 					PackageReference: kdexv1alpha1.PackageReference{
-						Name: "my-scope/my-package",
+						Name: "@my-scope/my-package",
 						SecretRef: &corev1.LocalObjectReference{
 							Name: "non-existent-secret",
 						},

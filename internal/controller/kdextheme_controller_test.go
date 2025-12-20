@@ -36,7 +36,7 @@ var _ = Describe("KDexTheme Controller", func() {
 			cleanupResources(namespace)
 		})
 
-		It("should not reconcile without assets", func() {
+		It("should not validate without assets", func() {
 			resource := &kdexv1alpha1.KDexTheme{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
@@ -51,7 +51,7 @@ var _ = Describe("KDexTheme Controller", func() {
 			Expect(k8sClient.Create(ctx, resource)).NotTo(Succeed())
 		})
 
-		It("should reconcile with only absolute assets references", func() {
+		It("should validate with only absolute assets and no static image", func() {
 			resource := &kdexv1alpha1.KDexTheme{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
@@ -66,7 +66,6 @@ var _ = Describe("KDexTheme Controller", func() {
 							LinkHref: "http://kdex.dev/style.css",
 						},
 					},
-					WebServer: kdexv1alpha1.WebServer{},
 				},
 			}
 
@@ -77,7 +76,7 @@ var _ = Describe("KDexTheme Controller", func() {
 				&kdexv1alpha1.KDexTheme{}, true)
 		})
 
-		It("should not reconcile with relative assets but no image specified", func() {
+		It("should not validate with relative assets but no static image", func() {
 			resource := &kdexv1alpha1.KDexTheme{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
@@ -95,64 +94,10 @@ var _ = Describe("KDexTheme Controller", func() {
 				},
 			}
 
-			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
-
-			assertResourceReady(
-				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.KDexTheme{}, false)
+			Expect(k8sClient.Create(ctx, resource)).NotTo(Succeed())
 		})
 
-		It("should successfully reconcile after assets becomes valid", func() {
-			addOrUpdateTheme(
-				ctx, k8sClient,
-				kdexv1alpha1.KDexTheme{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      resourceName,
-						Namespace: namespace,
-					},
-					Spec: kdexv1alpha1.KDexThemeSpec{
-						Assets: []kdexv1alpha1.Asset{
-							{
-								Attributes: map[string]string{
-									"!": `"`,
-								},
-								LinkHref: `"`,
-							},
-						},
-					},
-				},
-			)
-
-			assertResourceReady(
-				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.KDexTheme{}, false)
-
-			addOrUpdateTheme(
-				ctx, k8sClient,
-				kdexv1alpha1.KDexTheme{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      resourceName,
-						Namespace: namespace,
-					},
-					Spec: kdexv1alpha1.KDexThemeSpec{
-						Assets: []kdexv1alpha1.Asset{
-							{
-								Attributes: map[string]string{
-									"rel": "stylesheet",
-								},
-								LinkHref: "http://kdex.dev/style.css",
-							},
-						},
-					},
-				},
-			)
-
-			assertResourceReady(
-				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.KDexTheme{}, true)
-		})
-
-		It("should not reconcile with image but no ingressPath", func() {
+		It("should not validate with static image but invalid assets", func() {
 			resource := &kdexv1alpha1.KDexTheme{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
@@ -168,19 +113,15 @@ var _ = Describe("KDexTheme Controller", func() {
 						},
 					},
 					WebServer: kdexv1alpha1.WebServer{
-						StaticImage: "foo/bar",
+						StaticImage: "kdex/theme:123",
 					},
 				},
 			}
 
-			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
-
-			assertResourceReady(
-				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.KDexTheme{}, false)
+			Expect(k8sClient.Create(ctx, resource)).NotTo(Succeed())
 		})
 
-		It("should not reconcile with no image but ingressPath", func() {
+		It("should not validate with ingressPath but no static image", func() {
 			resource := &kdexv1alpha1.KDexTheme{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
@@ -192,7 +133,7 @@ var _ = Describe("KDexTheme Controller", func() {
 							Attributes: map[string]string{
 								"rel": "stylesheet",
 							},
-							LinkHref: "/style.css",
+							LinkHref: "/theme/style.css",
 						},
 					},
 					WebServer: kdexv1alpha1.WebServer{
@@ -201,14 +142,10 @@ var _ = Describe("KDexTheme Controller", func() {
 				},
 			}
 
-			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
-
-			assertResourceReady(
-				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.KDexTheme{}, false)
+			Expect(k8sClient.Create(ctx, resource)).NotTo(Succeed())
 		})
 
-		It("should not reconcile with image, ingressPath and relative assets that are not prefixed by ingressPath", func() {
+		It("should not validate with image, ingressPath and relative assets that are not prefixed by ingressPath", func() {
 			resource := &kdexv1alpha1.KDexTheme{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
@@ -224,17 +161,62 @@ var _ = Describe("KDexTheme Controller", func() {
 						},
 					},
 					WebServer: kdexv1alpha1.WebServer{
-						IngressPath: "/theme",
+						IngressPath: "/custom",
+						StaticImage: "foo/bar",
+					},
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, resource)).NotTo(Succeed())
+		})
+
+		It("should validate with image, ingressPath and relative assets that are prefixed by ingressPath", func() {
+			resource := &kdexv1alpha1.KDexTheme{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.KDexThemeSpec{
+					Assets: kdexv1alpha1.Assets{
+						{
+							Attributes: map[string]string{
+								"rel": "stylesheet",
+							},
+							LinkHref: "/custom/style.css",
+						},
+					},
+					WebServer: kdexv1alpha1.WebServer{
+						IngressPath: "/custom",
 						StaticImage: "foo/bar",
 					},
 				},
 			}
 
 			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+		})
 
-			assertResourceReady(
-				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.KDexTheme{}, false)
+		It("should validate with image and relative assets that are prefixed by default ingressPath", func() {
+			resource := &kdexv1alpha1.KDexTheme{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.KDexThemeSpec{
+					Assets: kdexv1alpha1.Assets{
+						{
+							Attributes: map[string]string{
+								"rel": "stylesheet",
+							},
+							LinkHref: "/theme/style.css",
+						},
+					},
+					WebServer: kdexv1alpha1.WebServer{
+						StaticImage: "foo/bar",
+					},
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 		})
 	})
 })

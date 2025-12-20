@@ -26,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	"kdex.dev/crds/npm"
+	"kdex.dev/nexus/internal/validation"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -114,7 +115,7 @@ func (r *KDexScriptLibraryReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			status.Attributes["secret.generation"] = fmt.Sprintf("%d", secret.Generation)
 		}
 
-		if err := validatePackageReference(ctx, spec.PackageReference, secret, r.RegistryFactory); err != nil {
+		if err := validation.ValidatePackageReference(ctx, spec.PackageReference, secret, r.RegistryFactory); err != nil {
 			kdexv1alpha1.SetConditions(
 				&status.Conditions,
 				kdexv1alpha1.ConditionStatuses{

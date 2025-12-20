@@ -30,6 +30,7 @@ import (
 	. "github.com/onsi/gomega"
 	"go.yaml.in/yaml/v3"
 	"golang.org/x/mod/modfile"
+	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -46,9 +47,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
-
-	nexuswebhook "kdex.dev/nexus/internal/webhook"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -116,7 +114,9 @@ var _ = BeforeSuite(func() {
 		CRDDirectoryPaths:     []string{}, // No local CRDs initially
 		ErrorIfCRDPathMissing: true,
 		WebhookInstallOptions: envtest.WebhookInstallOptions{
-			Paths: []string{filepath.Join("..", "..", "config", "webhook", "manifests.yaml")},
+			Paths: []string{
+				filepath.Join("..", "..", "config", "webhook", "manifests.yaml"),
+			},
 		},
 	}
 
@@ -144,6 +144,8 @@ var _ = BeforeSuite(func() {
 	err = corev1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 	err = rbacv1.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
+	err = admissionregistrationv1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 	err = kdexv1alpha1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
@@ -181,36 +183,6 @@ var _ = BeforeSuite(func() {
 
 	configuration := configuration.LoadConfiguration("/config.yaml", scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
-
-	webhookHandler := &nexuswebhook.KDexAppDefaulter{
-		Client:        k8sManager.GetClient(),
-		Configuration: configuration,
-	}
-	_ = webhookHandler.InjectDecoder(admission.NewDecoder(scheme.Scheme))
-
-	k8sManager.GetWebhookServer().Register("/mutate-kdex-dev-v1alpha1-kdexapps", &admission.Webhook{
-		Handler: webhookHandler,
-	})
-
-	hostWebhookHandler := &nexuswebhook.KDexHostDefaulter{
-		Client:        k8sManager.GetClient(),
-		Configuration: configuration,
-	}
-	_ = hostWebhookHandler.InjectDecoder(admission.NewDecoder(scheme.Scheme))
-
-	k8sManager.GetWebhookServer().Register("/mutate-kdex-dev-v1alpha1-kdexhosts", &admission.Webhook{
-		Handler: hostWebhookHandler,
-	})
-
-	themeWebhookHandler := &nexuswebhook.KDexThemeDefaulter{
-		Client:        k8sManager.GetClient(),
-		Configuration: configuration,
-	}
-	_ = themeWebhookHandler.InjectDecoder(admission.NewDecoder(scheme.Scheme))
-
-	k8sManager.GetWebhookServer().Register("/mutate-kdex-dev-v1alpha1-kdexthemes", &admission.Webhook{
-		Handler: themeWebhookHandler,
-	})
 
 	// App
 	appReconciler := &KDexAppReconciler{

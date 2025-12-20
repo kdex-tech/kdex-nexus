@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -26,6 +27,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	"kdex.dev/crds/npm"
+	"kdex.dev/nexus/internal/validation"
+	nexuswebhook "kdex.dev/nexus/internal/webhook"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -113,22 +116,7 @@ func (r *KDexAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 		status.Attributes["secret.generation"] = fmt.Sprintf("%d", secret.Generation)
 	}
 
-	if err := validateResourceProvider(&spec); err != nil {
-		kdexv1alpha1.SetConditions(
-			&status.Conditions,
-			kdexv1alpha1.ConditionStatuses{
-				Degraded:    metav1.ConditionTrue,
-				Progressing: metav1.ConditionFalse,
-				Ready:       metav1.ConditionFalse,
-			},
-			kdexv1alpha1.ConditionReasonReconcileError,
-			err.Error(),
-		)
-
-		return ctrl.Result{}, err
-	}
-
-	if err := validatePackageReference(ctx, &spec.PackageReference, secret, r.RegistryFactory); err != nil {
+	if err := validation.ValidatePackageReference(ctx, &spec.PackageReference, secret, r.RegistryFactory); err != nil {
 		kdexv1alpha1.SetConditions(
 			&status.Conditions,
 			kdexv1alpha1.ConditionStatuses{
@@ -161,6 +149,28 @@ func (r *KDexAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *KDexAppReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+		err := ctrl.NewWebhookManagedBy(mgr).
+			For(&kdexv1alpha1.KDexApp{}).
+			WithDefaulter(&nexuswebhook.KDexAppDefaulter{}).
+			WithValidator(&nexuswebhook.KDexAppValidator{}).
+			Complete()
+
+		if err != nil {
+			return err
+		}
+
+		err = ctrl.NewWebhookManagedBy(mgr).
+			For(&kdexv1alpha1.KDexClusterApp{}).
+			WithDefaulter(&nexuswebhook.KDexAppDefaulter{}).
+			WithValidator(&nexuswebhook.KDexAppValidator{}).
+			Complete()
+
+		if err != nil {
+			return err
+		}
+	}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&kdexv1alpha1.KDexApp{}).
 		Watches(

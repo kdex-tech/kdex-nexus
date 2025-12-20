@@ -10,7 +10,7 @@ import (
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 )
 
-var _ = Describe("KDexApp Webhook", func() {
+var _ = Describe("KDexApp Defaulter", func() {
 	Context("When creating a KDexApp", func() {
 		const namespace = "default"
 		const resourceName = "test-webhook-resource"
@@ -28,9 +28,12 @@ var _ = Describe("KDexApp Webhook", func() {
 					Namespace: namespace,
 				},
 				Spec: kdexv1alpha1.KDexAppSpec{
-					// Minimal required fields
 					CustomElements: []kdexv1alpha1.CustomElement{
 						{Name: "foo", Description: "bar"},
+					},
+					PackageReference: kdexv1alpha1.PackageReference{
+						Name:    "@foo/bar",
+						Version: "1.2.3",
 					},
 				},
 			}
@@ -53,6 +56,10 @@ var _ = Describe("KDexApp Webhook", func() {
 				Spec: kdexv1alpha1.KDexAppSpec{
 					CustomElements: []kdexv1alpha1.CustomElement{
 						{Name: "foo", Description: "bar"},
+					},
+					PackageReference: kdexv1alpha1.PackageReference{
+						Name:    "@foo/bar",
+						Version: "1.2.3",
 					},
 					WebServer: kdexv1alpha1.WebServer{
 						IngressPath: "/custom",

@@ -158,7 +158,7 @@ var _ = Describe("KDexHost Controller", func() {
 						Namespace: namespace,
 					},
 					Spec: kdexv1alpha1.KDexThemeSpec{
-						Assets: []kdexv1alpha1.Asset{
+						Assets: kdexv1alpha1.Assets{
 							{
 								LinkHref: "http://foo.bar/style.css",
 								Attributes: map[string]string{
