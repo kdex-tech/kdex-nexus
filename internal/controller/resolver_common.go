@@ -41,7 +41,7 @@ func ResolveContents(
 
 		appEntry := contentEntry.ContentEntryApp
 
-		app, shouldReturn, r1, err := ResolveKDexObjectReference(ctx, c, pageBinding, &pageBinding.Status.Conditions, &appEntry.AppRef, requeueDelay)
+		app, shouldReturn, r1, err := ResolveKDexObjectReference(ctx, c, pageBinding, &pageBinding.Status.Conditions, appEntry.AppRef, requeueDelay)
 		if shouldReturn {
 			return nil, shouldReturn, r1, err
 		}
