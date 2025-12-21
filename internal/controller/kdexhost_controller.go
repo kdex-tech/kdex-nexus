@@ -128,7 +128,7 @@ func (r *KDexHostReconciler) Reconcile(ctx context.Context, req ctrl.Request) (r
 			res = ctrl.Result{}
 		}
 
-		log.V(1).Info("status", "status", host.Status, "err", err, "res", res)
+		log.V(2).Info("status", "status", host.Status, "err", err, "res", res)
 	}()
 
 	if host.DeletionTimestamp.IsZero() {

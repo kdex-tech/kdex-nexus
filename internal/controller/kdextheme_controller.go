@@ -90,7 +90,7 @@ func (r *KDexThemeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			res = ctrl.Result{}
 		}
 
-		log.V(1).Info("status", "status", status, "err", err, "res", res)
+		log.V(2).Info("status", "status", status, "err", err, "res", res)
 	}()
 
 	kdexv1alpha1.SetConditions(

@@ -93,7 +93,7 @@ func (r *KDexAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 			res = ctrl.Result{}
 		}
 
-		log.V(1).Info("status", "status", status, "err", err, "res", res)
+		log.V(2).Info("status", "status", status, "err", err, "res", res)
 	}()
 
 	kdexv1alpha1.SetConditions(
