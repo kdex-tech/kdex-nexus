@@ -43,8 +43,8 @@ var _ = Describe("KDexTheme Controller", func() {
 					Namespace: namespace,
 				},
 				Spec: kdexv1alpha1.KDexThemeSpec{
-					Assets:    kdexv1alpha1.Assets{},
-					WebServer: kdexv1alpha1.WebServer{},
+					Assets:  kdexv1alpha1.Assets{},
+					Backend: kdexv1alpha1.Backend{},
 				},
 			}
 
@@ -112,7 +112,7 @@ var _ = Describe("KDexTheme Controller", func() {
 							LinkHref: "/style.css",
 						},
 					},
-					WebServer: kdexv1alpha1.WebServer{
+					Backend: kdexv1alpha1.Backend{
 						StaticImage: "kdex/theme:123",
 					},
 				},
@@ -133,11 +133,11 @@ var _ = Describe("KDexTheme Controller", func() {
 							Attributes: map[string]string{
 								"rel": "stylesheet",
 							},
-							LinkHref: "/theme/style.css",
+							LinkHref: "/_theme/style.css",
 						},
 					},
-					WebServer: kdexv1alpha1.WebServer{
-						IngressPath: "/theme",
+					Backend: kdexv1alpha1.Backend{
+						IngressPath: "/_theme",
 					},
 				},
 			}
@@ -160,8 +160,8 @@ var _ = Describe("KDexTheme Controller", func() {
 							LinkHref: "/style.css",
 						},
 					},
-					WebServer: kdexv1alpha1.WebServer{
-						IngressPath: "/custom",
+					Backend: kdexv1alpha1.Backend{
+						IngressPath: "/_theme",
 						StaticImage: "foo/bar",
 					},
 				},
@@ -182,11 +182,11 @@ var _ = Describe("KDexTheme Controller", func() {
 							Attributes: map[string]string{
 								"rel": "stylesheet",
 							},
-							LinkHref: "/custom/style.css",
+							LinkHref: "/_theme/style.css",
 						},
 					},
-					WebServer: kdexv1alpha1.WebServer{
-						IngressPath: "/custom",
+					Backend: kdexv1alpha1.Backend{
+						IngressPath: "/_theme",
 						StaticImage: "foo/bar",
 					},
 				},
@@ -207,10 +207,10 @@ var _ = Describe("KDexTheme Controller", func() {
 							Attributes: map[string]string{
 								"rel": "stylesheet",
 							},
-							LinkHref: "/theme/style.css",
+							LinkHref: "/_theme/style.css",
 						},
 					},
-					WebServer: kdexv1alpha1.WebServer{
+					Backend: kdexv1alpha1.Backend{
 						StaticImage: "foo/bar",
 					},
 				},

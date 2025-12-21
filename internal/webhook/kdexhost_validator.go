@@ -29,22 +29,26 @@ func (v *KDexHostValidator) ValidateDelete(ctx context.Context, obj runtime.Obje
 	return nil, nil
 }
 
-func (v *KDexHostValidator) validate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
-	host, ok := obj.(*kdexv1alpha1.KDexHost)
-	if !ok {
-		return nil, fmt.Errorf("expected KDexHost but got %T", obj)
+func (v *KDexHostValidator) validate(ctx context.Context, ro runtime.Object) (admission.Warnings, error) {
+	var spec *kdexv1alpha1.KDexHostSpec
+
+	switch t := ro.(type) {
+	case *kdexv1alpha1.KDexHost:
+		spec = &t.Spec
+	default:
+		return nil, fmt.Errorf("unsupported type: %T", t)
 	}
 
-	if host.Spec.BrandName == "" {
+	if spec.BrandName == "" {
 		return nil, fmt.Errorf(`spec.brandName: Invalid value: ""`)
 	}
 
-	if err := validation.ValidateAssets(host.Spec.Assets); err != nil {
+	if err := validation.ValidateAssets(spec.Assets); err != nil {
 		return nil, err
 	}
 
 	// Validate ResourceProvider
-	if err := validation.ValidateResourceProvider(&host.Spec); err != nil {
+	if err := validation.ValidateResourceProvider(spec); err != nil {
 		return nil, err
 	}
 

@@ -21,7 +21,7 @@ var _ = Describe("KDexApp Defaulter", func() {
 			cleanupResources(namespace)
 		})
 
-		It("should default IngressPath if missing", func() {
+		It("should default IngressPath", func() {
 			resource := &kdexv1alpha1.KDexApp{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
@@ -44,25 +44,25 @@ var _ = Describe("KDexApp Defaulter", func() {
 			createdResource := &kdexv1alpha1.KDexApp{}
 			Expect(k8sClient.Get(ctx, types.NamespacedName{Name: resourceName, Namespace: namespace}, createdResource)).To(Succeed())
 
-			Expect(createdResource.Spec.WebServer.IngressPath).To(Equal("/" + resourceName))
+			Expect(createdResource.Spec.IngressPath).To(Equal("/_a/" + resourceName))
 		})
 
-		It("should not overwrite IngressPath if present", func() {
+		It("should overwrite IngressPath if set", func() {
 			resource := &kdexv1alpha1.KDexApp{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
 					Namespace: namespace,
 				},
 				Spec: kdexv1alpha1.KDexAppSpec{
+					Backend: kdexv1alpha1.Backend{
+						IngressPath: "/custom",
+					},
 					CustomElements: []kdexv1alpha1.CustomElement{
 						{Name: "foo", Description: "bar"},
 					},
 					PackageReference: kdexv1alpha1.PackageReference{
 						Name:    "@foo/bar",
 						Version: "1.2.3",
-					},
-					WebServer: kdexv1alpha1.WebServer{
-						IngressPath: "/custom",
 					},
 				},
 			}
@@ -72,7 +72,7 @@ var _ = Describe("KDexApp Defaulter", func() {
 			createdResource := &kdexv1alpha1.KDexApp{}
 			Expect(k8sClient.Get(ctx, types.NamespacedName{Name: resourceName, Namespace: namespace}, createdResource)).To(Succeed())
 
-			Expect(createdResource.Spec.WebServer.IngressPath).To(Equal("/custom"))
+			Expect(createdResource.Spec.IngressPath).To(Equal("/_a/" + resourceName))
 		})
 	})
 })

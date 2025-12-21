@@ -30,15 +30,16 @@ func (v *KDexThemeValidator) ValidateDelete(ctx context.Context, obj runtime.Obj
 	return nil, nil
 }
 
-func (v *KDexThemeValidator) validate(ctx context.Context, o runtime.Object) (admission.Warnings, error) {
+func (v *KDexThemeValidator) validate(ctx context.Context, ro runtime.Object) (admission.Warnings, error) {
 	var spec *kdexv1alpha1.KDexThemeSpec
 
-	if obj, ok := o.(*kdexv1alpha1.KDexTheme); ok {
-		spec = &obj.Spec
-	} else if obj, ok := o.(*kdexv1alpha1.KDexClusterTheme); ok {
-		spec = &obj.Spec
-	} else {
-		return nil, fmt.Errorf("expected KDexTheme|KDexClusterTheme but got %T", obj)
+	switch t := ro.(type) {
+	case *kdexv1alpha1.KDexTheme:
+		spec = &t.Spec
+	case *kdexv1alpha1.KDexClusterTheme:
+		spec = &t.Spec
+	default:
+		return nil, fmt.Errorf("unsupported type: %T", t)
 	}
 
 	if err := validation.ValidateAssets(spec.Assets); err != nil {

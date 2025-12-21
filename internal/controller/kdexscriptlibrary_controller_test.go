@@ -97,6 +97,24 @@ var _ = Describe("KDexScriptLibrary Controller", func() {
 				&kdexv1alpha1.KDexScriptLibrary{}, true)
 		})
 
+		It("it should not validate if relative scripts but no static or server image specified", func() {
+			resource := &kdexv1alpha1.KDexScriptLibrary{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.KDexScriptLibrarySpec{
+					Scripts: []kdexv1alpha1.ScriptDef{
+						{
+							ScriptSrc: `/foo.js`,
+						},
+					},
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, resource)).NotTo(Succeed())
+		})
+
 		It("should not become ready when referenced secret is not found", func() {
 			resource := &kdexv1alpha1.KDexScriptLibrary{
 				ObjectMeta: metav1.ObjectMeta{

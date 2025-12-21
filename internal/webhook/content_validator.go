@@ -36,11 +36,11 @@ func (v *PageContentValidator) ValidateDelete(ctx context.Context, obj runtime.O
 	return nil, nil
 }
 
-func (v *PageContentValidator) validate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+func (v *PageContentValidator) validate(ctx context.Context, ro runtime.Object) (admission.Warnings, error) {
 	var content string
 	var name string
 
-	switch t := obj.(type) {
+	switch t := ro.(type) {
 	case *kdexv1alpha1.KDexPageArchetype:
 		content = t.Spec.Content
 		name = t.Name
@@ -66,7 +66,7 @@ func (v *PageContentValidator) validate(ctx context.Context, obj runtime.Object)
 		content = t.Spec.Content
 		name = t.Name
 	default:
-		return nil, fmt.Errorf("unsupported type for content validation: %T", t)
+		return nil, fmt.Errorf("unsupported type: %T", t)
 	}
 
 	if err := render.ValidateContent(name, content); err != nil {

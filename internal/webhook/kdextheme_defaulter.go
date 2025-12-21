@@ -15,20 +15,19 @@ import (
 type KDexThemeDefaulter struct {
 }
 
-func (a *KDexThemeDefaulter) Default(ctx context.Context, o runtime.Object) error {
+func (a *KDexThemeDefaulter) Default(ctx context.Context, ro runtime.Object) error {
 	var spec *kdexv1alpha1.KDexThemeSpec
 
-	if obj, ok := o.(*kdexv1alpha1.KDexTheme); ok {
-		spec = &obj.Spec
-	} else if obj, ok := o.(*kdexv1alpha1.KDexClusterTheme); ok {
-		spec = &obj.Spec
-	} else {
-		return fmt.Errorf("expected KDexTheme|KDexClusterTheme but got %T", obj)
+	switch t := ro.(type) {
+	case *kdexv1alpha1.KDexTheme:
+		spec = &t.Spec
+	case *kdexv1alpha1.KDexClusterTheme:
+		spec = &t.Spec
+	default:
+		return fmt.Errorf("unsupported type: %T", t)
 	}
 
-	if spec.WebServer.IngressPath == "" {
-		spec.WebServer.IngressPath = "/theme"
-	}
+	spec.IngressPath = "/_theme"
 
 	return nil
 }

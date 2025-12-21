@@ -1,4 +1,4 @@
-package controller
+package validation
 
 import (
 	"testing"
@@ -7,15 +7,15 @@ import (
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 )
 
-func Test_validateScripts(t *testing.T) {
+func Test_ValidateScriptLibrary(t *testing.T) {
 	tests := []struct {
-		name            string
-		scriptReference *kdexv1alpha1.KDexScriptLibrarySpec
-		wantErr         bool
+		name    string
+		spec    *kdexv1alpha1.KDexScriptLibrarySpec
+		wantErr bool
 	}{
 		{
 			name: "basic script",
-			scriptReference: &kdexv1alpha1.KDexScriptLibrarySpec{
+			spec: &kdexv1alpha1.KDexScriptLibrarySpec{
 				Scripts: []kdexv1alpha1.ScriptDef{
 					{
 						Script: `console.log('test');`,
@@ -26,7 +26,7 @@ func Test_validateScripts(t *testing.T) {
 		},
 		{
 			name: "basic script fail",
-			scriptReference: &kdexv1alpha1.KDexScriptLibrarySpec{
+			spec: &kdexv1alpha1.KDexScriptLibrarySpec{
 				Scripts: []kdexv1alpha1.ScriptDef{
 					{
 						Script: `console.log('test`,
@@ -37,7 +37,7 @@ func Test_validateScripts(t *testing.T) {
 		},
 		{
 			name: "basic package reference",
-			scriptReference: &kdexv1alpha1.KDexScriptLibrarySpec{
+			spec: &kdexv1alpha1.KDexScriptLibrarySpec{
 				PackageReference: &kdexv1alpha1.PackageReference{
 					Name:    "@foo/bar",
 					Version: "1.0.0",
@@ -47,7 +47,7 @@ func Test_validateScripts(t *testing.T) {
 		},
 		{
 			name: "basic package reference fail",
-			scriptReference: &kdexv1alpha1.KDexScriptLibrarySpec{
+			spec: &kdexv1alpha1.KDexScriptLibrarySpec{
 				PackageReference: &kdexv1alpha1.PackageReference{},
 			},
 			wantErr: true,
@@ -55,7 +55,7 @@ func Test_validateScripts(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := validateScripts(tt.scriptReference)
+			err := ValidateScriptLibrary(tt.spec)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return

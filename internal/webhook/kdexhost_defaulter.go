@@ -14,24 +14,29 @@ import (
 type KDexHostDefaulter struct {
 }
 
-func (a *KDexHostDefaulter) Default(ctx context.Context, o runtime.Object) error {
-	obj, ok := o.(*kdexv1alpha1.KDexHost)
+func (a *KDexHostDefaulter) Default(ctx context.Context, ro runtime.Object) error {
+	var spec *kdexv1alpha1.KDexHostSpec
 
-	if !ok {
-		return fmt.Errorf("expected KDexHost but got %T", obj)
+	switch t := ro.(type) {
+	case *kdexv1alpha1.KDexHost:
+		spec = &t.Spec
+	default:
+		return fmt.Errorf("unsupported type: %T", t)
 	}
 
-	if obj.Spec.DefaultLang == "" {
-		obj.Spec.DefaultLang = "en"
+	if spec.DefaultLang == "" {
+		spec.DefaultLang = "en"
 	}
 
-	if obj.Spec.ModulePolicy == "" {
-		obj.Spec.ModulePolicy = kdexv1alpha1.StrictModulePolicy
+	if spec.ModulePolicy == "" {
+		spec.ModulePolicy = kdexv1alpha1.StrictModulePolicy
 	}
 
-	if obj.Spec.WebServer.IngressPath == "" {
-		obj.Spec.WebServer.IngressPath = "/static"
+	if spec.Routing.Strategy == "" {
+		spec.Routing.Strategy = kdexv1alpha1.IngressRoutingStrategy
 	}
+
+	spec.IngressPath = "/_host"
 
 	return nil
 }

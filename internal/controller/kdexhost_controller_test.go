@@ -36,7 +36,7 @@ var _ = Describe("KDexHost Controller", func() {
 			cleanupResources(namespace)
 		})
 
-		It("it must not reconcile if it has missing brandName", func() {
+		It("it must not validate if it has missing brandName", func() {
 			resource := &kdexv1alpha1.KDexHost{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
@@ -48,7 +48,7 @@ var _ = Describe("KDexHost Controller", func() {
 			Expect(k8sClient.Create(ctx, resource)).NotTo(Succeed())
 		})
 
-		It("it must not reconcile if it has missing organization", func() {
+		It("it must not validate if it has missing organization", func() {
 			resource := &kdexv1alpha1.KDexHost{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
@@ -62,7 +62,7 @@ var _ = Describe("KDexHost Controller", func() {
 			Expect(k8sClient.Create(ctx, resource)).NotTo(Succeed())
 		})
 
-		It("it must not reconcile if it has missing routing", func() {
+		It("it must not validate if it has missing routing", func() {
 			resource := &kdexv1alpha1.KDexHost{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
@@ -77,7 +77,7 @@ var _ = Describe("KDexHost Controller", func() {
 			Expect(k8sClient.Create(ctx, resource)).NotTo(Succeed())
 		})
 
-		It("it must not reconcile if it has missing routing domains", func() {
+		It("it must not validate if it has missing routing domains", func() {
 			resource := &kdexv1alpha1.KDexHost{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
@@ -103,13 +103,11 @@ var _ = Describe("KDexHost Controller", func() {
 				},
 				Spec: kdexv1alpha1.KDexHostSpec{
 					BrandName:    "KDex Tech",
-					ModulePolicy: kdexv1alpha1.StrictModulePolicy,
 					Organization: "KDex Tech Inc.",
 					Routing: kdexv1alpha1.Routing{
 						Domains: []string{
 							"kdex.dev",
 						},
-						Strategy: kdexv1alpha1.IngressRoutingStrategy,
 					},
 				},
 			}
@@ -128,18 +126,17 @@ var _ = Describe("KDexHost Controller", func() {
 					Namespace: namespace,
 				},
 				Spec: kdexv1alpha1.KDexHostSpec{
-					BrandName: "KDex Tech",
-					DefaultThemeRef: &kdexv1alpha1.KDexObjectReference{
-						Kind: "KDexTheme",
-						Name: "non-existent-theme",
-					},
-					ModulePolicy: kdexv1alpha1.StrictModulePolicy,
+					BrandName:    "KDex Tech",
 					Organization: "KDex Tech Inc.",
 					Routing: kdexv1alpha1.Routing{
 						Domains: []string{
 							"kdex.dev",
 						},
 						Strategy: kdexv1alpha1.IngressRoutingStrategy,
+					},
+					ThemeRef: &kdexv1alpha1.KDexObjectReference{
+						Kind: "KDexTheme",
+						Name: "non-existent-theme",
 					},
 				},
 			}
@@ -150,25 +147,28 @@ var _ = Describe("KDexHost Controller", func() {
 				ctx, k8sClient, resourceName, namespace,
 				&kdexv1alpha1.KDexHost{}, false)
 
-			addOrUpdateTheme(
-				ctx, k8sClient,
-				kdexv1alpha1.KDexTheme{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "non-existent-theme",
-						Namespace: namespace,
-					},
-					Spec: kdexv1alpha1.KDexThemeSpec{
-						Assets: kdexv1alpha1.Assets{
-							{
-								LinkHref: "http://foo.bar/style.css",
-								Attributes: map[string]string{
-									"rel": "stylesheet",
-								},
+			themeResource := &kdexv1alpha1.KDexTheme{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "non-existent-theme",
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.KDexThemeSpec{
+					Assets: kdexv1alpha1.Assets{
+						{
+							LinkHref: "http://foo.bar/style.css",
+							Attributes: map[string]string{
+								"rel": "stylesheet",
 							},
 						},
 					},
 				},
-			)
+			}
+
+			Expect(k8sClient.Create(ctx, themeResource)).To(Succeed())
+
+			assertResourceReady(
+				ctx, k8sClient, themeResource.Name, namespace,
+				&kdexv1alpha1.KDexTheme{}, true)
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,

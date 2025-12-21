@@ -168,7 +168,7 @@ var _ = Describe("KDexHost Validator", func() {
 							"valid",
 						},
 					},
-					WebServer: kdexv1alpha1.WebServer{
+					Backend: kdexv1alpha1.Backend{
 						StaticImage: "kdex/static",
 					},
 				},
@@ -176,7 +176,7 @@ var _ = Describe("KDexHost Validator", func() {
 
 			err := k8sClient.Create(ctx, resource)
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring(`/foo is not prefixed by ingressPath: /static`))
+			Expect(err.Error()).To(ContainSubstring(`/foo is not prefixed by ingressPath: /_host`))
 		})
 
 		It("should succeed with relative assets, static image and correct prefix", func() {
@@ -188,7 +188,7 @@ var _ = Describe("KDexHost Validator", func() {
 				Spec: kdexv1alpha1.KDexHostSpec{
 					Assets: kdexv1alpha1.Assets{
 						{
-							LinkHref: "/static/foo",
+							LinkHref: "/_host/foo.css",
 						},
 					},
 					BrandName:    "valid",
@@ -198,7 +198,7 @@ var _ = Describe("KDexHost Validator", func() {
 							"valid",
 						},
 					},
-					WebServer: kdexv1alpha1.WebServer{
+					Backend: kdexv1alpha1.Backend{
 						StaticImage: "kdex/static",
 					},
 				},

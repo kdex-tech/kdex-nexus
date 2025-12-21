@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 )
@@ -16,20 +15,22 @@ import (
 type KDexAppDefaulter struct {
 }
 
-func (a *KDexAppDefaulter) Default(ctx context.Context, o runtime.Object) error {
+func (a *KDexAppDefaulter) Default(ctx context.Context, ro runtime.Object) error {
+	var name string
 	var spec *kdexv1alpha1.KDexAppSpec
 
-	if obj, ok := o.(*kdexv1alpha1.KDexApp); ok {
-		spec = &obj.Spec
-	} else if obj, ok := o.(*kdexv1alpha1.KDexClusterApp); ok {
-		spec = &obj.Spec
-	} else {
-		return fmt.Errorf("expected KDexApp|KDexClusterApp but got %T", obj)
+	switch t := ro.(type) {
+	case *kdexv1alpha1.KDexApp:
+		name = t.Name
+		spec = &t.Spec
+	case *kdexv1alpha1.KDexClusterApp:
+		name = t.Name
+		spec = &t.Spec
+	default:
+		return fmt.Errorf("unsupported type: %T", t)
 	}
 
-	if spec.WebServer.IngressPath == "" {
-		spec.WebServer.IngressPath = "/" + o.(client.Object).GetName()
-	}
+	spec.IngressPath = "/_a/" + name
 
 	return nil
 }

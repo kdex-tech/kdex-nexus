@@ -3,7 +3,6 @@ package webhook
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
@@ -31,20 +30,27 @@ func (v *KDexAppValidator) ValidateDelete(ctx context.Context, obj runtime.Objec
 	return nil, nil
 }
 
-func (v *KDexAppValidator) validate(ctx context.Context, o runtime.Object) (admission.Warnings, error) {
+func (v *KDexAppValidator) validate(ctx context.Context, ro runtime.Object) (admission.Warnings, error) {
 	var spec *kdexv1alpha1.KDexAppSpec
 
-	if obj, ok := o.(*kdexv1alpha1.KDexApp); ok {
-		spec = &obj.Spec
-	} else if obj, ok := o.(*kdexv1alpha1.KDexClusterApp); ok {
-		spec = &obj.Spec
-	} else {
-		return nil, fmt.Errorf("expected KDexApp|KDexClusterApp but got %T", obj)
+	switch t := ro.(type) {
+	case *kdexv1alpha1.KDexApp:
+		spec = &t.Spec
+	case *kdexv1alpha1.KDexClusterApp:
+		spec = &t.Spec
+	default:
+		return nil, fmt.Errorf("unsupported type: %T", t)
 	}
 
-	// Validate PackageReference name
-	if !strings.HasPrefix(spec.PackageReference.Name, "@") || !strings.Contains(spec.PackageReference.Name, "/") {
-		return nil, fmt.Errorf("invalid package name, must be scoped with @scope/name: %s", spec.PackageReference.Name)
+	// apply the same logic as KDexScriptLibrary
+	sl := &kdexv1alpha1.KDexScriptLibrarySpec{
+		Backend:          spec.Backend,
+		PackageReference: &spec.PackageReference,
+		Scripts:          spec.Scripts,
+	}
+
+	if err := validation.ValidateScriptLibrary(sl); err != nil {
+		return nil, err
 	}
 
 	// Validate ResourceProvider

@@ -50,6 +50,26 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
+      path: /mutate-kdex-dev-v1alpha1-kdexclusterscriptlibrary
+  failurePolicy: Fail
+  name: mutate.kdexclusterscriptlibrary.kdex.dev
+  rules:
+  - apiGroups:
+    - kdex.dev
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - kdexclusterscriptlibraries
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
       path: /mutate-kdex-dev-v1alpha1-kdexclustertheme
   failurePolicy: Fail
   name: mutate.kdexclustertheme.kdex.dev
@@ -83,6 +103,26 @@ webhooks:
     - UPDATE
     resources:
     - kdexhosts
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /mutate-kdex-dev-v1alpha1-kdexscriptlibrary
+  failurePolicy: Fail
+  name: mutate.kdexscriptlibrary.kdex.dev
+  rules:
+  - apiGroups:
+    - kdex.dev
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - kdexscriptlibraries
   sideEffects: None
 - admissionReviewVersions:
   - v1
@@ -156,6 +196,26 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
+      path: /validate-kdex-dev-v1alpha1-kdexclusterscriptlibrary
+  failurePolicy: Fail
+  name: validate.kdexclusterscriptlibrary.kdex.dev
+  rules:
+  - apiGroups:
+    - kdex.dev
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - kdexclusterscriptlibraries
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
       path: /validate-kdex-dev-v1alpha1-kdexclustertheme
   failurePolicy: Fail
   name: validate.kdexclustertheme.kdex.dev
@@ -189,6 +249,26 @@ webhooks:
     - UPDATE
     resources:
     - kdexhosts
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-kdex-dev-v1alpha1-kdexscriptlibrary
+  failurePolicy: Fail
+  name: validate.kdexscriptlibrary.kdex.dev
+  rules:
+  - apiGroups:
+    - kdex.dev
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - kdexscriptlibraries
   sideEffects: None
 - admissionReviewVersions:
   - v1

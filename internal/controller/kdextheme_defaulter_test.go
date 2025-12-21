@@ -21,7 +21,7 @@ var _ = Describe("KDexTheme Defaulter", func() {
 			cleanupResources(namespace)
 		})
 
-		It("should default IngressPath if missing", func() {
+		It("should default IngressPath", func() {
 			resource := &kdexv1alpha1.KDexTheme{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
@@ -39,10 +39,10 @@ var _ = Describe("KDexTheme Defaulter", func() {
 			createdResource := &kdexv1alpha1.KDexTheme{}
 			Expect(k8sClient.Get(ctx, types.NamespacedName{Name: resourceName, Namespace: namespace}, createdResource)).To(Succeed())
 
-			Expect(createdResource.Spec.WebServer.IngressPath).To(Equal("/theme"))
+			Expect(createdResource.Spec.IngressPath).To(Equal("/_theme"))
 		})
 
-		It("should not overwrite IngressPath if present", func() {
+		It("should overwrite IngressPath if set", func() {
 			resource := &kdexv1alpha1.KDexTheme{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
@@ -50,9 +50,9 @@ var _ = Describe("KDexTheme Defaulter", func() {
 				},
 				Spec: kdexv1alpha1.KDexThemeSpec{
 					Assets: []kdexv1alpha1.Asset{
-						{LinkHref: "/custom/styles.css"},
+						{LinkHref: "/_theme/styles.css"},
 					},
-					WebServer: kdexv1alpha1.WebServer{
+					Backend: kdexv1alpha1.Backend{
 						IngressPath: "/custom",
 						StaticImage: "kdex/theme:1.2.3",
 					},
@@ -64,7 +64,7 @@ var _ = Describe("KDexTheme Defaulter", func() {
 			createdResource := &kdexv1alpha1.KDexTheme{}
 			Expect(k8sClient.Get(ctx, types.NamespacedName{Name: resourceName, Namespace: namespace}, createdResource)).To(Succeed())
 
-			Expect(createdResource.Spec.WebServer.IngressPath).To(Equal("/custom"))
+			Expect(createdResource.Spec.IngressPath).To(Equal("/_theme"))
 		})
 	})
 })

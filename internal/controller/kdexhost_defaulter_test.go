@@ -43,10 +43,10 @@ var _ = Describe("KDexHost Defaulter", func() {
 
 			Expect(createdResource.Spec.DefaultLang).To(Equal("en"))
 			Expect(createdResource.Spec.ModulePolicy).To(Equal(kdexv1alpha1.StrictModulePolicy))
-			Expect(createdResource.Spec.WebServer.IngressPath).To(Equal("/static"))
+			Expect(createdResource.Spec.IngressPath).To(Equal("/_host"))
 		})
 
-		It("should not overwrite fields if present", func() {
+		It("should not overwrite fields if present except ingressPath", func() {
 			resource := &kdexv1alpha1.KDexHost{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
@@ -60,7 +60,7 @@ var _ = Describe("KDexHost Defaulter", func() {
 					},
 					DefaultLang:  "fr",
 					ModulePolicy: kdexv1alpha1.StrictModulePolicy, // Can verify it doesn't change
-					WebServer: kdexv1alpha1.WebServer{
+					Backend: kdexv1alpha1.Backend{
 						IngressPath: "/custom",
 					},
 				},
@@ -72,7 +72,7 @@ var _ = Describe("KDexHost Defaulter", func() {
 			Expect(k8sClient.Get(ctx, types.NamespacedName{Name: resourceName, Namespace: namespace}, createdResource)).To(Succeed())
 
 			Expect(createdResource.Spec.DefaultLang).To(Equal("fr"))
-			Expect(createdResource.Spec.WebServer.IngressPath).To(Equal("/custom"))
+			Expect(createdResource.Spec.IngressPath).To(Equal("/_host"))
 		})
 	})
 })
