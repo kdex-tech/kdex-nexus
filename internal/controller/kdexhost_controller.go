@@ -497,9 +497,7 @@ func (r *KDexHostReconciler) createOrUpdateHostControllerResource(
 			hostController.Labels["kdex.dev/instance"] = host.Name
 		}
 
-		hostController.Spec = kdexv1alpha1.KDexHostControllerSpec{
-			Host: *host.Spec.DeepCopy(),
-		}
+		hostController.Spec = host.Spec
 
 		return ctrl.SetControllerReference(host, hostController, r.Scheme)
 	})
