@@ -30,7 +30,7 @@ func (v *KDexAppValidator) ValidateDelete(ctx context.Context, obj runtime.Objec
 	return nil, nil
 }
 
-func (v *KDexAppValidator) validate(ctx context.Context, ro runtime.Object) (admission.Warnings, error) {
+func (v *KDexAppValidator) validate(_ context.Context, ro runtime.Object) (admission.Warnings, error) {
 	var spec *kdexv1alpha1.KDexAppSpec
 
 	switch t := ro.(type) {

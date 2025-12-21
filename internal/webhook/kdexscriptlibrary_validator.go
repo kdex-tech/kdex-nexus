@@ -30,7 +30,7 @@ func (v *KDexScriptLibraryValidator) ValidateDelete(ctx context.Context, obj run
 	return nil, nil
 }
 
-func (v *KDexScriptLibraryValidator) validate(ctx context.Context, ro runtime.Object) (admission.Warnings, error) {
+func (v *KDexScriptLibraryValidator) validate(_ context.Context, ro runtime.Object) (admission.Warnings, error) {
 	var spec *kdexv1alpha1.KDexScriptLibrarySpec
 
 	switch t := ro.(type) {

@@ -36,7 +36,7 @@ func (v *PageContentValidator) ValidateDelete(ctx context.Context, obj runtime.O
 	return nil, nil
 }
 
-func (v *PageContentValidator) validate(ctx context.Context, ro runtime.Object) (admission.Warnings, error) {
+func (v *PageContentValidator) validate(_ context.Context, ro runtime.Object) (admission.Warnings, error) {
 	var content string
 	var name string
 

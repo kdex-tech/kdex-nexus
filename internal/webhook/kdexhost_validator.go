@@ -29,7 +29,7 @@ func (v *KDexHostValidator) ValidateDelete(ctx context.Context, obj runtime.Obje
 	return nil, nil
 }
 
-func (v *KDexHostValidator) validate(ctx context.Context, ro runtime.Object) (admission.Warnings, error) {
+func (v *KDexHostValidator) validate(_ context.Context, ro runtime.Object) (admission.Warnings, error) {
 	var spec *kdexv1alpha1.KDexHostSpec
 
 	switch t := ro.(type) {

@@ -30,7 +30,7 @@ func (v *KDexThemeValidator) ValidateDelete(ctx context.Context, obj runtime.Obj
 	return nil, nil
 }
 
-func (v *KDexThemeValidator) validate(ctx context.Context, ro runtime.Object) (admission.Warnings, error) {
+func (v *KDexThemeValidator) validate(_ context.Context, ro runtime.Object) (admission.Warnings, error) {
 	var spec *kdexv1alpha1.KDexThemeSpec
 
 	switch t := ro.(type) {

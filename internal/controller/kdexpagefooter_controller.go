@@ -131,7 +131,7 @@ func (r *KDexPageFooterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *KDexPageFooterReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+	if os.Getenv("ENABLE_WEBHOOKS") != FALSE {
 		err := ctrl.NewWebhookManagedBy(mgr).
 			For(&kdexv1alpha1.KDexPageFooter{}).
 			WithValidator(&nexuswebhook.PageContentValidator{}).

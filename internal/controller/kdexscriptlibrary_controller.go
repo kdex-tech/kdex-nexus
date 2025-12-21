@@ -151,7 +151,7 @@ func (r *KDexScriptLibraryReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *KDexScriptLibraryReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+	if os.Getenv("ENABLE_WEBHOOKS") != FALSE {
 		err := ctrl.NewWebhookManagedBy(mgr).
 			For(&kdexv1alpha1.KDexScriptLibrary{}).
 			WithDefaulter(&nexuswebhook.KDexScriptLibraryDefaulter{}).
