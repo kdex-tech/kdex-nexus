@@ -28,12 +28,20 @@ func (a *KDexHostDefaulter) Default(ctx context.Context, ro runtime.Object) erro
 		spec.DefaultLang = "en"
 	}
 
+	if spec.ThemeRef != nil && spec.ThemeRef.Kind == "" {
+		spec.ThemeRef.Kind = "KDexTheme"
+	}
+
 	if spec.ModulePolicy == "" {
 		spec.ModulePolicy = kdexv1alpha1.StrictModulePolicy
 	}
 
 	if spec.Routing.Strategy == "" {
 		spec.Routing.Strategy = kdexv1alpha1.IngressRoutingStrategy
+	}
+
+	if spec.ScriptLibraryRef != nil && spec.ScriptLibraryRef.Kind == "" {
+		spec.ScriptLibraryRef.Kind = "KDexScriptLibrary"
 	}
 
 	spec.IngressPath = "/_host"

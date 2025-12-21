@@ -50,6 +50,86 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
+      path: /mutate-kdex-dev-v1alpha1-kdexclusterpagearchetype
+  failurePolicy: Fail
+  name: mutate.kdexclusterpagearchetype.kdex.dev
+  rules:
+  - apiGroups:
+    - kdex.dev
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - kdexclusterpagearchetypes
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /mutate-kdex-dev-v1alpha1-kdexclusterpagefooter
+  failurePolicy: Fail
+  name: mutate.kdexclusterpagefooter.kdex.dev
+  rules:
+  - apiGroups:
+    - kdex.dev
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - kdexclusterpagefooters
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /mutate-kdex-dev-v1alpha1-kdexclusterpageheader
+  failurePolicy: Fail
+  name: mutate.kdexclusterpageheader.kdex.dev
+  rules:
+  - apiGroups:
+    - kdex.dev
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - kdexclusterpageheaders
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /mutate-kdex-dev-v1alpha1-kdexclusterpagenavigation
+  failurePolicy: Fail
+  name: mutate.kdexclusterpagenavigation.kdex.dev
+  rules:
+  - apiGroups:
+    - kdex.dev
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - kdexclusterpagenavigations
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
       path: /mutate-kdex-dev-v1alpha1-kdexclusterscriptlibrary
   failurePolicy: Fail
   name: mutate.kdexclusterscriptlibrary.kdex.dev
@@ -103,6 +183,86 @@ webhooks:
     - UPDATE
     resources:
     - kdexhosts
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /mutate-kdex-dev-v1alpha1-kdexpagearchetype
+  failurePolicy: Fail
+  name: mutate.kdexpagearchetype.kdex.dev
+  rules:
+  - apiGroups:
+    - kdex.dev
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - kdexpagearchetypes
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /mutate-kdex-dev-v1alpha1-kdexpagefooter
+  failurePolicy: Fail
+  name: mutate.kdexpagefooter.kdex.dev
+  rules:
+  - apiGroups:
+    - kdex.dev
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - kdexpagefooters
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /mutate-kdex-dev-v1alpha1-kdexpageheader
+  failurePolicy: Fail
+  name: mutate.kdexpageheader.kdex.dev
+  rules:
+  - apiGroups:
+    - kdex.dev
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - kdexpageheaders
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /mutate-kdex-dev-v1alpha1-kdexpagenavigation
+  failurePolicy: Fail
+  name: mutate.kdexpagenavigation.kdex.dev
+  rules:
+  - apiGroups:
+    - kdex.dev
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - kdexpagenavigations
   sideEffects: None
 - admissionReviewVersions:
   - v1

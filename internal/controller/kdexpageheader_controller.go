@@ -135,6 +135,7 @@ func (r *KDexPageHeaderReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	if os.Getenv("ENABLE_WEBHOOKS") != FALSE {
 		err := ctrl.NewWebhookManagedBy(mgr).
 			For(&kdexv1alpha1.KDexPageHeader{}).
+			WithDefaulter(&nexuswebhook.KDexPageHeaderDefaulter{}).
 			WithValidator(&nexuswebhook.PageContentValidator{}).
 			Complete()
 		if err != nil {
@@ -143,6 +144,7 @@ func (r *KDexPageHeaderReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 		err = ctrl.NewWebhookManagedBy(mgr).
 			For(&kdexv1alpha1.KDexClusterPageHeader{}).
+			WithDefaulter(&nexuswebhook.KDexPageHeaderDefaulter{}).
 			WithValidator(&nexuswebhook.PageContentValidator{}).
 			Complete()
 		if err != nil {

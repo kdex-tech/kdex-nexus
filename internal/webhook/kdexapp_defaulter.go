@@ -3,7 +3,9 @@ package webhook
 import (
 	"context"
 	"fmt"
+	"strings"
 
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
@@ -31,6 +33,22 @@ func (a *KDexAppDefaulter) Default(ctx context.Context, ro runtime.Object) error
 	}
 
 	spec.IngressPath = "/_a/" + name
+
+	if spec.ServerImage != "" && spec.ServerImagePullPolicy == "" {
+		if strings.HasSuffix(spec.ServerImage, ":latest") {
+			spec.ServerImagePullPolicy = v1.PullAlways
+		} else {
+			spec.ServerImagePullPolicy = v1.PullIfNotPresent
+		}
+	}
+
+	if spec.StaticImage != "" && spec.StaticImagePullPolicy == "" {
+		if strings.HasSuffix(spec.StaticImage, ":latest") {
+			spec.StaticImagePullPolicy = v1.PullAlways
+		} else {
+			spec.StaticImagePullPolicy = v1.PullIfNotPresent
+		}
+	}
 
 	return nil
 }

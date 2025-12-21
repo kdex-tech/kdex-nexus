@@ -164,6 +164,7 @@ func (r *KDexPageArchetypeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	if os.Getenv("ENABLE_WEBHOOKS") != FALSE {
 		err := ctrl.NewWebhookManagedBy(mgr).
 			For(&kdexv1alpha1.KDexPageArchetype{}).
+			WithDefaulter(&nexuswebhook.KDexPageArchetypeDefaulter{}).
 			WithValidator(&nexuswebhook.PageContentValidator{}).
 			Complete()
 		if err != nil {
@@ -172,6 +173,7 @@ func (r *KDexPageArchetypeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 		err = ctrl.NewWebhookManagedBy(mgr).
 			For(&kdexv1alpha1.KDexClusterPageArchetype{}).
+			WithDefaulter(&nexuswebhook.KDexPageArchetypeDefaulter{}).
 			WithValidator(&nexuswebhook.PageContentValidator{}).
 			Complete()
 		if err != nil {
