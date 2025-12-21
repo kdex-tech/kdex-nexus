@@ -2,7 +2,7 @@ module kdex.dev/nexus
 
 go 1.25.0
 
-replace kdex.dev/crds => github.com/kdex-tech/kdex-crds v0.13.25
+replace kdex.dev/crds => github.com/kdex-tech/kdex-crds v0.13.26
 
 require (
 	github.com/go-logr/logr v1.4.3
