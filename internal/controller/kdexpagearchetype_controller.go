@@ -169,6 +169,14 @@ func (r *KDexPageArchetypeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		if err != nil {
 			return err
 		}
+
+		err = ctrl.NewWebhookManagedBy(mgr).
+			For(&kdexv1alpha1.KDexClusterPageArchetype{}).
+			WithValidator(&nexuswebhook.PageContentValidator{}).
+			Complete()
+		if err != nil {
+			return err
+		}
 	}
 
 	return ctrl.NewControllerManagedBy(mgr).
