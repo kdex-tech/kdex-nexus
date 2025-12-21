@@ -75,11 +75,11 @@ func MakeHandlerByReferencePath(
 		for _, i := range items {
 			item := i.(client.Object)
 
-			log.V(1).Info("processing item", "object", item.GetName(), "namespace", item.GetNamespace())
+			log.V(2).Info("processing item", "object", item.GetName(), "namespace", item.GetNamespace())
 
 			jsonPathReference, err := jpRef.FindResults(item)
 			if err != nil {
-				log.V(1).Info("skipping", "err", err, "object", item.GetName(), "namespace", item.GetNamespace())
+				log.V(2).Info("skipping", "err", err, "object", item.GetName(), "namespace", item.GetNamespace())
 				continue
 			}
 			if len(jsonPathReference) == 0 || len(jsonPathReference[0]) == 0 {
@@ -90,7 +90,7 @@ func MakeHandlerByReferencePath(
 				for _, curRef := range node {
 					ref := reflect.ValueOf(curRef.Interface())
 
-					log.V(1).Info("reference", "reference", ref, "object", item.GetName(), "node", idx)
+					log.V(2).Info("reference", "reference", ref, "object", item.GetName(), "node", idx)
 
 					isNil := false
 					switch ref.Kind() {
@@ -103,7 +103,7 @@ func MakeHandlerByReferencePath(
 
 					theReferenceStruct := ref.Interface()
 
-					log.V(1).Info("struct", "interface", theReferenceStruct, "object", item.GetName(), "node", idx)
+					log.V(2).Info("struct", "interface", theReferenceStruct, "object", item.GetName(), "node", idx)
 
 					switch v := theReferenceStruct.(type) {
 					case corev1.LocalObjectReference:
