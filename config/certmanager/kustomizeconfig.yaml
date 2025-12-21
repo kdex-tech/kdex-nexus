@@ -1,0 +1,9 @@
+# This file is used to configure how Kustomize should handle the substitution of variables
+# in the resources. This is specifically for cert-manager related replacements.
+nameReference:
+- kind: Issuer
+  group: cert-manager.io
+  fieldSpecs:
+  - kind: Certificate
+    group: cert-manager.io
+    path: spec/issuerRef/name
