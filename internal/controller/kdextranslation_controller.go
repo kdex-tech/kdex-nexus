@@ -31,8 +31,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-const translationFinalizerName = "kdex.dev/kdex-nexus-translation-finalizer"
-
 // KDexTranslationReconciler reconciles a KDexTranslation object
 type KDexTranslationReconciler struct {
 	client.Client
@@ -83,9 +81,9 @@ func (r *KDexTranslationReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		return r1, err
 	}
 
-	internalTranslation, shouldReturn, r1, err := r.createOrUpdateInternalTranslation(ctx, &translation)
-	if shouldReturn {
-		return r1, err
+	internalTranslation, err := r.createOrUpdateInternalTranslation(ctx, &translation)
+	if err != nil {
+		return reconcile.Result{}, err
 	}
 
 	translation.Status.Attributes = internalTranslation.Status.Attributes
@@ -124,7 +122,7 @@ func (r *KDexTranslationReconciler) SetupWithManager(mgr ctrl.Manager) error {
 func (r *KDexTranslationReconciler) createOrUpdateInternalTranslation(
 	ctx context.Context,
 	translation *kdexv1alpha1.KDexTranslation,
-) (*kdexv1alpha1.KDexInternalTranslation, bool, ctrl.Result, error) {
+) (*kdexv1alpha1.KDexInternalTranslation, error) {
 	log := logf.FromContext(ctx)
 
 	internalTranslation := &kdexv1alpha1.KDexInternalTranslation{
@@ -168,8 +166,8 @@ func (r *KDexTranslationReconciler) createOrUpdateInternalTranslation(
 			kdexv1alpha1.ConditionReasonReconcileError,
 			err.Error(),
 		)
-		return nil, true, ctrl.Result{}, err
+		return nil, err
 	}
 
-	return internalTranslation, false, ctrl.Result{}, nil
+	return internalTranslation, nil
 }
