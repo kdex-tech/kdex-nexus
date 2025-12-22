@@ -24,6 +24,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var _ = Describe("KDexTranslation Controller", func() {
@@ -185,6 +186,9 @@ var _ = Describe("KDexTranslation Controller", func() {
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
 				&kdexv1alpha1.KDexTranslation{}, true)
+
+			internalTranslation := &kdexv1alpha1.KDexInternalTranslation{}
+			Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(resource), internalTranslation)).To(Succeed())
 		})
 	})
 })
