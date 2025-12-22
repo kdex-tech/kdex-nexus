@@ -25,7 +25,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
-	"kdex.dev/nexus/internal/validation"
 	nexuswebhook "kdex.dev/nexus/internal/webhook"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -111,36 +110,6 @@ func (r *KDexThemeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	if scriptLibraryObj != nil {
 		status.Attributes["scriptLibrary.generation"] = fmt.Sprintf("%d", scriptLibraryObj.GetGeneration())
-	}
-
-	if err := validation.ValidateAssets(spec.Assets); err != nil {
-		kdexv1alpha1.SetConditions(
-			&status.Conditions,
-			kdexv1alpha1.ConditionStatuses{
-				Degraded:    metav1.ConditionTrue,
-				Progressing: metav1.ConditionFalse,
-				Ready:       metav1.ConditionFalse,
-			},
-			kdexv1alpha1.ConditionReasonReconcileError,
-			err.Error(),
-		)
-
-		return ctrl.Result{}, err
-	}
-
-	if err := validation.ValidateResourceProvider(&spec); err != nil {
-		kdexv1alpha1.SetConditions(
-			&status.Conditions,
-			kdexv1alpha1.ConditionStatuses{
-				Degraded:    metav1.ConditionTrue,
-				Progressing: metav1.ConditionFalse,
-				Ready:       metav1.ConditionFalse,
-			},
-			kdexv1alpha1.ConditionReasonReconcileError,
-			err.Error(),
-		)
-
-		return ctrl.Result{}, err
 	}
 
 	kdexv1alpha1.SetConditions(
