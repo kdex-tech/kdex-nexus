@@ -20,32 +20,6 @@ type Pairs struct {
 	list     client.ObjectList
 }
 
-// func addOrUpdate(
-// 	ctx context.Context,
-// 	k8sClient client.Client,
-// 	object client.Object,
-// 	list client.ObjectList,
-// ) {
-// 	Eventually(func(g Gomega) error {
-// 		err := k8sClient.List(ctx, list, &client.ListOptions{
-// 			Namespace:     object.GetNamespace(),
-// 			FieldSelector: fields.OneTermEqualSelector("metadata.name", object.GetName()),
-// 		})
-// 		g.Expect(err).NotTo(HaveOccurred())
-
-// 		items, err := meta.ExtractList(list)
-// 		g.Expect(err).NotTo(HaveOccurred())
-// 		if len(items) > 0 {
-// 			existing := items[0].(client.Object)
-// 			existing.Spec = object.Spec
-// 			g.Eventually(k8sClient.Update(ctx, existing)).Should(Succeed())
-// 		} else {
-// 			g.Expect(k8sClient.Create(ctx, object)).To(Succeed())
-// 		}
-// 		return nil
-// 	}).Should(Succeed())
-// }
-
 func addOrUpdateHost(
 	ctx context.Context,
 	k8sClient client.Client,
@@ -69,6 +43,28 @@ func addOrUpdateHost(
 	}).Should(Succeed())
 }
 
+func addOrUpdateClusterPageArchetype(
+	ctx context.Context,
+	k8sClient client.Client,
+	pageArchetype kdexv1alpha1.KDexClusterPageArchetype,
+) {
+	Eventually(func(g Gomega) error {
+		list := &kdexv1alpha1.KDexClusterPageArchetypeList{}
+		err := k8sClient.List(ctx, list, &client.ListOptions{
+			FieldSelector: fields.OneTermEqualSelector("metadata.name", pageArchetype.Name),
+		})
+		g.Expect(err).NotTo(HaveOccurred())
+		if len(list.Items) > 0 {
+			existing := list.Items[0]
+			existing.Spec = pageArchetype.Spec
+			g.Expect(k8sClient.Update(ctx, &existing)).To(Succeed())
+		} else {
+			g.Expect(k8sClient.Create(ctx, &pageArchetype)).To(Succeed())
+		}
+		return nil
+	}).Should(Succeed())
+}
+
 func addOrUpdatePageArchetype(
 	ctx context.Context,
 	k8sClient client.Client,
@@ -87,6 +83,29 @@ func addOrUpdatePageArchetype(
 			g.Expect(k8sClient.Update(ctx, &existing)).To(Succeed())
 		} else {
 			g.Expect(k8sClient.Create(ctx, &pageArchetype)).To(Succeed())
+		}
+		return nil
+	}).Should(Succeed())
+}
+
+func addOrUpdatePageBinding(
+	ctx context.Context,
+	k8sClient client.Client,
+	pageBinding kdexv1alpha1.KDexPageBinding,
+) {
+	Eventually(func(g Gomega) error {
+		list := &kdexv1alpha1.KDexPageBindingList{}
+		err := k8sClient.List(ctx, list, &client.ListOptions{
+			Namespace:     pageBinding.Namespace,
+			FieldSelector: fields.OneTermEqualSelector("metadata.name", pageBinding.Name),
+		})
+		g.Expect(err).NotTo(HaveOccurred())
+		if len(list.Items) > 0 {
+			existing := list.Items[0]
+			existing.Spec = pageBinding.Spec
+			g.Expect(k8sClient.Update(ctx, &existing)).To(Succeed())
+		} else {
+			g.Expect(k8sClient.Create(ctx, &pageBinding)).To(Succeed())
 		}
 		return nil
 	}).Should(Succeed())
@@ -209,8 +228,11 @@ func addOrUpdateTheme(
 
 func assertResourceReady(ctx context.Context, k8sClient client.Client, name string, namespace string, checkResource client.Object, ready bool) {
 	typeNamespacedName := types.NamespacedName{
-		Name:      name,
-		Namespace: namespace,
+		Name: name,
+	}
+
+	if namespace != "" {
+		typeNamespacedName.Namespace = namespace
 	}
 
 	check := func(g Gomega) {

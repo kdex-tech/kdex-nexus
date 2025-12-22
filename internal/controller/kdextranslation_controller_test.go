@@ -29,7 +29,6 @@ import (
 
 var _ = Describe("KDexTranslation Controller", func() {
 	Context("When reconciling a resource", func() {
-		const namespace = "default"
 		const resourceName = "test-translation"
 
 		ctx := context.Background()

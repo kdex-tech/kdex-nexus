@@ -77,6 +77,7 @@ rules:
   - kdexhostcontrollers
   - kdexhostpackagereferences
   - kdexhosts
+  - kdexinternaltranslations
   - kdexpagearchetypes
   - kdexpagebindings
   - kdexpagefooters

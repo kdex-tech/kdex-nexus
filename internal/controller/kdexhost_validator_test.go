@@ -11,8 +11,6 @@ import (
 
 var _ = Describe("KDexHost Validator", func() {
 	Context("When creating a KDexHost", func() {
-		const namespace = "default"
-
 		ctx := context.Background()
 
 		AfterEach(func() {

@@ -28,7 +28,6 @@ import (
 
 var _ = Describe("KDexScriptLibrary Controller", func() {
 	Context("When reconciling a resource", func() {
-		const namespace = "default"
 		const resourceName = "test-resource"
 
 		ctx := context.Background()

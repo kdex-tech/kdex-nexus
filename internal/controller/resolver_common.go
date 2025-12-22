@@ -29,10 +29,10 @@ func ResolveContents(
 	contents := make(map[string]page.ResolvedContentEntry)
 
 	for _, contentEntry := range pageBinding.Spec.ContentEntries {
-		rawEntry := contentEntry.RawHTML
-		if rawEntry == "" {
+		rawHTML := contentEntry.RawHTML
+		if rawHTML != "" {
 			contents[contentEntry.Slot] = page.ResolvedContentEntry{
-				Content: rawEntry,
+				Content: rawHTML,
 				Slot:    contentEntry.Slot,
 			}
 

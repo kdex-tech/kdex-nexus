@@ -12,7 +12,6 @@ import (
 
 var _ = Describe("KDexHost Defaulter", func() {
 	Context("When creating a KDexHost", func() {
-		const namespace = "default"
 		const resourceName = "test-host-webhook-resource"
 
 		ctx := context.Background()

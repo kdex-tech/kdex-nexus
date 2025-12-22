@@ -27,7 +27,6 @@ import (
 
 var _ = Describe("KDexHost Controller", func() {
 	Context("When reconciling a resource", func() {
-		const namespace = "default"
 		const resourceName = "host-resource"
 
 		ctx := context.Background()

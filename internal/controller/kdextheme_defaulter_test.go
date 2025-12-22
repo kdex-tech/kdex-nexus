@@ -12,7 +12,6 @@ import (
 
 var _ = Describe("KDexTheme Defaulter", func() {
 	Context("When creating a KDexTheme", func() {
-		const namespace = "default"
 		const resourceName = "test-theme-webhook-resource"
 
 		ctx := context.Background()

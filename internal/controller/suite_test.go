@@ -35,6 +35,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	"kdex.dev/crds/configuration"
@@ -54,11 +55,13 @@ import (
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
 var (
-	ctx       context.Context
-	cancel    context.CancelFunc
-	testEnv   *envtest.Environment
-	cfg       *rest.Config
-	k8sClient client.Client
+	ctx             context.Context
+	cancel          context.CancelFunc
+	testEnv         *envtest.Environment
+	cfg             *rest.Config
+	k8sClient       client.Client
+	namespace       string
+	secondNamespace string
 )
 
 type MockRegistry struct{}
@@ -99,7 +102,9 @@ var _ = BeforeSuite(func() {
 		panic(err)
 	}
 
-	logger, err := kdexlog.New(&opts, map[string]string{})
+	logger, err := kdexlog.New(&opts, map[string]string{
+		// "kdexpagebinding.watch": "2",
+	})
 	if err != nil {
 		panic(err)
 	}
@@ -148,8 +153,8 @@ var _ = BeforeSuite(func() {
 	err = admissionregistrationv1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 	err = kdexv1alpha1.AddToScheme(scheme.Scheme)
-	Expect(err).NotTo(HaveOccurred())
 	err = configuration.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
 	Expect(err).NotTo(HaveOccurred())
 
 	// cfg is defined in this file globally.
@@ -160,6 +165,12 @@ var _ = BeforeSuite(func() {
 	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
+
+	namespace = "default"
+	secondNamespace = "second-namespace"
+
+	ns2 := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: secondNamespace}}
+	Expect(k8sClient.Create(ctx, ns2)).To(Succeed())
 
 	k8sManager, err := manager.New(cfg, manager.Options{
 		Controller: config.Controller{
@@ -211,6 +222,15 @@ var _ = BeforeSuite(func() {
 		Scheme:       k8sClient.Scheme(),
 	}
 	err = pageArchetypeReconciler.SetupWithManager(k8sManager)
+	Expect(err).NotTo(HaveOccurred())
+
+	// Page Binding
+	pageBindingReconciler := &KDexPageBindingReconciler{
+		Client:       k8sClient,
+		RequeueDelay: 0,
+		Scheme:       k8sClient.Scheme(),
+	}
+	err = pageBindingReconciler.SetupWithManager(k8sManager)
 	Expect(err).NotTo(HaveOccurred())
 
 	// Page Footer
