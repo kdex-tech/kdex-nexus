@@ -259,6 +259,15 @@ var _ = BeforeSuite(func() {
 	err = themeReconciler.SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 
+	// Translation
+	translationReconciler := &KDexTranslationReconciler{
+		Client:       k8sClient,
+		RequeueDelay: 0,
+		Scheme:       k8sClient.Scheme(),
+	}
+	err = translationReconciler.SetupWithManager(k8sManager)
+	Expect(err).ToNot(HaveOccurred())
+
 	go func() {
 		defer GinkgoRecover()
 		err := k8sManager.Start(ctx)

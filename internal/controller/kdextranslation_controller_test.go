@@ -17,16 +17,174 @@ limitations under the License.
 package controller
 
 import (
+	"context"
+
 	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 )
 
 var _ = Describe("KDexTranslation Controller", func() {
 	Context("When reconciling a resource", func() {
+		const namespace = "default"
+		const resourceName = "test-translation"
 
-		It("should successfully reconcile the resource", func() {
+		ctx := context.Background()
 
-			// TODO(user): Add more specific assertions depending on your controller's reconciliation logic.
-			// Example: If you expect a certain status condition after reconciliation, verify it here.
+		AfterEach(func() {
+			cleanupResources(namespace)
+		})
+
+		It("should not validate without host", func() {
+			resource := &kdexv1alpha1.KDexTranslation{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.KDexTranslationSpec{},
+			}
+
+			Expect(k8sClient.Create(ctx, resource)).NotTo(Succeed())
+		})
+
+		It("should not validate without translations", func() {
+			resource := &kdexv1alpha1.KDexTranslation{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.KDexTranslationSpec{
+					HostRef: v1.LocalObjectReference{
+						Name: "test-host",
+					},
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, resource)).NotTo(Succeed())
+		})
+
+		It("should not validate with empty translations", func() {
+			resource := &kdexv1alpha1.KDexTranslation{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.KDexTranslationSpec{
+					HostRef: v1.LocalObjectReference{
+						Name: "test-host",
+					},
+					Translations: []kdexv1alpha1.Translation{},
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, resource)).NotTo(Succeed())
+		})
+
+		It("should validate with translations", func() {
+			resource := &kdexv1alpha1.KDexTranslation{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.KDexTranslationSpec{
+					HostRef: v1.LocalObjectReference{
+						Name: "test-host",
+					},
+					Translations: []kdexv1alpha1.Translation{
+						{
+							Lang: "fr",
+							KeysAndValues: map[string]string{
+								"test": "test",
+							},
+						},
+					},
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+		})
+
+		It("should only reconcile when host ready", func() {
+			resource := &kdexv1alpha1.KDexTranslation{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.KDexTranslationSpec{
+					HostRef: v1.LocalObjectReference{
+						Name: "test-host",
+					},
+					Translations: []kdexv1alpha1.Translation{
+						{
+							Lang: "fr",
+							KeysAndValues: map[string]string{
+								"test": "test",
+							},
+						},
+					},
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.KDexTranslation{}, false)
+		})
+
+		It("should reconcile when host ready", func() {
+			resource := &kdexv1alpha1.KDexTranslation{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.KDexTranslationSpec{
+					HostRef: v1.LocalObjectReference{
+						Name: "test-host",
+					},
+					Translations: []kdexv1alpha1.Translation{
+						{
+							Lang: "fr",
+							KeysAndValues: map[string]string{
+								"test": "test",
+							},
+						},
+					},
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.KDexTranslation{}, false)
+
+			addOrUpdateHost(
+				ctx, k8sClient, kdexv1alpha1.KDexHost{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-host",
+						Namespace: namespace,
+					},
+					Spec: kdexv1alpha1.KDexHostSpec{
+						BrandName:    "test-brand",
+						Organization: "test-organization",
+						Routing: kdexv1alpha1.Routing{
+							Domains: []string{
+								"test-domain",
+							},
+						},
+					},
+				})
+
+			assertResourceReady(
+				ctx, k8sClient, "test-host", namespace,
+				&kdexv1alpha1.KDexHost{}, true)
+
+			assertResourceReady(
+				ctx, k8sClient, resourceName, namespace,
+				&kdexv1alpha1.KDexTranslation{}, true)
 		})
 	})
 })

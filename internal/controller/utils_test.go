@@ -243,13 +243,22 @@ func cleanupResources(namespace string) {
 
 	for _, pair := range []Pairs{
 		{&kdexv1alpha1.KDexApp{}, &kdexv1alpha1.KDexAppList{}},
+		{&kdexv1alpha1.KDexClusterApp{}, &kdexv1alpha1.KDexClusterAppList{}},
+		{&kdexv1alpha1.KDexClusterPageArchetype{}, &kdexv1alpha1.KDexClusterPageArchetypeList{}},
+		{&kdexv1alpha1.KDexClusterPageFooter{}, &kdexv1alpha1.KDexClusterPageFooterList{}},
+		{&kdexv1alpha1.KDexClusterPageHeader{}, &kdexv1alpha1.KDexClusterPageHeaderList{}},
+		{&kdexv1alpha1.KDexClusterPageNavigation{}, &kdexv1alpha1.KDexClusterPageNavigationList{}},
+		{&kdexv1alpha1.KDexClusterScriptLibrary{}, &kdexv1alpha1.KDexClusterScriptLibraryList{}},
+		{&kdexv1alpha1.KDexClusterTheme{}, &kdexv1alpha1.KDexClusterThemeList{}},
 		{&kdexv1alpha1.KDexHost{}, &kdexv1alpha1.KDexHostList{}},
+		{&kdexv1alpha1.KDexHostController{}, &kdexv1alpha1.KDexHostControllerList{}},
 		{&kdexv1alpha1.KDexPageArchetype{}, &kdexv1alpha1.KDexPageArchetypeList{}},
 		{&kdexv1alpha1.KDexPageBinding{}, &kdexv1alpha1.KDexPageBindingList{}},
 		{&kdexv1alpha1.KDexPageFooter{}, &kdexv1alpha1.KDexPageFooterList{}},
 		{&kdexv1alpha1.KDexPageHeader{}, &kdexv1alpha1.KDexPageHeaderList{}},
 		{&kdexv1alpha1.KDexPageNavigation{}, &kdexv1alpha1.KDexPageNavigationList{}},
 		{&kdexv1alpha1.KDexScriptLibrary{}, &kdexv1alpha1.KDexScriptLibraryList{}},
+		{&kdexv1alpha1.KDexTranslation{}, &kdexv1alpha1.KDexTranslationList{}},
 		{&kdexv1alpha1.KDexTheme{}, &kdexv1alpha1.KDexThemeList{}},
 		{&corev1.Secret{}, &corev1.SecretList{}},
 	} {

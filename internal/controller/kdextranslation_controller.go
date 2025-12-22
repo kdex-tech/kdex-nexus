@@ -18,36 +18,100 @@ package controller
 
 import (
 	"context"
+	"time"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
+
+const translationFinalizerName = "kdex.dev/kdex-nexus-translation-finalizer"
 
 // KDexTranslationReconciler reconciles a KDexTranslation object
 type KDexTranslationReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	RequeueDelay time.Duration
+	Scheme       *runtime.Scheme
 }
 
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdextranslations,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdextranslations/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdextranslations/finalizers,verbs=update
 
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the KDexTranslation object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.22.4/pkg/reconcile
-func (r *KDexTranslationReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = logf.FromContext(ctx)
+func (r *KDexTranslationReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, err error) {
+	log := logf.FromContext(ctx)
 
-	// TODO(user): your logic here
+	var translation kdexv1alpha1.KDexTranslation
+	if err := r.Get(ctx, req.NamespacedName, &translation); err != nil {
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	// Defer status update
+	defer func() {
+		translation.Status.ObservedGeneration = translation.Generation
+		if updateErr := r.Status().Update(ctx, &translation); updateErr != nil {
+			err = updateErr
+			res = ctrl.Result{}
+		}
+
+		log.V(1).Info("status", "status", translation.Status, "err", err, "res", res)
+	}()
+
+	if translation.DeletionTimestamp.IsZero() {
+		if !controllerutil.ContainsFinalizer(&translation, translationFinalizerName) {
+			controllerutil.AddFinalizer(&translation, translationFinalizerName)
+			if err := r.Update(ctx, &translation); err != nil {
+				return ctrl.Result{}, err
+			}
+			return ctrl.Result{Requeue: true}, nil
+		}
+	} else {
+		if controllerutil.ContainsFinalizer(&translation, translationFinalizerName) {
+			// remove internal translation
+
+			controllerutil.RemoveFinalizer(&translation, translationFinalizerName)
+			if err := r.Update(ctx, &translation); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+	}
+
+	kdexv1alpha1.SetConditions(
+		&translation.Status.Conditions,
+		kdexv1alpha1.ConditionStatuses{
+			Degraded:    metav1.ConditionFalse,
+			Progressing: metav1.ConditionTrue,
+			Ready:       metav1.ConditionUnknown,
+		},
+		kdexv1alpha1.ConditionReasonReconciling,
+		"Reconciling",
+	)
+
+	_, shouldReturn, r1, err := ResolveHost(ctx, r.Client, &translation, &translation.Status.Conditions, &translation.Spec.HostRef, r.RequeueDelay)
+	if shouldReturn {
+		return r1, err
+	}
+
+	// create the internal translation
+
+	kdexv1alpha1.SetConditions(
+		&translation.Status.Conditions,
+		kdexv1alpha1.ConditionStatuses{
+			Degraded:    metav1.ConditionFalse,
+			Progressing: metav1.ConditionFalse,
+			Ready:       metav1.ConditionTrue,
+		},
+		kdexv1alpha1.ConditionReasonReconcileSuccess,
+		"Reconciliation successful",
+	)
+
+	log.V(1).Info("reconciled")
 
 	return ctrl.Result{}, nil
 }
@@ -55,8 +119,15 @@ func (r *KDexTranslationReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 // SetupWithManager sets up the controller with the Manager.
 func (r *KDexTranslationReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		// Uncomment the following line adding a pointer to an instance of the controlled resource as an argument
-		// For().
+		For(&kdexv1alpha1.KDexTranslation{}).
+		WithOptions(
+			controller.TypedOptions[reconcile.Request]{
+				LogConstructor: LogConstructor("kdextranslation", mgr),
+			},
+		).
+		Watches(
+			&kdexv1alpha1.KDexHost{},
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexTranslation{}, &kdexv1alpha1.KDexTranslationList{}, "{.Spec.HostRef}")).
 		Named("kdextranslation").
 		Complete(r)
 }
