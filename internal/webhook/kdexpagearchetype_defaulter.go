@@ -46,7 +46,7 @@ func (a *KDexPageArchetypeDefaulter) Default(ctx context.Context, ro runtime.Obj
 	}
 
 	if spec.ScriptLibraryRef != nil && spec.ScriptLibraryRef.Kind == "" {
-		spec.ScriptLibraryRef.Kind = "KDexScriptLibrary"
+		spec.ScriptLibraryRef.Kind = KDexScriptLibrary
 	}
 
 	return nil

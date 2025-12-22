@@ -30,7 +30,7 @@ func (a *KDexThemeDefaulter) Default(ctx context.Context, ro runtime.Object) err
 	}
 
 	if spec.ScriptLibraryRef != nil && spec.ScriptLibraryRef.Kind == "" {
-		spec.ScriptLibraryRef.Kind = "KDexScriptLibrary"
+		spec.ScriptLibraryRef.Kind = KDexScriptLibrary
 	}
 
 	spec.IngressPath = "/_theme"

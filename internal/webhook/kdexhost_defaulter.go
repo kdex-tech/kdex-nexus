@@ -41,7 +41,7 @@ func (a *KDexHostDefaulter) Default(ctx context.Context, ro runtime.Object) erro
 	}
 
 	if spec.ScriptLibraryRef != nil && spec.ScriptLibraryRef.Kind == "" {
-		spec.ScriptLibraryRef.Kind = "KDexScriptLibrary"
+		spec.ScriptLibraryRef.Kind = KDexScriptLibrary
 	}
 
 	spec.IngressPath = "/_host"
