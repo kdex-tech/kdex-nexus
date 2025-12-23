@@ -103,7 +103,7 @@ var _ = BeforeSuite(func() {
 	}
 
 	logger, err := kdexlog.New(&opts, map[string]string{
-		// "kdexpagebinding.watch": "2",
+		"kdexpagebinding": "2",
 	})
 	if err != nil {
 		panic(err)
