@@ -288,24 +288,34 @@ func (r *KDexPageBindingReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		scriptLibraries = append(scriptLibraries, scriptLibrary)
 	}
 
+	host, shouldReturn, r1, err := ResolveHost(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, &pageBinding.Spec.HostRef, r.RequeueDelay)
+	if shouldReturn {
+		return r1, err
+	}
+
+	pageBinding.Status.Attributes["host.generation"] = fmt.Sprintf("%d", host.GetGeneration())
+
 	packageReferences := []kdexv1alpha1.PackageReference{}
+	scripts := []kdexv1alpha1.ScriptDef{}
 	for _, content := range contents {
 		if content.App != nil {
 			packageReferences = append(packageReferences, content.App.PackageReference)
+			scripts = append(scripts, content.App.Scripts...)
 		}
 	}
 	for _, scriptLibrary := range scriptLibraries {
 		if scriptLibrary.PackageReference != nil {
 			packageReferences = append(packageReferences, *scriptLibrary.PackageReference)
 		}
+		scripts = append(scripts, scriptLibrary.Scripts...)
 	}
 
-	log.V(1).Info("packageReferences", "packageReferences", packageReferences)
-
-	_, shouldReturn, r1, err = ResolveHost(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, &pageBinding.Spec.HostRef, r.RequeueDelay)
-	if shouldReturn {
-		return r1, err
+	_, err = r.createOrUpdateInternalPageBinding(ctx, &pageBinding, packageReferences, scripts)
+	if err != nil {
+		return reconcile.Result{}, err
 	}
+
+	// pageBinding.Status.Attributes = internalPageBinding.Status.Attributes
 
 	kdexv1alpha1.SetConditions(
 		&pageBinding.Status.Conditions,
@@ -389,4 +399,79 @@ func (r *KDexPageBindingReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		).
 		Named("kdexpagebinding").
 		Complete(r)
+}
+
+func (r *KDexPageBindingReconciler) createOrUpdateInternalPageBinding(
+	ctx context.Context,
+	pageBinding *kdexv1alpha1.KDexPageBinding,
+	packageReferences []kdexv1alpha1.PackageReference,
+	scripts []kdexv1alpha1.ScriptDef,
+) (*kdexv1alpha1.KDexInternalPageBinding, error) {
+	log := logf.FromContext(ctx)
+
+	internalPageBinding := &kdexv1alpha1.KDexInternalPageBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      pageBinding.Name,
+			Namespace: pageBinding.Namespace,
+		},
+	}
+
+	op, err := ctrl.CreateOrUpdate(ctx, r.Client, internalPageBinding, func() error {
+		if internalPageBinding.CreationTimestamp.IsZero() {
+			internalPageBinding.Annotations = make(map[string]string)
+			for key, value := range pageBinding.Annotations {
+				internalPageBinding.Annotations[key] = value
+			}
+			internalPageBinding.Labels = make(map[string]string)
+			for key, value := range pageBinding.Labels {
+				internalPageBinding.Labels[key] = value
+			}
+
+			internalPageBinding.Labels["app.kubernetes.io/name"] = kdexWeb
+			internalPageBinding.Labels["kdex.dev/instance"] = pageBinding.Name
+
+			internalPageBinding.Spec = kdexv1alpha1.KDexInternalPageBindingSpec{}
+		}
+
+		internalPageBinding.Labels["kdex.dev/generation"] = fmt.Sprintf("%d", pageBinding.Generation)
+		internalPageBinding.Spec.ContentEntries = pageBinding.Spec.ContentEntries
+		internalPageBinding.Spec.HostRef = pageBinding.Spec.HostRef
+		internalPageBinding.Spec.Label = pageBinding.Spec.Label
+		internalPageBinding.Spec.NavigationHints = pageBinding.Spec.NavigationHints
+		internalPageBinding.Spec.OverrideFooterRef = pageBinding.Spec.OverrideFooterRef
+		internalPageBinding.Spec.OverrideHeaderRef = pageBinding.Spec.OverrideHeaderRef
+		internalPageBinding.Spec.OverrideMainNavigationRef = pageBinding.Spec.OverrideMainNavigationRef
+		internalPageBinding.Spec.PageArchetypeRef = pageBinding.Spec.PageArchetypeRef
+		internalPageBinding.Spec.ParentPageRef = pageBinding.Spec.ParentPageRef
+		internalPageBinding.Spec.Paths = pageBinding.Spec.Paths
+		internalPageBinding.Spec.ScriptLibraryRef = pageBinding.Spec.ScriptLibraryRef
+		internalPageBinding.Spec.PackageReferences = packageReferences
+		internalPageBinding.Spec.Scripts = scripts
+
+		return ctrl.SetControllerReference(pageBinding, internalPageBinding, r.Scheme)
+	})
+
+	log.V(2).Info(
+		"createOrUpdateInternalPageBinding",
+		"packageReferences", packageReferences,
+		"scripts", scripts,
+		"op", op,
+		"err", err,
+	)
+
+	if err != nil {
+		kdexv1alpha1.SetConditions(
+			&pageBinding.Status.Conditions,
+			kdexv1alpha1.ConditionStatuses{
+				Degraded:    metav1.ConditionTrue,
+				Progressing: metav1.ConditionFalse,
+				Ready:       metav1.ConditionFalse,
+			},
+			kdexv1alpha1.ConditionReasonReconcileError,
+			err.Error(),
+		)
+		return nil, err
+	}
+
+	return internalPageBinding, nil
 }

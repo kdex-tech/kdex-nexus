@@ -83,12 +83,12 @@ func (r *KDexTranslationReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		return r1, err
 	}
 
-	internalTranslation, err := r.createOrUpdateInternalTranslation(ctx, &translation)
+	_, err = r.createOrUpdateInternalTranslation(ctx, &translation)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
 
-	translation.Status.Attributes = internalTranslation.Status.Attributes
+	// translation.Status.Attributes = internalTranslation.Status.Attributes
 
 	kdexv1alpha1.SetConditions(
 		&translation.Status.Conditions,
