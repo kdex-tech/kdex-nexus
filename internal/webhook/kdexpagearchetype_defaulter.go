@@ -36,12 +36,12 @@ func (a *KDexPageArchetypeDefaulter) Default(ctx context.Context, ro runtime.Obj
 	}
 
 	if spec.DefaultMainNavigationRef != nil && spec.DefaultMainNavigationRef.Kind == "" {
-		spec.DefaultMainNavigationRef.Kind = "KDexPageNavigation"
+		spec.DefaultMainNavigationRef.Kind = KDexPageNavigation
 	}
 
 	for _, v := range spec.ExtraNavigations {
 		if v.Kind == "" {
-			v.Kind = "KDexPageNavigation"
+			v.Kind = KDexPageNavigation
 		}
 	}
 

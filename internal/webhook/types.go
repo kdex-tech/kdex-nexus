@@ -1,6 +1,7 @@
 package webhook
 
 const (
-	KDexScriptLibrary = "KDexScriptLibrary"
-	KDexTheme         = "KDexTheme"
+	KDexPageNavigation = "KDexPageNavigation"
+	KDexScriptLibrary  = "KDexScriptLibrary"
+	KDexTheme          = "KDexTheme"
 )

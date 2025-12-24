@@ -44,12 +44,12 @@ func (v *KDexPageBindingValidator) validate(_ context.Context, ro runtime.Object
 	}
 
 	for idx, entry := range spec.ContentEntries {
-		if entry.ContentEntryStatic.RawHTML != "" {
-			if err := render.ValidateContent(entry.Slot, entry.ContentEntryStatic.RawHTML); err != nil {
+		if entry.RawHTML != "" {
+			if err := render.ValidateContent(entry.Slot, entry.RawHTML); err != nil {
 				return nil, fmt.Errorf("invalid go template in spec.contentEntries[%d].rawHTML: %w", idx, err)
 			}
 		}
-		if entry.ContentEntryApp.AppRef != nil && entry.ContentEntryApp.AppRef.Name == "" {
+		if entry.AppRef != nil && entry.AppRef.Name == "" {
 			return nil, fmt.Errorf("spec.contentEntries[%d].appRef.name is required", idx)
 		}
 	}

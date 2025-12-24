@@ -25,9 +25,9 @@ func (a *KDexPageBindingDefaulter) Default(ctx context.Context, ro runtime.Objec
 	}
 
 	for _, entry := range spec.ContentEntries {
-		if entry.ContentEntryApp.AppRef != nil {
-			if entry.ContentEntryApp.AppRef.Kind == "" {
-				entry.ContentEntryApp.AppRef.Kind = "KDexApp"
+		if entry.AppRef != nil {
+			if entry.AppRef.Kind == "" {
+				entry.AppRef.Kind = "KDexApp"
 			}
 		}
 	}
@@ -41,7 +41,7 @@ func (a *KDexPageBindingDefaulter) Default(ctx context.Context, ro runtime.Objec
 	}
 
 	if spec.OverrideMainNavigationRef != nil && spec.OverrideMainNavigationRef.Kind == "" {
-		spec.OverrideMainNavigationRef.Kind = "KDexPageNavigation"
+		spec.OverrideMainNavigationRef.Kind = KDexPageNavigation
 	}
 
 	if spec.PageArchetypeRef.Kind == "" {

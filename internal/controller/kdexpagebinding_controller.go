@@ -33,8 +33,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-const pageBindingFinalizerName = "kdex.dev/kdex-nexus-page-binding-finalizer"
-
 // KDexPageBindingReconciler reconciles a KDexPageBinding object
 type KDexPageBindingReconciler struct {
 	client.Client
