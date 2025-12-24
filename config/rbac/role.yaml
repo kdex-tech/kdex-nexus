@@ -74,9 +74,9 @@ rules:
   - kdexclusterpagenavigations
   - kdexclusterscriptlibraries
   - kdexclusterthemes
-  - kdexhostcontrollers
   - kdexhostpackagereferences
   - kdexhosts
+  - kdexinternalhosts
   - kdexinternaltranslations
   - kdexpagearchetypes
   - kdexpagebindings
@@ -105,9 +105,9 @@ rules:
   - kdexclusterpagenavigations/finalizers
   - kdexclusterscriptlibraries/finalizers
   - kdexclusterthemes/finalizers
-  - kdexhostcontrollers/finalizers
   - kdexhostpackagereferences/finalizers
   - kdexhosts/finalizers
+  - kdexinternalhosts/finalizers
   - kdexpagearchetypes/finalizers
   - kdexpagebindings/finalizers
   - kdexpagefooters/finalizers
@@ -129,9 +129,9 @@ rules:
   - kdexclusterpagenavigations/status
   - kdexclusterscriptlibraries/status
   - kdexclusterthemes/status
-  - kdexhostcontrollers/status
   - kdexhostpackagereferences/status
   - kdexhosts/status
+  - kdexinternalhosts/status
   - kdexpagearchetypes/status
   - kdexpagebindings/status
   - kdexpagefooters/status

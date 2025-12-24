@@ -77,9 +77,9 @@ type KDexHostReconciler struct {
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexhosts,                           verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexhosts/status,                    verbs=get;update;patch
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexhosts/finalizers,                verbs=update
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexhostcontrollers,                 verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexhostcontrollers/status,          verbs=get;update;patch
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexhostcontrollers/finalizers,      verbs=update
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexinternalhosts,                   verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexinternalhosts/status,            verbs=get;update;patch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexinternalhosts/finalizers,        verbs=update
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexhostpackagereferences,           verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexhostpackagereferences/status,    verbs=get;update;patch
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexhostpackagereferences/finalizers,verbs=update
@@ -141,15 +141,15 @@ func (r *KDexHostReconciler) Reconcile(ctx context.Context, req ctrl.Request) (r
 		}
 	} else {
 		if controllerutil.ContainsFinalizer(&host, hostFinalizerName) {
-			hostController := &kdexv1alpha1.KDexHostController{}
-			err := r.Get(ctx, req.NamespacedName, hostController)
+			internalHost := &kdexv1alpha1.KDexInternalHost{}
+			err := r.Get(ctx, req.NamespacedName, internalHost)
 			if err == nil {
-				if hostController.DeletionTimestamp.IsZero() {
-					if err := r.Delete(ctx, hostController); err != nil {
+				if internalHost.DeletionTimestamp.IsZero() {
+					if err := r.Delete(ctx, internalHost); err != nil {
 						return ctrl.Result{}, err
 					}
 				}
-				// KDexHostController still exists. We wait.
+				// KDexInternalHost still exists. We wait.
 				return ctrl.Result{Requeue: true}, nil
 			}
 			if !errors.IsNotFound(err) {
@@ -236,7 +236,7 @@ func (r *KDexHostReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&corev1.ConfigMap{}).
 		Owns(&corev1.Service{}).
 		Owns(&corev1.ServiceAccount{}).
-		Owns(&kdexv1alpha1.KDexHostController{}).
+		Owns(&kdexv1alpha1.KDexInternalHost{}).
 		Owns(&rbacv1.ClusterRoleBinding{}).
 		Watches(
 			&kdexv1alpha1.KDexScriptLibrary{},
@@ -377,7 +377,7 @@ func (r *KDexHostReconciler) innerReconcile(ctx context.Context, host *kdexv1alp
 		return err
 	}
 
-	hostControllerOp, err := r.createOrUpdateHostControllerResource(ctx, host)
+	internalHostOp, err := r.createOrUpdateInternalHostResource(ctx, host)
 	if err != nil {
 		return err
 	}
@@ -402,7 +402,7 @@ func (r *KDexHostReconciler) innerReconcile(ctx context.Context, host *kdexv1alp
 		"clusterRoleBindingOp", clusterRoleBindingOp,
 		"deploymentOp", deploymentOp,
 		"serviceOp", serviceOp,
-		"hostControllerOp", hostControllerOp,
+		"internalHostOp", internalHostOp,
 	)
 
 	return nil
@@ -467,39 +467,39 @@ func (r *KDexHostReconciler) createOrUpdateConfigMap(
 	return op, nil
 }
 
-func (r *KDexHostReconciler) createOrUpdateHostControllerResource(
+func (r *KDexHostReconciler) createOrUpdateInternalHostResource(
 	ctx context.Context,
 	host *kdexv1alpha1.KDexHost,
 ) (controllerutil.OperationResult, error) {
-	hostController := &kdexv1alpha1.KDexHostController{
+	internalHost := &kdexv1alpha1.KDexInternalHost{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      host.Name,
 			Namespace: host.Namespace,
 		},
 	}
 
-	op, err := ctrl.CreateOrUpdate(ctx, r.Client, hostController, func() error {
-		if hostController.CreationTimestamp.IsZero() {
-			if hostController.Annotations == nil {
-				hostController.Annotations = make(map[string]string)
+	op, err := ctrl.CreateOrUpdate(ctx, r.Client, internalHost, func() error {
+		if internalHost.CreationTimestamp.IsZero() {
+			if internalHost.Annotations == nil {
+				internalHost.Annotations = make(map[string]string)
 			}
 			for key, value := range host.Annotations {
-				hostController.Annotations[key] = value
+				internalHost.Annotations[key] = value
 			}
-			if hostController.Labels == nil {
-				hostController.Labels = make(map[string]string)
+			if internalHost.Labels == nil {
+				internalHost.Labels = make(map[string]string)
 			}
 			for key, value := range host.Labels {
-				hostController.Labels[key] = value
+				internalHost.Labels[key] = value
 			}
 
-			hostController.Labels["app.kubernetes.io/name"] = kdexWeb
-			hostController.Labels["kdex.dev/instance"] = host.Name
+			internalHost.Labels["app.kubernetes.io/name"] = kdexWeb
+			internalHost.Labels["kdex.dev/instance"] = host.Name
 		}
 
-		hostController.Spec = host.Spec
+		internalHost.Spec = host.Spec
 
-		return ctrl.SetControllerReference(host, hostController, r.Scheme)
+		return ctrl.SetControllerReference(host, internalHost, r.Scheme)
 	})
 
 	if err != nil {

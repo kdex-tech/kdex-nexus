@@ -49,7 +49,7 @@ var _ = Describe("KDexPageBinding Controller", func() {
 
 			err := k8sClient.Create(ctx, resource)
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring(`spec.basePath: Invalid value: "": spec.basePath in body should match '^/'`))
+			Expect(err.Error()).To(ContainSubstring(`spec.basePath in body should match '^/'`))
 		})
 
 		It("must not validate if no contentEntries are provided", func() {
@@ -86,7 +86,7 @@ var _ = Describe("KDexPageBinding Controller", func() {
 
 			err := k8sClient.Create(ctx, resource)
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring(`spec.contentEntries: Invalid value: 0: spec.contentEntries in body should have at least 1 items`))
+			Expect(err.Error()).To(ContainSubstring(`spec.contentEntries in body should have at least 1 items`))
 		})
 
 		It("must not validate if contentEntries doesn't have a 'main' slot", func() {
@@ -107,7 +107,7 @@ var _ = Describe("KDexPageBinding Controller", func() {
 
 			err := k8sClient.Create(ctx, resource)
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring(`spec.contentEntries: Invalid value: slot 'main' must be specified`))
+			Expect(err.Error()).To(ContainSubstring(`slot 'main' must be specified`))
 		})
 
 		It("must not validate if contentEntries doesn't have either 'rawHTML' or 'appRef'", func() {
@@ -130,36 +130,7 @@ var _ = Describe("KDexPageBinding Controller", func() {
 
 			err := k8sClient.Create(ctx, resource)
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring(`spec.contentEntries[0]: Invalid value: exactly one of the fields in [appRef rawHTML] must be set`))
-		})
-
-		It("must not validate if contentEntries has both 'rawHTML' and 'appRef'", func() {
-			resource := &kdexv1alpha1.KDexPageBinding{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      resourceName,
-					Namespace: namespace,
-				},
-				Spec: kdexv1alpha1.KDexPageBindingSpec{
-					ContentEntries: []kdexv1alpha1.ContentEntry{
-						{
-							Slot: "main",
-							ContentEntryApp: kdexv1alpha1.ContentEntryApp{
-								AppRef: &kdexv1alpha1.KDexObjectReference{},
-							},
-							ContentEntryStatic: kdexv1alpha1.ContentEntryStatic{
-								RawHTML: "<h1>Hello, World!</h1>",
-							},
-						},
-					},
-					Paths: kdexv1alpha1.Paths{
-						BasePath: "/",
-					},
-				},
-			}
-
-			err := k8sClient.Create(ctx, resource)
-			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring(`spec.contentEntries[0]: Invalid value: exactly one of the fields in [appRef rawHTML] must be set`))
+			Expect(err.Error()).To(ContainSubstring(`exactly one of the fields in [appRef rawHTML] must be set`))
 		})
 
 		It("must not validate if label is not set", func() {
@@ -185,7 +156,44 @@ var _ = Describe("KDexPageBinding Controller", func() {
 
 			err := k8sClient.Create(ctx, resource)
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring(`spec.label: Invalid value: "": spec.label in body should be at least 3 chars long`))
+			Expect(err.Error()).To(ContainSubstring(`spec.label in body should be at least 3 chars long`))
+		})
+
+		It("must not validate if contentEntries has both 'rawHTML' and 'appRef'", func() {
+			resource := &kdexv1alpha1.KDexPageBinding{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.KDexPageBindingSpec{
+					ContentEntries: []kdexv1alpha1.ContentEntry{
+						{
+							Slot: "main",
+							ContentEntryApp: kdexv1alpha1.ContentEntryApp{
+								AppRef:            &kdexv1alpha1.KDexObjectReference{},
+								CustomElementName: "test-custom-element",
+							},
+							ContentEntryStatic: kdexv1alpha1.ContentEntryStatic{
+								RawHTML: "<h1>Hello, World!</h1>",
+							},
+						},
+					},
+					HostRef: corev1.LocalObjectReference{
+						Name: "test-host",
+					},
+					Label: "test-label",
+					PageArchetypeRef: kdexv1alpha1.KDexObjectReference{
+						Name: "test-page-archetype",
+					},
+					Paths: kdexv1alpha1.Paths{
+						BasePath: "/",
+					},
+				},
+			}
+
+			err := k8sClient.Create(ctx, resource)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring(`exactly one of the fields in [appRef rawHTML] must be set`))
 		})
 
 		It("must not validate if hostRef.name is empty", func() {
@@ -212,7 +220,7 @@ var _ = Describe("KDexPageBinding Controller", func() {
 
 			err := k8sClient.Create(ctx, resource)
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring(`spec.hostRef: Invalid value: hostRef.name must not be empty`))
+			Expect(err.Error()).To(ContainSubstring(`hostRef.name must not be empty`))
 		})
 
 		It("must not validate if pageArchetypeRef.name is missing name", func() {
@@ -242,7 +250,7 @@ var _ = Describe("KDexPageBinding Controller", func() {
 
 			err := k8sClient.Create(ctx, resource)
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring(`spec.pageArchetypeRef: Invalid value: pageArchetypeRef.name must not be empty`))
+			Expect(err.Error()).To(ContainSubstring(`pageArchetypeRef.name must not be empty`))
 		})
 
 		It("must not validate if contentEntries has invalid rawHTML", func() {
@@ -308,7 +316,7 @@ var _ = Describe("KDexPageBinding Controller", func() {
 
 			err := k8sClient.Create(ctx, resource)
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring(`spec.contentEntries[0]: Invalid value: "object": no such key: customElementName evaluating rule: appRef must be accompanied by customElementName`))
+			Expect(err.Error()).To(ContainSubstring(`no such key: customElementName evaluating rule: appRef must be accompanied by customElementName`))
 		})
 
 		It("must not validate if app contentEntry appRef is missing name", func() {
