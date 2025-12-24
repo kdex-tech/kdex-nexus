@@ -286,12 +286,10 @@ func (r *KDexPageBindingReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		scriptLibraries = append(scriptLibraries, scriptLibrary)
 	}
 
-	host, shouldReturn, r1, err := ResolveHost(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, &pageBinding.Spec.HostRef, r.RequeueDelay)
+	_, shouldReturn, r1, err = ResolveHost(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, &pageBinding.Spec.HostRef, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
-
-	pageBinding.Status.Attributes["host.generation"] = fmt.Sprintf("%d", host.GetGeneration())
 
 	packageReferences := []kdexv1alpha1.PackageReference{}
 	scripts := []kdexv1alpha1.ScriptDef{}
