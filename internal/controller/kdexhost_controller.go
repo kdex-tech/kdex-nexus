@@ -195,24 +195,6 @@ func (r *KDexHostReconciler) Reconcile(ctx context.Context, req ctrl.Request) (r
 		"Reconciling",
 	)
 
-	themeObj, shouldReturn, r1, err := ResolveKDexObjectReference(ctx, r.Client, &host, &host.Status.Conditions, host.Spec.ThemeRef, r.RequeueDelay)
-	if shouldReturn {
-		return r1, err
-	}
-
-	if themeObj != nil {
-		host.Status.Attributes["theme.generation"] = fmt.Sprintf("%d", themeObj.GetGeneration())
-	}
-
-	scriptLibraryObj, shouldReturn, r1, err := ResolveKDexObjectReference(ctx, r.Client, &host, &host.Status.Conditions, host.Spec.ScriptLibraryRef, r.RequeueDelay)
-	if shouldReturn {
-		return r1, err
-	}
-
-	if scriptLibraryObj != nil {
-		host.Status.Attributes["scriptLibrary.generation"] = fmt.Sprintf("%d", scriptLibraryObj.GetGeneration())
-	}
-
 	return ctrl.Result{}, r.innerReconcile(ctx, &host)
 }
 
@@ -352,6 +334,45 @@ func (r *KDexHostReconciler) getMemoizedService() *corev1.ServiceSpec {
 }
 
 func (r *KDexHostReconciler) innerReconcile(ctx context.Context, host *kdexv1alpha1.KDexHost) error {
+	requiredBackends := []kdexv1alpha1.KDexObjectReference{}
+
+	// Resolve direct requirements from host spec
+	themeObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, host.Spec.ThemeRef, r.RequeueDelay)
+	if shouldReturn {
+		return err
+	}
+	if themeObj != nil {
+		host.Status.Attributes["theme.generation"] = fmt.Sprintf("%d", themeObj.GetGeneration())
+
+		CollectBackend(requiredBackends, themeObj)
+
+		var spec kdexv1alpha1.KDexThemeSpec
+		switch v := themeObj.(type) {
+		case *kdexv1alpha1.KDexTheme:
+			spec = v.Spec
+		case *kdexv1alpha1.KDexClusterTheme:
+			spec = v.Spec
+		}
+
+		themeScriptLibraryObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, themeObj, &host.Status.Conditions, spec.ScriptLibraryRef, r.RequeueDelay)
+		if shouldReturn {
+			return err
+		}
+		if themeScriptLibraryObj != nil {
+			CollectBackend(requiredBackends, themeScriptLibraryObj)
+		}
+	}
+
+	scriptLibraryObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, host.Spec.ScriptLibraryRef, r.RequeueDelay)
+	if shouldReturn {
+		return err
+	}
+	if scriptLibraryObj != nil {
+		host.Status.Attributes["scriptLibrary.generation"] = fmt.Sprintf("%d", scriptLibraryObj.GetGeneration())
+
+		CollectBackend(requiredBackends, scriptLibraryObj)
+	}
+
 	configMapOp, err := r.createOrUpdateConfigMap(ctx, host)
 	if err != nil {
 		return err
@@ -377,10 +398,27 @@ func (r *KDexHostReconciler) innerReconcile(ctx context.Context, host *kdexv1alp
 		return err
 	}
 
-	internalHostOp, err := r.createOrUpdateInternalHostResource(ctx, host)
+	// Deduplicate
+	uniqueBackends := []kdexv1alpha1.KDexObjectReference{}
+	seen := make(map[string]bool)
+	for _, rb := range requiredBackends {
+		key := fmt.Sprintf("%s/%s/%s", rb.Kind, rb.Namespace, rb.Name)
+		if !seen[key] {
+			seen[key] = true
+			uniqueBackends = append(uniqueBackends, rb)
+		}
+	}
+
+	// Note: Next steps will implement the actual creation of Backend resources
+	// based on uniqueBackends.
+
+	internalHostOp, err := r.createOrUpdateInternalHostResource(ctx, host, uniqueBackends)
 	if err != nil {
 		return err
 	}
+
+	// TODO: we need to extract the ingress IP from the ingress resource, set it in the internal host status and
+	// proliferating it all the way to the host resource.
 
 	kdexv1alpha1.SetConditions(
 		&host.Status.Conditions,
@@ -470,6 +508,7 @@ func (r *KDexHostReconciler) createOrUpdateConfigMap(
 func (r *KDexHostReconciler) createOrUpdateInternalHostResource(
 	ctx context.Context,
 	host *kdexv1alpha1.KDexHost,
+	requiredBackends []kdexv1alpha1.KDexObjectReference,
 ) (controllerutil.OperationResult, error) {
 	internalHost := &kdexv1alpha1.KDexInternalHost{
 		ObjectMeta: metav1.ObjectMeta{
@@ -497,7 +536,8 @@ func (r *KDexHostReconciler) createOrUpdateInternalHostResource(
 			internalHost.Labels["kdex.dev/instance"] = host.Name
 		}
 
-		internalHost.Spec = host.Spec
+		internalHost.Spec.KDexHostSpec = host.Spec
+		internalHost.Spec.RequiredBackends = requiredBackends
 
 		return ctrl.SetControllerReference(host, internalHost, r.Scheme)
 	})

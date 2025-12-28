@@ -56,11 +56,11 @@ func ResolveContents(
 		}
 
 		contents[contentEntry.Slot] = page.ResolvedContentEntry{
-			App:               appSpec,
-			AppName:           app.GetName(),
-			AppGeneration:     fmt.Sprintf("%d", app.GetGeneration()),
+			AppObj:            app,
 			Attributes:        contentEntry.Attributes,
 			CustomElementName: contentEntry.CustomElementName,
+			PackageReference:  &appSpec.PackageReference,
+			Scripts:           appSpec.Scripts,
 			Slot:              contentEntry.Slot,
 		}
 	}
