@@ -145,6 +145,14 @@ rules:
   - patch
   - update
 - apiGroups:
+  - kdex.dev
+  resources:
+  - kdexinternalpagebindings
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
   - networking.k8s.io
   resources:
   - ingresses

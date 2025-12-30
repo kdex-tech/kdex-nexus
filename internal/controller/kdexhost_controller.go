@@ -40,13 +40,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 const (
-	hostFinalizerName = "kdex.dev/kdex-nexus-host-finalizer"
 	kdexWeb           = "kdex-web"
+	hostFinalizerName = "kdex.dev/kdex-nexus-host-finalizer"
+	hostIndexKey      = "spec.hostRef.name"
 )
 
 // KDexHostReconciler reconciles a KDexHost object
@@ -80,6 +82,8 @@ type KDexHostReconciler struct {
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexinternalhosts,                   verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexinternalhosts/status,            verbs=get;update;patch
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexinternalhosts/finalizers,        verbs=update
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexinternalpagebindings,            verbs=get;list;watch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexinternaltranslations,            verbs=get;list;watch
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexhostpackagereferences,           verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexhostpackagereferences/status,    verbs=get;update;patch
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexhostpackagereferences/finalizers,verbs=update
@@ -212,6 +216,26 @@ func (r *KDexHostReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		}
 	}
 
+	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &kdexv1alpha1.KDexInternalPageBinding{}, hostIndexKey, func(rawObj client.Object) []string {
+		pageBinding := rawObj.(*kdexv1alpha1.KDexInternalPageBinding)
+		if pageBinding.Spec.HostRef.Name == "" {
+			return nil
+		}
+		return []string{pageBinding.Spec.HostRef.Name}
+	}); err != nil {
+		return err
+	}
+
+	// if err := mgr.GetFieldIndexer().IndexField(context.Background(), &kdexv1alpha1.KDexInternalTranslation{}, hostIndexKey, func(rawObj client.Object) []string {
+	// 	translation := rawObj.(*kdexv1alpha1.KDexInternalTranslation)
+	// 	if translation.Spec.HostRef.Name == "" {
+	// 		return nil
+	// 	}
+	// 	return []string{translation.Spec.HostRef.Name}
+	// }); err != nil {
+	// 	return err
+	// }
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&kdexv1alpha1.KDexHost{}).
 		Owns(&appsv1.Deployment{}).
@@ -220,6 +244,39 @@ func (r *KDexHostReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&corev1.ServiceAccount{}).
 		Owns(&kdexv1alpha1.KDexInternalHost{}).
 		Owns(&rbacv1.ClusterRoleBinding{}).
+		Watches(
+			&kdexv1alpha1.KDexInternalPageBinding{},
+			handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
+				pageBinding, ok := obj.(*kdexv1alpha1.KDexInternalPageBinding)
+				if !ok {
+					return nil
+				}
+				return []reconcile.Request{
+					{
+						NamespacedName: types.NamespacedName{
+							Name:      pageBinding.Spec.HostRef.Name,
+							Namespace: pageBinding.Namespace,
+						},
+					},
+				}
+			})).
+		// Watches(
+		// 	&kdexv1alpha1.KDexInternalTranslation{},
+		// 	handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, o client.Object) []reconcile.Request {
+		// 		translation, ok := o.(*kdexv1alpha1.KDexInternalTranslation)
+		// 		if !ok {
+		// 			return nil
+		// 		}
+
+		// 		return []reconcile.Request{
+		// 			{
+		// 				NamespacedName: types.NamespacedName{
+		// 					Name:      translation.Spec.HostRef.Name,
+		// 					Namespace: translation.Namespace,
+		// 				},
+		// 			},
+		// 		}
+		// 	})).
 		Watches(
 			&kdexv1alpha1.KDexScriptLibrary{},
 			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexHost{}, &kdexv1alpha1.KDexHostList{}, "{.Spec.ScriptLibraryRef}")).
@@ -398,19 +455,26 @@ func (r *KDexHostReconciler) innerReconcile(ctx context.Context, host *kdexv1alp
 		return err
 	}
 
-	// Deduplicate
-	uniqueBackends := []kdexv1alpha1.KDexObjectReference{}
-	seen := make(map[string]bool)
-	for _, rb := range requiredBackends {
-		key := fmt.Sprintf("%s/%s/%s", rb.Kind, rb.Namespace, rb.Name)
-		if !seen[key] {
-			seen[key] = true
-			uniqueBackends = append(uniqueBackends, rb)
-		}
+	internalPages := &kdexv1alpha1.KDexInternalPageBindingList{}
+	if err := r.List(ctx, internalPages, client.InNamespace(host.Namespace), client.MatchingFields{hostIndexKey: host.Name}); err != nil {
+		return err
 	}
 
-	// Note: Next steps will implement the actual creation of Backend resources
-	// based on uniqueBackends.
+	for _, internalPage := range internalPages.Items {
+		requiredBackends = append(requiredBackends, internalPage.Spec.RequiredBackends...)
+	}
+
+	// Deduplicate
+	uniqueBackends := []kdexv1alpha1.KDexObjectReference{}
+	seen := map[string]bool{}
+	for _, backend := range requiredBackends {
+		key := fmt.Sprintf("%s/%s/%s", backend.Kind, backend.Namespace, backend.Name)
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+		uniqueBackends = append(uniqueBackends, backend)
+	}
 
 	internalHostOp, err := r.createOrUpdateInternalHostResource(ctx, host, uniqueBackends)
 	if err != nil {
