@@ -1,6 +1,12 @@
 # Image URL to use all building/pushing image targets
 IMG ?= kdex-tech/kdex-nexus:latest
 
+REPOSITORY ?= 
+# if REPOSITORY is set make sure it ends with a /
+ifneq ($(REPOSITORY),)
+override REPOSITORY := $(REPOSITORY)/
+endif
+
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
 GOBIN=$(shell go env GOPATH)/bin
@@ -138,11 +144,11 @@ run: manifests generate fmt vet ## Run a controller from your host.
 # More info: https://docs.docker.com/develop/develop-images/build_enhancements/
 .PHONY: docker-build
 docker-build: ## Build docker image with the manager.
-	$(CONTAINER_TOOL) build -t ${IMG} .
+	$(CONTAINER_TOOL) build -t ${REPOSITORY}${IMG} .
 
 .PHONY: docker-push
 docker-push: ## Push docker image with the manager.
-	$(CONTAINER_TOOL) push ${IMG}
+	$(CONTAINER_TOOL) push ${REPOSITORY}${IMG}
 
 # PLATFORMS defines the target platforms for the manager image be built to provide support to multiple
 # architectures. (i.e. make docker-buildx IMG=myregistry/mypoperator:0.0.1). To use this option you need to:
@@ -155,18 +161,21 @@ PLATFORMS ?= linux/arm64,linux/amd64,linux/s390x,linux/ppc64le
 docker-buildx: ## Build and push docker image for the manager for cross-platform support
 	# copy existing Dockerfile and insert --platform=${BUILDPLATFORM} into Dockerfile.cross, and preserve the original Dockerfile
 	sed -e '1 s/\(^FROM\)/FROM --platform=\$$\{BUILDPLATFORM\}/; t' -e ' 1,// s//FROM --platform=\$$\{BUILDPLATFORM\}/' Dockerfile > Dockerfile.cross
-	- $(CONTAINER_TOOL) buildx create --name kdex-nexus-builder
-	$(CONTAINER_TOOL) buildx use kdex-nexus-builder
-	IMAGE_NAME=$$(echo "${IMG}" | cut -d: -f1); \
-	echo "IMAGE_NAME=$${IMAGE_NAME}"; \
-	$(CONTAINER_TOOL) buildx build --push --platform=$(PLATFORMS) --tag ${IMG} --tag $${IMAGE_NAME}:latest -f Dockerfile.cross .
-	- $(CONTAINER_TOOL) buildx rm kdex-nexus-builder
+	$(CONTAINER_TOOL) buildx inspect kdex-nexus-builder >/dev/null 2>&1 || $(CONTAINER_TOOL) buildx create --name kdex-nexus-builder --use
+	$(CONTAINER_TOOL) buildx build --push --platform=$(PLATFORMS) --tag ${REPOSITORY}${IMG} -f Dockerfile.cross .
+	rm Dockerfile.cross
+.PHONY: docker-buildx-local
+docker-buildx-local: ## Build and push docker image for the manager for cross-platform support
+	# copy existing Dockerfile and insert --platform=${BUILDPLATFORM} into Dockerfile.cross, and preserve the original Dockerfile
+	sed -e '1 s/\(^FROM\)/FROM --platform=\$$\{BUILDPLATFORM\}/; t' -e ' 1,// s//FROM --platform=\$$\{BUILDPLATFORM\}/' Dockerfile > Dockerfile.cross
+	$(CONTAINER_TOOL) buildx inspect kdex-nexus-builder >/dev/null 2>&1 || $(CONTAINER_TOOL) buildx create --name kdex-nexus-builder --config buildx.toml --use --driver-opt network=host
+	$(CONTAINER_TOOL) buildx build --push --platform=$(PLATFORMS) --tag ${REPOSITORY}${IMG} -f Dockerfile.cross .
 	rm Dockerfile.cross
 
 .PHONY: build-installer
 build-installer: manifests generate kustomize ## Generate a consolidated YAML with CRDs and deployment.
 	mkdir -p dist
-	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
+	cd config/manager && $(KUSTOMIZE) edit set image controller=${REPOSITORY}${IMG}
 	$(KUSTOMIZE) build config/default > dist/install.yaml
 
 ##@ Deployment
@@ -187,7 +196,7 @@ uninstall: kustomize ## Uninstall CRDs from the kdex-crds module.
 
 .PHONY: deploy
 deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
+	cd config/manager && $(KUSTOMIZE) edit set image controller=${REPOSITORY}${IMG}
 	$(KUSTOMIZE) build config/default | $(KUBECTL) apply -f -
 
 .PHONY: undeploy
