@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"maps"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -137,13 +138,9 @@ func (r *KDexTranslationReconciler) createOrUpdateInternalTranslation(
 	op, err := ctrl.CreateOrUpdate(ctx, r.Client, internalTranslation, func() error {
 		if internalTranslation.CreationTimestamp.IsZero() {
 			internalTranslation.Annotations = make(map[string]string)
-			for key, value := range translation.Annotations {
-				internalTranslation.Annotations[key] = value
-			}
+			maps.Copy(internalTranslation.Annotations, translation.Annotations)
 			internalTranslation.Labels = make(map[string]string)
-			for key, value := range translation.Labels {
-				internalTranslation.Labels[key] = value
-			}
+			maps.Copy(internalTranslation.Labels, translation.Labels)
 
 			internalTranslation.Labels["app.kubernetes.io/name"] = kdexWeb
 			internalTranslation.Labels["kdex.dev/instance"] = translation.Name

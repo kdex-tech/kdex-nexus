@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"maps"
 	"os"
 	"strings"
 	"sync"
@@ -531,15 +532,11 @@ func (r *KDexHostReconciler) createOrUpdateConfigMap(
 			if configMap.Annotations == nil {
 				configMap.Annotations = make(map[string]string)
 			}
-			for key, value := range host.Annotations {
-				configMap.Annotations[key] = value
-			}
+			maps.Copy(configMap.Annotations, host.Annotations)
 			if configMap.Labels == nil {
 				configMap.Labels = make(map[string]string)
 			}
-			for key, value := range host.Labels {
-				configMap.Labels[key] = value
-			}
+			maps.Copy(configMap.Labels, host.Labels)
 
 			configMap.Labels["app.kubernetes.io/name"] = kdexWeb
 			configMap.Labels["kdex.dev/instance"] = host.Name
@@ -586,15 +583,11 @@ func (r *KDexHostReconciler) createOrUpdateInternalHostResource(
 			if internalHost.Annotations == nil {
 				internalHost.Annotations = make(map[string]string)
 			}
-			for key, value := range host.Annotations {
-				internalHost.Annotations[key] = value
-			}
+			maps.Copy(internalHost.Annotations, host.Annotations)
 			if internalHost.Labels == nil {
 				internalHost.Labels = make(map[string]string)
 			}
-			for key, value := range host.Labels {
-				internalHost.Labels[key] = value
-			}
+			maps.Copy(internalHost.Labels, host.Labels)
 
 			internalHost.Labels["app.kubernetes.io/name"] = kdexWeb
 			internalHost.Labels["kdex.dev/instance"] = host.Name
@@ -644,15 +637,11 @@ func (r *KDexHostReconciler) createOrUpdateDeployment(
 				if deployment.Annotations == nil {
 					deployment.Annotations = make(map[string]string)
 				}
-				for key, value := range host.Annotations {
-					deployment.Annotations[key] = value
-				}
+				maps.Copy(deployment.Annotations, host.Annotations)
 				if deployment.Labels == nil {
 					deployment.Labels = make(map[string]string)
 				}
-				for key, value := range host.Labels {
-					deployment.Labels[key] = value
-				}
+				maps.Copy(deployment.Labels, host.Labels)
 
 				deployment.Labels["app.kubernetes.io/name"] = kdexWeb
 				deployment.Labels["kdex.dev/instance"] = host.Name
@@ -755,15 +744,11 @@ func (r *KDexHostReconciler) createOrUpdateClusterRoleBinding(
 				if clusterRoleBinding.Annotations == nil {
 					clusterRoleBinding.Annotations = make(map[string]string)
 				}
-				for key, value := range host.Annotations {
-					clusterRoleBinding.Annotations[key] = value
-				}
+				maps.Copy(clusterRoleBinding.Annotations, host.Annotations)
 				if clusterRoleBinding.Labels == nil {
 					clusterRoleBinding.Labels = make(map[string]string)
 				}
-				for key, value := range host.Labels {
-					clusterRoleBinding.Labels[key] = value
-				}
+				maps.Copy(clusterRoleBinding.Labels, host.Labels)
 
 				clusterRoleBinding.Labels["app.kubernetes.io/name"] = kdexWeb
 				clusterRoleBinding.Labels["kdex.dev/instance"] = host.Name
@@ -821,15 +806,11 @@ func (r *KDexHostReconciler) createOrUpdateService(
 				if service.Annotations == nil {
 					service.Annotations = make(map[string]string)
 				}
-				for key, value := range host.Annotations {
-					service.Annotations[key] = value
-				}
+				maps.Copy(service.Annotations, host.Annotations)
 				if service.Labels == nil {
 					service.Labels = make(map[string]string)
 				}
-				for key, value := range host.Labels {
-					service.Labels[key] = value
-				}
+				maps.Copy(service.Labels, host.Labels)
 
 				service.Labels["app.kubernetes.io/name"] = kdexWeb
 				service.Labels["kdex.dev/instance"] = host.Name
@@ -886,15 +867,11 @@ func (r *KDexHostReconciler) createOrUpdateServiceAccount(
 				if serviceAccount.Annotations == nil {
 					serviceAccount.Annotations = make(map[string]string)
 				}
-				for key, value := range host.Annotations {
-					serviceAccount.Annotations[key] = value
-				}
+				maps.Copy(serviceAccount.Annotations, host.Annotations)
 				if serviceAccount.Labels == nil {
 					serviceAccount.Labels = make(map[string]string)
 				}
-				for key, value := range host.Labels {
-					serviceAccount.Labels[key] = value
-				}
+				maps.Copy(serviceAccount.Labels, host.Labels)
 
 				serviceAccount.Labels["app.kubernetes.io/name"] = kdexWeb
 				serviceAccount.Labels["kdex.dev/instance"] = host.Name

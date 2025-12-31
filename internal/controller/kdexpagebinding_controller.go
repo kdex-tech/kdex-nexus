@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"maps"
 	"os"
 	"time"
 
@@ -429,13 +430,9 @@ func (r *KDexPageBindingReconciler) createOrUpdateInternalPageBinding(
 	op, err := ctrl.CreateOrUpdate(ctx, r.Client, internalPageBinding, func() error {
 		if internalPageBinding.CreationTimestamp.IsZero() {
 			internalPageBinding.Annotations = make(map[string]string)
-			for key, value := range pageBinding.Annotations {
-				internalPageBinding.Annotations[key] = value
-			}
+			maps.Copy(internalPageBinding.Annotations, pageBinding.Annotations)
 			internalPageBinding.Labels = make(map[string]string)
-			for key, value := range pageBinding.Labels {
-				internalPageBinding.Labels[key] = value
-			}
+			maps.Copy(internalPageBinding.Labels, pageBinding.Labels)
 
 			internalPageBinding.Labels["app.kubernetes.io/name"] = kdexWeb
 			internalPageBinding.Labels["kdex.dev/instance"] = pageBinding.Name
