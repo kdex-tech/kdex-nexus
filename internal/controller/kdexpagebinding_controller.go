@@ -56,6 +56,7 @@ type KDexPageBindingReconciler struct {
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterpagenavigations, verbs=get;list;watch
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexscriptlibraries,        verbs=get;list;watch
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterscriptlibraries, verbs=get;list;watch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexinternalpagebindings,    verbs=get;list;watch;create;update;patch;delete
 
 //nolint:gocyclo
 func (r *KDexPageBindingReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, err error) {

@@ -74,9 +74,10 @@ rules:
   - kdexclusterpagenavigations
   - kdexclusterscriptlibraries
   - kdexclusterthemes
-  - kdexhostpackagereferences
   - kdexhosts
   - kdexinternalhosts
+  - kdexinternalpackagereferences
+  - kdexinternalpagebindings
   - kdexinternaltranslations
   - kdexpagearchetypes
   - kdexpagebindings
@@ -105,9 +106,9 @@ rules:
   - kdexclusterpagenavigations/finalizers
   - kdexclusterscriptlibraries/finalizers
   - kdexclusterthemes/finalizers
-  - kdexhostpackagereferences/finalizers
   - kdexhosts/finalizers
   - kdexinternalhosts/finalizers
+  - kdexinternalpackagereferences/finalizers
   - kdexpagearchetypes/finalizers
   - kdexpagebindings/finalizers
   - kdexpagefooters/finalizers
@@ -129,9 +130,9 @@ rules:
   - kdexclusterpagenavigations/status
   - kdexclusterscriptlibraries/status
   - kdexclusterthemes/status
-  - kdexhostpackagereferences/status
   - kdexhosts/status
   - kdexinternalhosts/status
+  - kdexinternalpackagereferences/status
   - kdexpagearchetypes/status
   - kdexpagebindings/status
   - kdexpagefooters/status
@@ -144,14 +145,6 @@ rules:
   - get
   - patch
   - update
-- apiGroups:
-  - kdex.dev
-  resources:
-  - kdexinternalpagebindings
-  verbs:
-  - get
-  - list
-  - watch
 - apiGroups:
   - networking.k8s.io
   resources:
