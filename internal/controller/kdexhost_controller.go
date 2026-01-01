@@ -362,7 +362,7 @@ func (r *KDexHostReconciler) getMemoizedDeployment() *appsv1.DeploymentSpec {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	r.memoizedDeployment = r.Configuration.HostController.Deployment.DeepCopy()
+	r.memoizedDeployment = r.Configuration.HostDefault.Deployment.DeepCopy()
 
 	return r.memoizedDeployment
 }
@@ -379,7 +379,7 @@ func (r *KDexHostReconciler) getMemoizedService() *corev1.ServiceSpec {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	r.memoizedService = r.Configuration.HostController.Service.DeepCopy()
+	r.memoizedService = r.Configuration.HostDefault.Service.DeepCopy()
 
 	return r.memoizedService
 }
@@ -747,7 +747,7 @@ func (r *KDexHostReconciler) createOrUpdateClusterRoleBinding(
 				clusterRoleBinding.Labels["kdex.dev/instance"] = host.Name
 			}
 
-			clusterRoleBinding.RoleRef = *r.Configuration.HostController.RoleRef.DeepCopy()
+			clusterRoleBinding.RoleRef = *r.Configuration.HostDefault.RoleRef.DeepCopy()
 			clusterRoleBinding.Subjects = []rbacv1.Subject{
 				{
 					Kind:      "ServiceAccount",

@@ -61,11 +61,11 @@ spec:
       - command:
         - /manager
         args:
-          - --leader-elect
-          - --health-probe-bind-address=:8081
-          - --zap-encoder=console
-          - --zap-log-level=debug
-          - --zap-stacktrace-level=error
+        - --leader-elect
+        - --health-probe-bind-address=:8081
+        - --zap-encoder=console
+        - --zap-log-level=debug
+        - --zap-stacktrace-level=error
         image: controller:latest
         name: manager
         ports: []
@@ -113,37 +113,33 @@ metadata:
   name: controller-manager
   namespace: system
 data:
-    config.yaml: |
-      hostController:
-        deployment:
-          template:
-            spec:
-              containers:
-              - args:
-                - --named-log-level=hosts.pages=error
-                - --named-log-level=hosts=debug
-                - --zap-encoder=console
-                - --zap-log-level=info
-                - --zap-stacktrace-level=error
-                image: k3d-registry:5000/kdex-tech/kdex-web:latest
-                imagePullPolicy: Always
-        roleRef:
-          apiGroup: rbac.authorization.k8s.io
-          kind: ClusterRole
-          name: kdex-nexus-host-controller-role
+  config.yaml: |
+    backendDefault:
+      serverImage: k3d-registry:5000/kdex-tech/kdex-themeserver:latest
+      serverImagePullPolicy: Always
 
-      defaultImageRegistry:
-        host: k3d-registry:5000
-        insecure: true
+    defaultImageRegistry:
+      host: k3d-registry:5000
+      insecure: true
 
-      defaultNpmRegistry:
-        host: npm-registry-verdaccio.npm-registry:4873
-        insecure: true
+    defaultNpmRegistry:
+      host: npm-registry-verdaccio.npm-registry:4873
+      insecure: true
 
-      staticServing:
-        deployment:
-          template:
-            spec:
-              containers:
-              - image: k3d-registry:5000/kdex-tech/kdex-themeserver:latest
-                imagePullPolicy: Always
+    hostDefault:
+      deployment:
+        template:
+          spec:
+            containers:
+            - args:
+              - --named-log-level=hosts.pages=error
+              - --named-log-level=hosts=debug
+              - --zap-encoder=console
+              - --zap-log-level=info
+              - --zap-stacktrace-level=error
+              image: k3d-registry:5000/kdex-tech/kdex-web:latest
+              imagePullPolicy: Always
+      roleRef:
+        apiGroup: rbac.authorization.k8s.io
+        kind: ClusterRole
+        name: kdex-nexus-host-controller-role
