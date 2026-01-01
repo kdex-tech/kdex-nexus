@@ -46,5 +46,7 @@ func (a *KDexHostDefaulter) Default(ctx context.Context, ro runtime.Object) erro
 
 	spec.IngressPath = "/_host"
 
+	BackendDefaults(&spec.Backend)
+
 	return nil
 }
