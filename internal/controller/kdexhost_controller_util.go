@@ -77,6 +77,7 @@ func (r *KDexHostReconciler) createOrUpdateInternalUtilityPage(
 	return &corev1.LocalObjectReference{Name: name}, nil
 }
 
+//nolint:gocyclo
 func (r *KDexHostReconciler) resolveUtilityPages(
 	ctx context.Context,
 	host *kdexv1alpha1.KDexHost,
