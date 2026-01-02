@@ -17,36 +17,58 @@ type KDexPageArchetypeDefaulter struct {
 
 func (a *KDexPageArchetypeDefaulter) Default(ctx context.Context, ro runtime.Object) error {
 	var spec *kdexv1alpha1.KDexPageArchetypeSpec
+	clustered := false
 
 	switch t := ro.(type) {
 	case *kdexv1alpha1.KDexPageArchetype:
 		spec = &t.Spec
 	case *kdexv1alpha1.KDexClusterPageArchetype:
+		clustered = true
 		spec = &t.Spec
 	default:
 		return fmt.Errorf("unsupported type: %T", t)
 	}
 
 	if spec.DefaultFooterRef != nil && spec.DefaultFooterRef.Kind == "" {
-		spec.DefaultFooterRef.Kind = "KDexPageFooter"
+		if clustered {
+			spec.DefaultFooterRef.Kind = KDexClusterPageFooter
+		} else {
+			spec.DefaultFooterRef.Kind = KDexPageFooter
+		}
 	}
 
 	if spec.DefaultHeaderRef != nil && spec.DefaultHeaderRef.Kind == "" {
-		spec.DefaultHeaderRef.Kind = "KDexPageHeader"
+		if clustered {
+			spec.DefaultHeaderRef.Kind = KDexClusterPageHeader
+		} else {
+			spec.DefaultHeaderRef.Kind = KDexPageHeader
+		}
 	}
 
 	if spec.DefaultMainNavigationRef != nil && spec.DefaultMainNavigationRef.Kind == "" {
-		spec.DefaultMainNavigationRef.Kind = KDexPageNavigation
+		if clustered {
+			spec.DefaultMainNavigationRef.Kind = KDexClusterPageNavigation
+		} else {
+			spec.DefaultMainNavigationRef.Kind = KDexPageNavigation
+		}
 	}
 
 	for _, v := range spec.ExtraNavigations {
-		if v.Kind == "" {
-			v.Kind = KDexPageNavigation
+		if clustered {
+			v.Kind = KDexClusterPageNavigation
+		} else {
+			if v.Kind == "" {
+				v.Kind = KDexPageNavigation
+			}
 		}
 	}
 
 	if spec.ScriptLibraryRef != nil && spec.ScriptLibraryRef.Kind == "" {
-		spec.ScriptLibraryRef.Kind = KDexScriptLibrary
+		if clustered {
+			spec.ScriptLibraryRef.Kind = KDexClusterScriptLibrary
+		} else {
+			spec.ScriptLibraryRef.Kind = KDexScriptLibrary
+		}
 	}
 
 	return nil

@@ -45,6 +45,177 @@ var _ = Describe("KDexUtilityPage Controller", func() {
 			cleanupResources(namespace)
 		})
 
+		It("should not validate without type", func() {
+			utilityPage := &kdexv1alpha1.KDexUtilityPage{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      KDexUtilityPageName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.KDexUtilityPageSpec{},
+			}
+
+			err := k8sClient.Create(ctx, utilityPage)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring(`supported values: "Announcement", "Error", "Login"`))
+		})
+
+		It("should not validate without content entries", func() {
+			utilityPage := &kdexv1alpha1.KDexUtilityPage{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      KDexUtilityPageName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.KDexUtilityPageSpec{
+					Type: "Announcement",
+				},
+			}
+
+			err := k8sClient.Create(ctx, utilityPage)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring(`spec.contentEntries in body must be of type array: "null"`))
+		})
+
+		It("should not validate with empty content entries", func() {
+			utilityPage := &kdexv1alpha1.KDexUtilityPage{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      KDexUtilityPageName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.KDexUtilityPageSpec{
+					ContentEntries: []kdexv1alpha1.ContentEntry{},
+					Type:           "Announcement",
+				},
+			}
+
+			err := k8sClient.Create(ctx, utilityPage)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring(`spec.contentEntries in body should have at least 1 items`))
+		})
+
+		It("should not validate without 'main' content entry", func() {
+			utilityPage := &kdexv1alpha1.KDexUtilityPage{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      KDexUtilityPageName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.KDexUtilityPageSpec{
+					ContentEntries: []kdexv1alpha1.ContentEntry{
+						{
+							Slot: "sidebar",
+							ContentEntryStatic: kdexv1alpha1.ContentEntryStatic{
+								RawHTML: "<h1>sidebar</h1>",
+							},
+						},
+					},
+					Type: "Announcement",
+				},
+			}
+
+			err := k8sClient.Create(ctx, utilityPage)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring(`spec.contentEntries: Invalid value: slot 'main' must be specified`))
+		})
+
+		It("should not validate with empty content entry", func() {
+			utilityPage := &kdexv1alpha1.KDexUtilityPage{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      KDexUtilityPageName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.KDexUtilityPageSpec{
+					ContentEntries: []kdexv1alpha1.ContentEntry{
+						{
+							Slot: "main",
+						},
+					},
+					Type: "Announcement",
+				},
+			}
+
+			err := k8sClient.Create(ctx, utilityPage)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring(`exactly one of the fields in [appRef rawHTML] must be set`))
+		})
+
+		It("should not validate with no page archetype", func() {
+			utilityPage := &kdexv1alpha1.KDexUtilityPage{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      KDexUtilityPageName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.KDexUtilityPageSpec{
+					ContentEntries: []kdexv1alpha1.ContentEntry{
+						{
+							Slot: "main",
+							ContentEntryStatic: kdexv1alpha1.ContentEntryStatic{
+								RawHTML: "",
+							},
+						},
+					},
+					Type: "Announcement",
+				},
+			}
+
+			err := k8sClient.Create(ctx, utilityPage)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring(`spec.pageArchetypeRef: Invalid value: pageArchetypeRef.name must not be empty`))
+		})
+
+		It("should not validate with empty content entry", func() {
+			utilityPage := &kdexv1alpha1.KDexUtilityPage{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      KDexUtilityPageName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.KDexUtilityPageSpec{
+					ContentEntries: []kdexv1alpha1.ContentEntry{
+						{
+							Slot: "main",
+							ContentEntryStatic: kdexv1alpha1.ContentEntryStatic{
+								RawHTML: "",
+							},
+						},
+					},
+					PageArchetypeRef: kdexv1alpha1.KDexObjectReference{
+						Name: "test-utility-archetype",
+					},
+					Type: "Announcement",
+				},
+			}
+
+			err := k8sClient.Create(ctx, utilityPage)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring(`spec.contentEntries[0]: Invalid value: exactly one of the fields in [appRef rawHTML] must be set`))
+		})
+
+		It("should not validate with invalid rawHTML content entry", func() {
+			utilityPage := &kdexv1alpha1.KDexUtilityPage{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      KDexUtilityPageName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.KDexUtilityPageSpec{
+					ContentEntries: []kdexv1alpha1.ContentEntry{
+						{
+							Slot: "main",
+							ContentEntryStatic: kdexv1alpha1.ContentEntryStatic{
+								RawHTML: "<foo",
+							},
+						},
+					},
+					PageArchetypeRef: kdexv1alpha1.KDexObjectReference{
+						Kind: "KDexPageArchetype",
+						Name: "test-utility-archetype",
+					},
+					Type: "Announcement",
+				},
+			}
+
+			err := k8sClient.Create(ctx, utilityPage)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring(`invalid go template in spec.contentEntries[0].rawHTML: html/template:main: ends in a non-text context`))
+		})
+
 		It("Should update KDexUtilityPage Status", func() {
 			By("Creating a new KDexUtilityPage")
 

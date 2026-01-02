@@ -17,18 +17,24 @@ type KDexPageFooterDefaulter struct {
 
 func (a *KDexPageFooterDefaulter) Default(ctx context.Context, ro runtime.Object) error {
 	var spec *kdexv1alpha1.KDexPageFooterSpec
+	clustered := false
 
 	switch t := ro.(type) {
 	case *kdexv1alpha1.KDexPageFooter:
 		spec = &t.Spec
 	case *kdexv1alpha1.KDexClusterPageFooter:
+		clustered = true
 		spec = &t.Spec
 	default:
 		return fmt.Errorf("unsupported type: %T", t)
 	}
 
 	if spec.ScriptLibraryRef != nil && spec.ScriptLibraryRef.Kind == "" {
-		spec.ScriptLibraryRef.Kind = KDexScriptLibrary
+		if clustered {
+			spec.ScriptLibraryRef.Kind = KDexClusterScriptLibrary
+		} else {
+			spec.ScriptLibraryRef.Kind = KDexScriptLibrary
+		}
 	}
 
 	return nil

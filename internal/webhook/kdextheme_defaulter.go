@@ -17,18 +17,24 @@ type KDexThemeDefaulter struct {
 
 func (a *KDexThemeDefaulter) Default(ctx context.Context, ro runtime.Object) error {
 	var spec *kdexv1alpha1.KDexThemeSpec
+	clustered := false
 
 	switch t := ro.(type) {
 	case *kdexv1alpha1.KDexTheme:
 		spec = &t.Spec
 	case *kdexv1alpha1.KDexClusterTheme:
+		clustered = true
 		spec = &t.Spec
 	default:
 		return fmt.Errorf("unsupported type: %T", t)
 	}
 
 	if spec.ScriptLibraryRef != nil && spec.ScriptLibraryRef.Kind == "" {
-		spec.ScriptLibraryRef.Kind = KDexScriptLibrary
+		if clustered {
+			spec.ScriptLibraryRef.Kind = KDexClusterScriptLibrary
+		} else {
+			spec.ScriptLibraryRef.Kind = KDexScriptLibrary
+		}
 	}
 
 	spec.IngressPath = "/_theme"

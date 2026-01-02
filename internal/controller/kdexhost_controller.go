@@ -220,16 +220,6 @@ func (r *KDexHostReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		return err
 	}
 
-	// if err := mgr.GetFieldIndexer().IndexField(context.Background(), &kdexv1alpha1.KDexInternalTranslation{}, hostIndexKey, func(rawObj client.Object) []string {
-	// 	translation := rawObj.(*kdexv1alpha1.KDexInternalTranslation)
-	// 	if translation.Spec.HostRef.Name == "" {
-	// 		return nil
-	// 	}
-	// 	return []string{translation.Spec.HostRef.Name}
-	// }); err != nil {
-	// 	return err
-	// }
-
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&kdexv1alpha1.KDexHost{}).
 		Owns(&appsv1.Deployment{}).
@@ -237,6 +227,7 @@ func (r *KDexHostReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&corev1.Service{}).
 		Owns(&corev1.ServiceAccount{}).
 		Owns(&kdexv1alpha1.KDexInternalHost{}).
+		Owns(&kdexv1alpha1.KDexInternalUtilityPage{}).
 		Owns(&rbacv1.ClusterRoleBinding{}).
 		Watches(
 			&kdexv1alpha1.KDexInternalPageBinding{},
@@ -254,23 +245,6 @@ func (r *KDexHostReconciler) SetupWithManager(mgr ctrl.Manager) error {
 					},
 				}
 			})).
-		// Watches(
-		// 	&kdexv1alpha1.KDexInternalTranslation{},
-		// 	handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, o client.Object) []reconcile.Request {
-		// 		translation, ok := o.(*kdexv1alpha1.KDexInternalTranslation)
-		// 		if !ok {
-		// 			return nil
-		// 		}
-
-		// 		return []reconcile.Request{
-		// 			{
-		// 				NamespacedName: types.NamespacedName{
-		// 					Name:      translation.Spec.HostRef.Name,
-		// 					Namespace: translation.Namespace,
-		// 				},
-		// 			},
-		// 		}
-		// 	})).
 		Watches(
 			&kdexv1alpha1.KDexScriptLibrary{},
 			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexHost{}, &kdexv1alpha1.KDexHostList{}, "{.Spec.ScriptLibraryRef}")).
@@ -283,6 +257,12 @@ func (r *KDexHostReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Watches(
 			&kdexv1alpha1.KDexClusterTheme{},
 			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexHost{}, &kdexv1alpha1.KDexHostList{}, "{.Spec.ThemeRef}")).
+		Watches(
+			&kdexv1alpha1.KDexUtilityPage{},
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexHost{}, &kdexv1alpha1.KDexHostList{}, "{.Spec.UtilityPages.AnnouncementRef}{.Spec.UtilityPages.ErrorRef}{.Spec.UtilityPages.LoginRef}")).
+		Watches(
+			&kdexv1alpha1.KDexClusterUtilityPage{},
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexHost{}, &kdexv1alpha1.KDexHostList{}, "{.Spec.UtilityPages.AnnouncementRef}{.Spec.UtilityPages.ErrorRef}{.Spec.UtilityPages.LoginRef}")).
 		WithOptions(controller.TypedOptions[reconcile.Request]{
 			LogConstructor: LogConstructor("kdexhost", mgr),
 		}).
@@ -424,6 +404,13 @@ func (r *KDexHostReconciler) innerReconcile(ctx context.Context, host *kdexv1alp
 		CollectBackend(&requiredBackends, scriptLibraryObj)
 	}
 
+	utilityPageBackends, announcementRef, errorRef, loginRef, err := r.resolveUtilityPages(ctx, host)
+	if err != nil {
+		return err
+	}
+
+	requiredBackends = append(requiredBackends, utilityPageBackends...)
+
 	configMapOp, err := r.createOrUpdateConfigMap(ctx, host)
 	if err != nil {
 		return err
@@ -448,13 +435,6 @@ func (r *KDexHostReconciler) innerReconcile(ctx context.Context, host *kdexv1alp
 	if err != nil {
 		return err
 	}
-
-	// Resolve Utility Pages
-	utilityPageBackends, announcementRef, errorRef, loginRef, err := r.resolveUtilityPages(ctx, host)
-	if err != nil {
-		return err
-	}
-	requiredBackends = append(requiredBackends, utilityPageBackends...)
 
 	internalPages := &kdexv1alpha1.KDexInternalPageBindingList{}
 	if err := r.List(ctx, internalPages, client.InNamespace(host.Namespace), client.MatchingFields{hostIndexKey: host.Name}); err != nil {

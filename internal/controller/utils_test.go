@@ -272,9 +272,11 @@ func cleanupResources(namespace string) {
 		{&kdexv1alpha1.KDexClusterPageNavigation{}, &kdexv1alpha1.KDexClusterPageNavigationList{}},
 		{&kdexv1alpha1.KDexClusterScriptLibrary{}, &kdexv1alpha1.KDexClusterScriptLibraryList{}},
 		{&kdexv1alpha1.KDexClusterTheme{}, &kdexv1alpha1.KDexClusterThemeList{}},
+		{&kdexv1alpha1.KDexClusterUtilityPage{}, &kdexv1alpha1.KDexClusterUtilityPageList{}},
 		{&kdexv1alpha1.KDexHost{}, &kdexv1alpha1.KDexHostList{}},
 		{&kdexv1alpha1.KDexInternalHost{}, &kdexv1alpha1.KDexInternalHostList{}},
 		{&kdexv1alpha1.KDexInternalTranslation{}, &kdexv1alpha1.KDexInternalTranslationList{}},
+		{&kdexv1alpha1.KDexInternalUtilityPage{}, &kdexv1alpha1.KDexInternalUtilityPageList{}},
 		{&kdexv1alpha1.KDexPageArchetype{}, &kdexv1alpha1.KDexPageArchetypeList{}},
 		{&kdexv1alpha1.KDexPageBinding{}, &kdexv1alpha1.KDexPageBindingList{}},
 		{&kdexv1alpha1.KDexPageFooter{}, &kdexv1alpha1.KDexPageFooterList{}},
@@ -283,6 +285,7 @@ func cleanupResources(namespace string) {
 		{&kdexv1alpha1.KDexScriptLibrary{}, &kdexv1alpha1.KDexScriptLibraryList{}},
 		{&kdexv1alpha1.KDexTranslation{}, &kdexv1alpha1.KDexTranslationList{}},
 		{&kdexv1alpha1.KDexTheme{}, &kdexv1alpha1.KDexThemeList{}},
+		{&kdexv1alpha1.KDexUtilityPage{}, &kdexv1alpha1.KDexUtilityPageList{}},
 		{&corev1.Secret{}, &corev1.SecretList{}},
 	} {
 		err := k8sClient.DeleteAllOf(ctx, pair.resource, client.InNamespace(namespace))

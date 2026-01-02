@@ -25,6 +25,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
+	nexuswebhook "kdex.dev/nexus/internal/webhook"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -110,21 +111,14 @@ func (r *KDexUtilityPageReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		status.Attributes["archetype.generation"] = fmt.Sprintf("%d", archetypeObj.GetGeneration())
 	}
 
-	// Wait, ResolveContents logic is specific to KDexPageBinding.
-	// It iterates `pageBinding.Spec.ContentEntries`.
-	// KDexUtilityPageSpec has `ContentEntries`.
-	// I should create a `ResolveUtilityPageContents` function or duplicate the small logic loop here.
-	// Let's duplicate gently to avoid refactoring common code too much right now.
+	contents, shouldReturn, response, err := ResolveContents(ctx, r.Client, o, &status.Conditions, spec.ContentEntries, r.RequeueDelay)
+	if shouldReturn {
+		return response, err
+	}
 
-	for _, contentEntry := range spec.ContentEntries {
-		if contentEntry.AppRef != nil {
-			app, shouldReturn, r1, err := ResolveKDexObjectReference(ctx, r.Client, o, &status.Conditions, contentEntry.AppRef, r.RequeueDelay)
-			if shouldReturn {
-				return r1, err
-			}
-			if app != nil {
-				status.Attributes[contentEntry.Slot+".content.generation"] = fmt.Sprintf("%d", app.GetGeneration())
-			}
+	for k, content := range contents {
+		if content.AppObj != nil {
+			status.Attributes[k+".content.generation"] = fmt.Sprintf("%d", content.AppObj.GetGeneration())
 		}
 	}
 
@@ -182,31 +176,89 @@ func (r *KDexUtilityPageReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 // SetupWithManager sets up the controller with the Manager.
 func (r *KDexUtilityPageReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
-		// Assuming webhooks will be generated eventually, similar pattern
-		// err := ctrl.NewWebhookManagedBy(mgr).
-		// 	For(&kdexv1alpha1.KDexUtilityPage{}).
-		// 	WithDefaulter(&nexuswebhook.KDexUtilityPageDefaulter{}).
-		// 	WithValidator(&nexuswebhook.KDexUtilityPageValidator{}).
-		// 	Complete()
+		err := ctrl.NewWebhookManagedBy(mgr).
+			For(&kdexv1alpha1.KDexUtilityPage{}).
+			WithDefaulter(&nexuswebhook.KDexUtilityPageDefaulter{}).
+			WithValidator(&nexuswebhook.KDexUtilityPageValidator{}).
+			Complete()
 
-		// if err != nil {
-		// 	return err
-		// }
+		if err != nil {
+			return err
+		}
+
+		err = ctrl.NewWebhookManagedBy(mgr).
+			For(&kdexv1alpha1.KDexClusterUtilityPage{}).
+			WithDefaulter(&nexuswebhook.KDexUtilityPageDefaulter{}).
+			WithValidator(&nexuswebhook.KDexUtilityPageValidator{}).
+			Complete()
+
+		if err != nil {
+			return err
+		}
 	}
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&kdexv1alpha1.KDexUtilityPage{}). // Primary watch
 		Watches(
 			&kdexv1alpha1.KDexClusterUtilityPage{}, // Also watch cluster scoped
-			&handler.EnqueueRequestForObject{},
-		).
-		// Minimal Watches for dependencies - for now keep it simple to ensure basic reconciliation loop works
-		// Ideally we watch all referenced objects (App, Archetype, Header, Footer...)
+			&handler.EnqueueRequestForObject{}).
+		Watches(
+			&kdexv1alpha1.KDexApp{},
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexUtilityPage{}, &kdexv1alpha1.KDexUtilityPageList{}, "{.Spec.ContentEntries[*].AppRef}")).
+		Watches(
+			&kdexv1alpha1.KDexClusterApp{},
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexUtilityPage{}, &kdexv1alpha1.KDexUtilityPageList{}, "{.Spec.ContentEntries[*].AppRef}")).
+		Watches(
+			&kdexv1alpha1.KDexClusterApp{},
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexClusterUtilityPage{}, &kdexv1alpha1.KDexClusterUtilityPageList{}, "{.Spec.ContentEntries[*].AppRef}")).
+		Watches(
+			&kdexv1alpha1.KDexPageArchetype{},
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexUtilityPage{}, &kdexv1alpha1.KDexUtilityPageList{}, "{.Spec.PageArchetypeRef}")).
+		Watches(
+			&kdexv1alpha1.KDexClusterPageArchetype{},
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexUtilityPage{}, &kdexv1alpha1.KDexUtilityPageList{}, "{.Spec.PageArchetypeRef}")).
+		Watches(
+			&kdexv1alpha1.KDexClusterPageArchetype{},
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexClusterUtilityPage{}, &kdexv1alpha1.KDexClusterUtilityPageList{}, "{.Spec.PageArchetypeRef}")).
+		Watches(
+			&kdexv1alpha1.KDexPageFooter{},
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexUtilityPage{}, &kdexv1alpha1.KDexUtilityPageList{}, "{.Spec.OverrideFooterRef}")).
+		Watches(
+			&kdexv1alpha1.KDexClusterPageFooter{},
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexUtilityPage{}, &kdexv1alpha1.KDexUtilityPageList{}, "{.Spec.OverrideFooterRef}")).
+		Watches(
+			&kdexv1alpha1.KDexClusterPageFooter{},
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexClusterUtilityPage{}, &kdexv1alpha1.KDexClusterUtilityPageList{}, "{.Spec.OverrideFooterRef}")).
+		Watches(
+			&kdexv1alpha1.KDexPageHeader{},
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexUtilityPage{}, &kdexv1alpha1.KDexUtilityPageList{}, "{.Spec.OverrideHeaderRef}")).
+		Watches(
+			&kdexv1alpha1.KDexClusterPageHeader{},
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexUtilityPage{}, &kdexv1alpha1.KDexUtilityPageList{}, "{.Spec.OverrideHeaderRef}")).
+		Watches(
+			&kdexv1alpha1.KDexClusterPageHeader{},
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexClusterUtilityPage{}, &kdexv1alpha1.KDexClusterUtilityPageList{}, "{.Spec.OverrideHeaderRef}")).
+		Watches(
+			&kdexv1alpha1.KDexPageNavigation{},
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexUtilityPage{}, &kdexv1alpha1.KDexUtilityPageList{}, "{.Spec.OverrideMainNavigationRef}")).
+		Watches(
+			&kdexv1alpha1.KDexClusterPageNavigation{},
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexUtilityPage{}, &kdexv1alpha1.KDexUtilityPageList{}, "{.Spec.OverrideMainNavigationRef}")).
+		Watches(
+			&kdexv1alpha1.KDexClusterPageNavigation{},
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexClusterUtilityPage{}, &kdexv1alpha1.KDexClusterUtilityPageList{}, "{.Spec.OverrideMainNavigationRef}")).
+		Watches(
+			&kdexv1alpha1.KDexScriptLibrary{},
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexUtilityPage{}, &kdexv1alpha1.KDexUtilityPageList{}, "{.Spec.ScriptLibraryRef}")).
+		Watches(
+			&kdexv1alpha1.KDexClusterScriptLibrary{},
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexUtilityPage{}, &kdexv1alpha1.KDexUtilityPageList{}, "{.Spec.ScriptLibraryRef}")).
+		Watches(
+			&kdexv1alpha1.KDexClusterScriptLibrary{},
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexClusterUtilityPage{}, &kdexv1alpha1.KDexClusterUtilityPageList{}, "{.Spec.ScriptLibraryRef}")).
 		WithOptions(
 			controller.TypedOptions[reconcile.Request]{
-				LogConstructor: LogConstructor("kdexutilitypage", mgr),
-			},
-		).
+				LogConstructor: LogConstructor("kdexutilitypage", mgr)}).
 		Named("kdexutilitypage").
 		Complete(r)
 }

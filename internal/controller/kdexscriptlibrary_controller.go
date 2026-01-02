@@ -32,6 +32,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -177,7 +178,7 @@ func (r *KDexScriptLibraryReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&kdexv1alpha1.KDexScriptLibrary{}).
 		Watches(
 			&kdexv1alpha1.KDexClusterScriptLibrary{},
-			LikeNamedHandler).
+			&handler.EnqueueRequestForObject{}).
 		Watches(
 			&corev1.Secret{},
 			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexScriptLibrary{}, &kdexv1alpha1.KDexScriptLibraryList{}, "{.Spec.PackageReference.SecretRef}")).

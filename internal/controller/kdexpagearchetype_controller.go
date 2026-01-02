@@ -30,6 +30,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -185,7 +186,7 @@ func (r *KDexPageArchetypeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&kdexv1alpha1.KDexPageArchetype{}).
 		Watches(
 			&kdexv1alpha1.KDexClusterPageArchetype{},
-			LikeNamedHandler).
+			&handler.EnqueueRequestForObject{}).
 		Watches(
 			&kdexv1alpha1.KDexPageFooter{},
 			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexPageArchetype{}, &kdexv1alpha1.KDexPageArchetypeList{}, "{.Spec.DefaultFooterRef}")).

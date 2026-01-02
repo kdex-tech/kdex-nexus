@@ -34,6 +34,8 @@ func (r *KDexHostReconciler) createOrUpdateInternalUtilityPage(
 	utilityPageSpec kdexv1alpha1.KDexUtilityPageSpec,
 	pageType kdexv1alpha1.KDexUtilityPageType,
 ) (*corev1.LocalObjectReference, error) {
+	log := ctrl.LoggerFrom(ctx)
+
 	name := fmt.Sprintf("%s-%s", host.Name, strings.ToLower(string(pageType)))
 	internalUtilityPage := &kdexv1alpha1.KDexInternalUtilityPage{
 		ObjectMeta: metav1.ObjectMeta{
@@ -42,15 +44,11 @@ func (r *KDexHostReconciler) createOrUpdateInternalUtilityPage(
 		},
 	}
 
-	_, err := ctrl.CreateOrUpdate(ctx, r.Client, internalUtilityPage, func() error {
+	op, err := ctrl.CreateOrUpdate(ctx, r.Client, internalUtilityPage, func() error {
 		if internalUtilityPage.CreationTimestamp.IsZero() {
-			if internalUtilityPage.Annotations == nil {
-				internalUtilityPage.Annotations = make(map[string]string)
-			}
+			internalUtilityPage.Annotations = make(map[string]string)
 			maps.Copy(internalUtilityPage.Annotations, host.Annotations)
-			if internalUtilityPage.Labels == nil {
-				internalUtilityPage.Labels = make(map[string]string)
-			}
+			internalUtilityPage.Labels = make(map[string]string)
 			maps.Copy(internalUtilityPage.Labels, host.Labels)
 
 			internalUtilityPage.Labels["app.kubernetes.io/name"] = kdexWeb
@@ -63,6 +61,14 @@ func (r *KDexHostReconciler) createOrUpdateInternalUtilityPage(
 
 		return ctrl.SetControllerReference(host, internalUtilityPage, r.Scheme)
 	})
+
+	log.V(1).Info(
+		"createOrUpdateInternalUtilityPage",
+		"name", name,
+		"type", pageType,
+		"op", op,
+		"err", err,
+	)
 
 	if err != nil {
 		return nil, err
@@ -97,7 +103,10 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 			}
 		}
 
+		directRef := true
+
 		if ref == nil {
+			directRef = false
 			ref = &kdexv1alpha1.KDexObjectReference{
 				Kind: "KDexClusterUtilityPage",
 				Name: fmt.Sprintf("kdex-default-%s", strings.ToLower(string(pageType))),
@@ -106,6 +115,9 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 
 		resolvedObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, ref, r.RequeueDelay)
 		if shouldReturn {
+			if directRef && err == nil {
+				err = fmt.Errorf("utility page %s not found", ref.Name)
+			}
 			return nil, nil, nil, nil, err
 		}
 
@@ -120,15 +132,7 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 
 			// Validate Type matches
 			if spec.Type != pageType {
-				// Warn but proceed? Or error?
-				// For now, assume it's okay or maybe just log.
-				// Actually, we should create the internal page anyway, but maybe the type mismatch is problematic for web.
-				// We enforce type in createOrUpdateInternalUtilityPage based on requested type.
-			}
-
-			// === Fallback for unset Type in existing resources (migration safety) ===
-			if spec.Type == "" {
-				spec.Type = pageType
+				return nil, nil, nil, nil, fmt.Errorf("utility page type %s does not match requested type %s", spec.Type, pageType)
 			}
 
 			internalRef, err := r.createOrUpdateInternalUtilityPage(ctx, host, spec, pageType)
@@ -136,6 +140,8 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 				return nil, nil, nil, nil, err
 			}
 			refs[pageType] = internalRef
+
+			host.Status.Attributes["utilitypage."+strings.ToLower(string(pageType))+".generation"] = fmt.Sprintf("%d", resolvedObj.GetGeneration())
 
 			// === Collect Backends ===
 
@@ -212,11 +218,6 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 					return nil, nil, nil, nil, err
 				}
 				if headerObj != nil {
-					CollectBackend(&requiredBackends, headerObj) // Header implies backend? Usually ScriptLibrary inside header.
-					// Wait, KDexPageHeader IS NOT A BACKEND. But it might reference one.
-					// CollectBackend checks if obj satisfies interface or is specific type.
-					// Actually KDexPageHeader doesn't have Backend spec. It has ScriptLibraryRef.
-
 					var headerSpec kdexv1alpha1.KDexPageHeaderSpec
 					switch v := headerObj.(type) {
 					case *kdexv1alpha1.KDexPageHeader:

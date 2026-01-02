@@ -63,10 +63,6 @@ func CollectBackend(requiredBackends *[]kdexv1alpha1.KDexObjectReference, obj cl
 	}
 }
 
-var LikeNamedHandler = handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, o client.Object) []reconcile.Request {
-	return []reconcile.Request{{NamespacedName: types.NamespacedName{Name: o.GetName()}}}
-})
-
 func MakeHandlerByReferencePath(
 	c client.Client,
 	scheme *runtime.Scheme,

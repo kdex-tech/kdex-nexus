@@ -136,7 +136,7 @@ func (r *KDexPageBindingReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		scriptLibraries = append(scriptLibraries, scriptLibrary)
 	}
 
-	contents, shouldReturn, response, err := ResolveContents(ctx, r.Client, &pageBinding, r.RequeueDelay)
+	contents, shouldReturn, response, err := ResolveContents(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, pageBinding.Spec.ContentEntries, r.RequeueDelay)
 	if shouldReturn {
 		return response, err
 	}
