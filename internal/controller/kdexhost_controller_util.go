@@ -142,7 +142,7 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 			}
 			refs[pageType] = internalRef
 
-			host.Status.Attributes["utilitypage."+strings.ToLower(string(pageType))+".generation"] = fmt.Sprintf("%d", resolvedObj.GetGeneration())
+			host.Status.Attributes[strings.ToLower(string(pageType))+".utilitypage.generation"] = fmt.Sprintf("%d", resolvedObj.GetGeneration())
 
 			// === Collect Backends ===
 

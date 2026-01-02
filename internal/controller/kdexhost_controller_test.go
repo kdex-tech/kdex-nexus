@@ -309,7 +309,7 @@ var _ = Describe("KDexHost Controller", func() {
 				checkedHost, true)
 
 			Eventually(
-				checkedHost.Status.Attributes["utilitypage.announcement.generation"], "5s",
+				checkedHost.Status.Attributes["announcement.utilitypage.generation"], "5s",
 			).Should(Equal("1"))
 
 			internalUtilityPage := &kdexv1alpha1.KDexInternalUtilityPage{}
@@ -392,7 +392,7 @@ var _ = Describe("KDexHost Controller", func() {
 				checkedHost, true)
 
 			Eventually(
-				checkedHost.Status.Attributes["utilitypage.announcement.generation"], "5s",
+				checkedHost.Status.Attributes["announcement.utilitypage.generation"], "5s",
 			).Should(Equal("1"))
 
 			internalUtilityPage := &kdexv1alpha1.KDexInternalUtilityPage{}
