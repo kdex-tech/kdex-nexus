@@ -449,6 +449,13 @@ func (r *KDexHostReconciler) innerReconcile(ctx context.Context, host *kdexv1alp
 		return err
 	}
 
+	// Resolve Utility Pages
+	utilityPageBackends, announcementRef, errorRef, loginRef, err := r.resolveUtilityPages(ctx, host)
+	if err != nil {
+		return err
+	}
+	requiredBackends = append(requiredBackends, utilityPageBackends...)
+
 	internalPages := &kdexv1alpha1.KDexInternalPageBindingList{}
 	if err := r.List(ctx, internalPages, client.InNamespace(host.Namespace), client.MatchingFields{hostIndexKey: host.Name}); err != nil {
 		return err
@@ -470,7 +477,7 @@ func (r *KDexHostReconciler) innerReconcile(ctx context.Context, host *kdexv1alp
 		uniqueBackends = append(uniqueBackends, backend)
 	}
 
-	internalHostOp, err := r.createOrUpdateInternalHostResource(ctx, host, uniqueBackends)
+	internalHostOp, err := r.createOrUpdateInternalHostResource(ctx, host, uniqueBackends, announcementRef, errorRef, loginRef)
 	if err != nil {
 		return err
 	}
@@ -563,6 +570,9 @@ func (r *KDexHostReconciler) createOrUpdateInternalHostResource(
 	ctx context.Context,
 	host *kdexv1alpha1.KDexHost,
 	requiredBackends []kdexv1alpha1.KDexObjectReference,
+	announcementRef *corev1.LocalObjectReference,
+	errorRef *corev1.LocalObjectReference,
+	loginRef *corev1.LocalObjectReference,
 ) (controllerutil.OperationResult, error) {
 	internalHost := &kdexv1alpha1.KDexInternalHost{
 		ObjectMeta: metav1.ObjectMeta{
@@ -588,6 +598,9 @@ func (r *KDexHostReconciler) createOrUpdateInternalHostResource(
 
 		internalHost.Spec.KDexHostSpec = host.Spec
 		internalHost.Spec.RequiredBackends = requiredBackends
+		internalHost.Spec.AnnouncementRef = announcementRef
+		internalHost.Spec.ErrorRef = errorRef
+		internalHost.Spec.LoginRef = loginRef
 
 		return ctrl.SetControllerReference(host, internalHost, r.Scheme)
 	})

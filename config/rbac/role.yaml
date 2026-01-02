@@ -74,6 +74,7 @@ rules:
   - kdexclusterpagenavigations
   - kdexclusterscriptlibraries
   - kdexclusterthemes
+  - kdexclusterutilitypages
   - kdexhosts
   - kdexinternalhosts
   - kdexinternalpackagereferences
@@ -87,6 +88,7 @@ rules:
   - kdexscriptlibraries
   - kdexthemes
   - kdextranslations
+  - kdexutilitypages
   verbs:
   - create
   - delete
@@ -106,6 +108,7 @@ rules:
   - kdexclusterpagenavigations/finalizers
   - kdexclusterscriptlibraries/finalizers
   - kdexclusterthemes/finalizers
+  - kdexclusterutilitypages/finalizers
   - kdexhosts/finalizers
   - kdexinternalhosts/finalizers
   - kdexinternalpackagereferences/finalizers
@@ -117,6 +120,7 @@ rules:
   - kdexscriptlibraries/finalizers
   - kdexthemes/finalizers
   - kdextranslations/finalizers
+  - kdexutilitypages/finalizers
   verbs:
   - update
 - apiGroups:
@@ -130,6 +134,7 @@ rules:
   - kdexclusterpagenavigations/status
   - kdexclusterscriptlibraries/status
   - kdexclusterthemes/status
+  - kdexclusterutilitypages/status
   - kdexhosts/status
   - kdexinternalhosts/status
   - kdexinternalpackagereferences/status
@@ -141,6 +146,7 @@ rules:
   - kdexscriptlibraries/status
   - kdexthemes/status
   - kdextranslations/status
+  - kdexutilitypages/status
   verbs:
   - get
   - patch
