@@ -26,15 +26,71 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	ctrl "sigs.k8s.io/controller-runtime"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
+
+func (r *KDexHostReconciler) createOrUpdateInternalTranslation(
+	ctx context.Context,
+	translationSpec kdexv1alpha1.KDexTranslationSpec,
+	translationName string,
+	generation int64,
+	host *kdexv1alpha1.KDexHost,
+) (*kdexv1alpha1.KDexInternalTranslation, error) {
+	log := logf.FromContext(ctx)
+
+	name := fmt.Sprintf("%s-%s", host.Name, translationName)
+	internalTranslation := &kdexv1alpha1.KDexInternalTranslation{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: host.Namespace,
+		},
+	}
+
+	op, err := ctrl.CreateOrUpdate(ctx, r.Client, internalTranslation, func() error {
+		if internalTranslation.CreationTimestamp.IsZero() {
+			internalTranslation.Annotations = make(map[string]string)
+			maps.Copy(internalTranslation.Annotations, host.Annotations)
+			internalTranslation.Labels = make(map[string]string)
+			maps.Copy(internalTranslation.Labels, host.Labels)
+
+			internalTranslation.Labels["app.kubernetes.io/name"] = kdexWeb
+			internalTranslation.Labels["kdex.dev/instance"] = host.Name
+		}
+
+		internalTranslation.Labels["kdex.dev/generation"] = fmt.Sprintf("%d", generation)
+		internalTranslation.Spec.KDexTranslationSpec = translationSpec
+		internalTranslation.Spec.HostRef = corev1.LocalObjectReference{Name: host.Name}
+
+		return ctrl.SetControllerReference(host, internalTranslation, r.Scheme)
+	})
+
+	log.V(2).Info("createOrUpdateInternalTranslation", "op", op, "err", err)
+
+	if err != nil {
+		kdexv1alpha1.SetConditions(
+			&host.Status.Conditions,
+			kdexv1alpha1.ConditionStatuses{
+				Degraded:    metav1.ConditionTrue,
+				Progressing: metav1.ConditionFalse,
+				Ready:       metav1.ConditionFalse,
+			},
+			kdexv1alpha1.ConditionReasonReconcileError,
+			err.Error(),
+		)
+		return nil, err
+	}
+
+	return internalTranslation, nil
+}
 
 func (r *KDexHostReconciler) createOrUpdateInternalUtilityPage(
 	ctx context.Context,
 	host *kdexv1alpha1.KDexHost,
 	utilityPageSpec kdexv1alpha1.KDexUtilityPageSpec,
 	pageType kdexv1alpha1.KDexUtilityPageType,
+	utilityPageGeneration int64,
 ) (*corev1.LocalObjectReference, error) {
-	log := ctrl.LoggerFrom(ctx)
+	log := logf.FromContext(ctx)
 
 	name := fmt.Sprintf("%s-%s", host.Name, strings.ToLower(string(pageType)))
 	internalUtilityPage := &kdexv1alpha1.KDexInternalUtilityPage{
@@ -56,6 +112,7 @@ func (r *KDexHostReconciler) createOrUpdateInternalUtilityPage(
 			internalUtilityPage.Labels["kdex.dev/utility-page-type"] = string(pageType)
 		}
 
+		internalUtilityPage.Labels["kdex.dev/generation"] = fmt.Sprintf("%d", utilityPageGeneration)
 		internalUtilityPage.Spec.KDexUtilityPageSpec = utilityPageSpec
 		internalUtilityPage.Spec.HostRef = corev1.LocalObjectReference{Name: host.Name}
 
@@ -75,6 +132,68 @@ func (r *KDexHostReconciler) createOrUpdateInternalUtilityPage(
 	}
 
 	return &corev1.LocalObjectReference{Name: name}, nil
+}
+
+func (r *KDexHostReconciler) resolveTranslations(
+	ctx context.Context,
+	host *kdexv1alpha1.KDexHost,
+) ([]corev1.LocalObjectReference, bool, error) {
+	refs := []corev1.LocalObjectReference{}
+
+	for _, translationRef := range host.Spec.TranslationRefs {
+		resolvedObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, &translationRef, r.RequeueDelay)
+		if shouldReturn {
+			return nil, true, err
+		}
+
+		if resolvedObj != nil {
+			var spec kdexv1alpha1.KDexTranslationSpec
+			switch v := resolvedObj.(type) {
+			case *kdexv1alpha1.KDexTranslation:
+				spec = v.Spec
+			case *kdexv1alpha1.KDexClusterTranslation:
+				spec = v.Spec
+			}
+
+			internalTranslation, err := r.createOrUpdateInternalTranslation(ctx, spec, resolvedObj.GetName(), resolvedObj.GetGeneration(), host)
+			if err != nil {
+				return nil, true, err
+			}
+			refs = append(refs, corev1.LocalObjectReference{Name: internalTranslation.Name})
+
+			host.Status.Attributes[translationRef.Name+".translation.generation"] = fmt.Sprintf("%d", resolvedObj.GetGeneration())
+		}
+	}
+
+	defaultTranslationRef := kdexv1alpha1.KDexObjectReference{
+		Name: "kdex-default-translation",
+		Kind: "KDexClusterTranslation",
+	}
+
+	defaultResolvedObj, _, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, &defaultTranslationRef, r.RequeueDelay)
+	if err != nil {
+		return nil, false, err
+	}
+
+	if defaultResolvedObj != nil {
+		var spec kdexv1alpha1.KDexTranslationSpec
+		switch v := defaultResolvedObj.(type) {
+		case *kdexv1alpha1.KDexTranslation:
+			spec = v.Spec
+		case *kdexv1alpha1.KDexClusterTranslation:
+			spec = v.Spec
+		}
+
+		internalTranslation, err := r.createOrUpdateInternalTranslation(ctx, spec, defaultResolvedObj.GetName(), defaultResolvedObj.GetGeneration(), host)
+		if err != nil {
+			return nil, true, err
+		}
+		refs = append(refs, corev1.LocalObjectReference{Name: internalTranslation.Name})
+
+		host.Status.Attributes[defaultTranslationRef.Name+".translation.generation"] = fmt.Sprintf("%d", defaultResolvedObj.GetGeneration())
+	}
+
+	return refs, false, nil
 }
 
 //nolint:gocyclo
@@ -136,7 +255,7 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 				return nil, nil, nil, nil, fmt.Errorf("utility page type %s does not match requested type %s", spec.Type, pageType)
 			}
 
-			internalRef, err := r.createOrUpdateInternalUtilityPage(ctx, host, spec, pageType)
+			internalRef, err := r.createOrUpdateInternalUtilityPage(ctx, host, spec, pageType, resolvedObj.GetGeneration())
 			if err != nil {
 				return nil, nil, nil, nil, err
 			}

@@ -378,6 +378,7 @@ func (r *KDexHostReconciler) innerReconcile(ctx context.Context, host *kdexv1alp
 	if shouldReturn {
 		return err
 	}
+
 	if themeObj != nil {
 		host.Status.Attributes["theme.generation"] = fmt.Sprintf("%d", themeObj.GetGeneration())
 
@@ -404,21 +405,16 @@ func (r *KDexHostReconciler) innerReconcile(ctx context.Context, host *kdexv1alp
 	if shouldReturn {
 		return err
 	}
+
 	if scriptLibraryObj != nil {
 		host.Status.Attributes["scriptLibrary.generation"] = fmt.Sprintf("%d", scriptLibraryObj.GetGeneration())
 
 		CollectBackend(&requiredBackends, scriptLibraryObj)
 	}
 
-	for _, translationRef := range host.Spec.TranslationRefs {
-		translationObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, themeObj, &host.Status.Conditions, &translationRef, r.RequeueDelay)
-		if shouldReturn {
-			return err
-		}
-
-		if translationObj != nil {
-			host.Status.Attributes[fmt.Sprintf("%s.translation.generation", translationObj.GetName())] = fmt.Sprintf("%d", translationObj.GetGeneration())
-		}
+	translationRefs, shouldReturn, err := r.resolveTranslations(ctx, host)
+	if shouldReturn {
+		return err
 	}
 
 	utilityPageBackends, announcementRef, errorRef, loginRef, err := r.resolveUtilityPages(ctx, host)
@@ -474,7 +470,7 @@ func (r *KDexHostReconciler) innerReconcile(ctx context.Context, host *kdexv1alp
 		uniqueBackends = append(uniqueBackends, backend)
 	}
 
-	internalHostOp, err := r.createOrUpdateInternalHostResource(ctx, host, uniqueBackends, announcementRef, errorRef, loginRef)
+	internalHostOp, err := r.createOrUpdateInternalHostResource(ctx, host, uniqueBackends, announcementRef, errorRef, loginRef, translationRefs)
 	if err != nil {
 		return err
 	}
@@ -570,6 +566,7 @@ func (r *KDexHostReconciler) createOrUpdateInternalHostResource(
 	announcementRef *corev1.LocalObjectReference,
 	errorRef *corev1.LocalObjectReference,
 	loginRef *corev1.LocalObjectReference,
+	translationRefs []corev1.LocalObjectReference,
 ) (controllerutil.OperationResult, error) {
 	internalHost := &kdexv1alpha1.KDexInternalHost{
 		ObjectMeta: metav1.ObjectMeta{
@@ -598,6 +595,7 @@ func (r *KDexHostReconciler) createOrUpdateInternalHostResource(
 		internalHost.Spec.AnnouncementRef = announcementRef
 		internalHost.Spec.ErrorRef = errorRef
 		internalHost.Spec.LoginRef = loginRef
+		internalHost.Spec.InternalTranslationRefs = translationRefs
 
 		return ctrl.SetControllerReference(host, internalHost, r.Scheme)
 	})

@@ -407,5 +407,148 @@ var _ = Describe("KDexHost Controller", func() {
 			Expect(internalUtilityPage.Spec.ContentEntries[0].Slot).To(Equal("main"))
 			Expect(internalUtilityPage.Spec.ContentEntries[0].ContentEntryStatic.RawHTML).To(Equal("<h1>Announcement</h1>"))
 		})
+
+		It("it reconciles a referenced translation", func() {
+			host := &kdexv1alpha1.KDexHost{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.KDexHostSpec{
+					BrandName:    "KDex Tech",
+					Organization: "KDex Tech Inc.",
+					Routing: kdexv1alpha1.Routing{
+						Domains: []string{
+							"kdex.dev",
+						},
+					},
+					TranslationRefs: []kdexv1alpha1.KDexObjectReference{
+						{
+							Kind: "KDexTranslation",
+							Name: "non-existent-translation",
+						},
+					},
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, host)).To(Succeed())
+
+			assertResourceReady(
+				ctx, k8sClient, host.Name, namespace,
+				&kdexv1alpha1.KDexHost{}, false)
+
+			translation := &kdexv1alpha1.KDexTranslation{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "non-existent-translation",
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.KDexTranslationSpec{
+					Translations: []kdexv1alpha1.Translation{
+						{
+							Lang: "en",
+							KeysAndValues: map[string]string{
+								"brandName":    "KDex Tech",
+								"organization": "KDex Tech Inc.",
+							},
+						},
+					},
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, translation)).To(Succeed())
+
+			assertResourceReady(
+				ctx, k8sClient, translation.Name, namespace,
+				&kdexv1alpha1.KDexTranslation{}, true)
+
+			checkedHost := &kdexv1alpha1.KDexHost{}
+			assertResourceReady(
+				ctx, k8sClient, host.Name, namespace,
+				checkedHost, true)
+
+			Eventually(
+				checkedHost.Status.Attributes[translation.Name+".translation.generation"], "5s",
+			).Should(Equal("1"))
+
+			internalTranslation := &kdexv1alpha1.KDexInternalTranslation{}
+			err := k8sClient.Get(ctx, types.NamespacedName{
+				Name:      fmt.Sprintf("%s-%s", host.Name, translation.Name),
+				Namespace: namespace,
+			}, internalTranslation)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(internalTranslation.Spec.Translations).To(HaveLen(1))
+			Expect(internalTranslation.Spec.Translations[0].Lang).To(Equal("en"))
+			Expect(internalTranslation.Spec.Translations[0].KeysAndValues).To(HaveLen(2))
+			Expect(internalTranslation.Spec.Translations[0].KeysAndValues["brandName"]).To(Equal("KDex Tech"))
+			Expect(internalTranslation.Spec.Translations[0].KeysAndValues["organization"]).To(Equal("KDex Tech Inc."))
+		})
+
+		It("it reconciles a default translation if a default is available", func() {
+			translation := &kdexv1alpha1.KDexClusterTranslation{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "kdex-default-translation",
+				},
+				Spec: kdexv1alpha1.KDexTranslationSpec{
+					Translations: []kdexv1alpha1.Translation{
+						{
+							Lang: "en",
+							KeysAndValues: map[string]string{
+								"brandName":    "KDex Tech",
+								"organization": "KDex Tech Inc.",
+							},
+						},
+					},
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, translation)).To(Succeed())
+
+			assertResourceReady(
+				ctx, k8sClient, translation.Name, "",
+				&kdexv1alpha1.KDexClusterTranslation{}, true)
+
+			host := &kdexv1alpha1.KDexHost{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: namespace,
+				},
+				Spec: kdexv1alpha1.KDexHostSpec{
+					BrandName:    "KDex Tech",
+					Organization: "KDex Tech Inc.",
+					Routing: kdexv1alpha1.Routing{
+						Domains: []string{
+							"kdex.dev",
+						},
+					},
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, host)).To(Succeed())
+
+			assertResourceReady(
+				ctx, k8sClient, host.Name, namespace,
+				&kdexv1alpha1.KDexHost{}, true)
+
+			checkedHost := &kdexv1alpha1.KDexHost{}
+			assertResourceReady(
+				ctx, k8sClient, host.Name, namespace,
+				checkedHost, true)
+
+			Eventually(
+				checkedHost.Status.Attributes[translation.Name+".translation.generation"], "5s",
+			).Should(Equal("1"))
+
+			internalTranslation := &kdexv1alpha1.KDexInternalTranslation{}
+			err := k8sClient.Get(ctx, types.NamespacedName{
+				Name:      fmt.Sprintf("%s-%s", host.Name, translation.Name),
+				Namespace: namespace,
+			}, internalTranslation)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(internalTranslation.Spec.Translations).To(HaveLen(1))
+			Expect(internalTranslation.Spec.Translations[0].Lang).To(Equal("en"))
+			Expect(internalTranslation.Spec.Translations[0].KeysAndValues).To(HaveLen(2))
+			Expect(internalTranslation.Spec.Translations[0].KeysAndValues["brandName"]).To(Equal("KDex Tech"))
+			Expect(internalTranslation.Spec.Translations[0].KeysAndValues["organization"]).To(Equal("KDex Tech Inc."))
+		})
 	})
 })
