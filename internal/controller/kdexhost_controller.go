@@ -90,7 +90,6 @@ type KDexHostReconciler struct {
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexinternalpackagereferences/finalizers,verbs=update
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexinternalpackagereferences/status,    verbs=get;update;patch
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexinternalpagebindings,                verbs=get;list;watch
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexinternaltranslations,                verbs=get;list;watch
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexinternalutilitypages,                verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagebindings,                        verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagebindings/finalizers,             verbs=update
@@ -259,6 +258,12 @@ func (r *KDexHostReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			&kdexv1alpha1.KDexClusterTheme{},
 			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexHost{}, &kdexv1alpha1.KDexHostList{}, "{.Spec.ThemeRef}")).
 		Watches(
+			&kdexv1alpha1.KDexTranslation{},
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexHost{}, &kdexv1alpha1.KDexHostList{}, "{.Spec.TranslationRefs[*]}")).
+		Watches(
+			&kdexv1alpha1.KDexClusterTranslation{},
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexHost{}, &kdexv1alpha1.KDexHostList{}, "{.Spec.TranslationRefs[*]}")).
+		Watches(
 			&kdexv1alpha1.KDexUtilityPage{},
 			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexHost{}, &kdexv1alpha1.KDexHostList{}, "{.Spec.UtilityPages.AnnouncementRef}{.Spec.UtilityPages.ErrorRef}{.Spec.UtilityPages.LoginRef}")).
 		Watches(
@@ -403,6 +408,17 @@ func (r *KDexHostReconciler) innerReconcile(ctx context.Context, host *kdexv1alp
 		host.Status.Attributes["scriptLibrary.generation"] = fmt.Sprintf("%d", scriptLibraryObj.GetGeneration())
 
 		CollectBackend(&requiredBackends, scriptLibraryObj)
+	}
+
+	for _, translationRef := range host.Spec.TranslationRefs {
+		translationObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, themeObj, &host.Status.Conditions, &translationRef, r.RequeueDelay)
+		if shouldReturn {
+			return err
+		}
+
+		if translationObj != nil {
+			host.Status.Attributes[fmt.Sprintf("%s.translation.generation", translationObj.GetName())] = fmt.Sprintf("%d", translationObj.GetGeneration())
+		}
 	}
 
 	utilityPageBackends, announcementRef, errorRef, loginRef, err := r.resolveUtilityPages(ctx, host)

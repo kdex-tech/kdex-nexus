@@ -18,8 +18,6 @@ package controller
 
 import (
 	"context"
-	"fmt"
-	"maps"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,6 +26,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -39,37 +38,55 @@ type KDexTranslationReconciler struct {
 	Scheme       *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexinternaltranslations,verbs=get;list;watch;create;update;patch;delete
-
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdextranslations,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdextranslations/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdextranslations/finalizers,verbs=update
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdextranslations,                  verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdextranslations/status,           verbs=get;update;patch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdextranslations/finalizers,       verbs=update
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexclustertranslations,           verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexclustertranslations/status,    verbs=get;update;patch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexclustertranslations/finalizers,verbs=update
 
 func (r *KDexTranslationReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, err error) {
 	log := logf.FromContext(ctx)
 
-	var translation kdexv1alpha1.KDexTranslation
-	if err := r.Get(ctx, req.NamespacedName, &translation); err != nil {
-		return ctrl.Result{}, client.IgnoreNotFound(err)
+	var status *kdexv1alpha1.KDexObjectStatus
+	var om metav1.ObjectMeta
+	var o client.Object
+
+	if req.Namespace == "" {
+		var clusterTranslation kdexv1alpha1.KDexClusterTranslation
+		if err := r.Get(ctx, req.NamespacedName, &clusterTranslation); err != nil {
+			return ctrl.Result{}, client.IgnoreNotFound(err)
+		}
+		status = &clusterTranslation.Status
+		om = clusterTranslation.ObjectMeta
+		o = &clusterTranslation
+	} else {
+		var translation kdexv1alpha1.KDexTranslation
+		if err := r.Get(ctx, req.NamespacedName, &translation); err != nil {
+			return ctrl.Result{}, client.IgnoreNotFound(err)
+		}
+		status = &translation.Status
+		om = translation.ObjectMeta
+		o = &translation
 	}
 
-	if translation.Status.Attributes == nil {
-		translation.Status.Attributes = make(map[string]string)
+	if status.Attributes == nil {
+		status.Attributes = make(map[string]string)
 	}
 
 	// Defer status update
 	defer func() {
-		translation.Status.ObservedGeneration = translation.Generation
-		if updateErr := r.Status().Update(ctx, &translation); updateErr != nil {
+		status.ObservedGeneration = om.Generation
+		if updateErr := r.Status().Update(ctx, o); updateErr != nil {
 			err = updateErr
 			res = ctrl.Result{}
 		}
 
-		log.V(1).Info("status", "status", translation.Status, "err", err, "res", res)
+		log.V(1).Info("status", "status", status, "err", err, "res", res)
 	}()
 
 	kdexv1alpha1.SetConditions(
-		&translation.Status.Conditions,
+		&status.Conditions,
 		kdexv1alpha1.ConditionStatuses{
 			Degraded:    metav1.ConditionFalse,
 			Progressing: metav1.ConditionTrue,
@@ -79,18 +96,8 @@ func (r *KDexTranslationReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		"Reconciling",
 	)
 
-	_, shouldReturn, r1, err := ResolveHost(ctx, r.Client, &translation, &translation.Status.Conditions, &translation.Spec.HostRef, r.RequeueDelay)
-	if shouldReturn {
-		return r1, err
-	}
-
-	_, err = r.createOrUpdateInternalTranslation(ctx, &translation)
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-
 	kdexv1alpha1.SetConditions(
-		&translation.Status.Conditions,
+		&status.Conditions,
 		kdexv1alpha1.ConditionStatuses{
 			Degraded:    metav1.ConditionFalse,
 			Progressing: metav1.ConditionFalse,
@@ -109,62 +116,12 @@ func (r *KDexTranslationReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 func (r *KDexTranslationReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&kdexv1alpha1.KDexTranslation{}).
-		Owns(&kdexv1alpha1.KDexInternalTranslation{}).
 		Watches(
-			&kdexv1alpha1.KDexHost{},
-			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexTranslation{}, &kdexv1alpha1.KDexTranslationList{}, "{.Spec.HostRef}")).
+			&kdexv1alpha1.KDexClusterTranslation{},
+			&handler.EnqueueRequestForObject{}).
 		WithOptions(
 			controller.TypedOptions[reconcile.Request]{
 				LogConstructor: LogConstructor("kdextranslation", mgr)}).
 		Named("kdextranslation").
 		Complete(r)
-}
-
-func (r *KDexTranslationReconciler) createOrUpdateInternalTranslation(
-	ctx context.Context,
-	translation *kdexv1alpha1.KDexTranslation,
-) (*kdexv1alpha1.KDexInternalTranslation, error) {
-	log := logf.FromContext(ctx)
-
-	internalTranslation := &kdexv1alpha1.KDexInternalTranslation{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      translation.Name,
-			Namespace: translation.Namespace,
-		},
-	}
-
-	op, err := ctrl.CreateOrUpdate(ctx, r.Client, internalTranslation, func() error {
-		if internalTranslation.CreationTimestamp.IsZero() {
-			internalTranslation.Annotations = make(map[string]string)
-			maps.Copy(internalTranslation.Annotations, translation.Annotations)
-			internalTranslation.Labels = make(map[string]string)
-			maps.Copy(internalTranslation.Labels, translation.Labels)
-
-			internalTranslation.Labels["app.kubernetes.io/name"] = kdexWeb
-			internalTranslation.Labels["kdex.dev/instance"] = translation.Name
-		}
-
-		internalTranslation.Labels["kdex.dev/generation"] = fmt.Sprintf("%d", translation.Generation)
-		internalTranslation.Spec = translation.Spec
-
-		return ctrl.SetControllerReference(translation, internalTranslation, r.Scheme)
-	})
-
-	log.V(2).Info("createOrUpdateInternalTranslation", "op", op, "err", err)
-
-	if err != nil {
-		kdexv1alpha1.SetConditions(
-			&translation.Status.Conditions,
-			kdexv1alpha1.ConditionStatuses{
-				Degraded:    metav1.ConditionTrue,
-				Progressing: metav1.ConditionFalse,
-				Ready:       metav1.ConditionFalse,
-			},
-			kdexv1alpha1.ConditionReasonReconcileError,
-			err.Error(),
-		)
-		return nil, err
-	}
-
-	return internalTranslation, nil
 }

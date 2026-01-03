@@ -21,10 +21,8 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var _ = Describe("KDexTranslation Controller", func() {
@@ -55,11 +53,7 @@ var _ = Describe("KDexTranslation Controller", func() {
 					Name:      resourceName,
 					Namespace: namespace,
 				},
-				Spec: kdexv1alpha1.KDexTranslationSpec{
-					HostRef: v1.LocalObjectReference{
-						Name: "test-host",
-					},
-				},
+				Spec: kdexv1alpha1.KDexTranslationSpec{},
 			}
 
 			Expect(k8sClient.Create(ctx, resource)).NotTo(Succeed())
@@ -72,9 +66,6 @@ var _ = Describe("KDexTranslation Controller", func() {
 					Namespace: namespace,
 				},
 				Spec: kdexv1alpha1.KDexTranslationSpec{
-					HostRef: v1.LocalObjectReference{
-						Name: "test-host",
-					},
 					Translations: []kdexv1alpha1.Translation{},
 				},
 			}
@@ -89,9 +80,6 @@ var _ = Describe("KDexTranslation Controller", func() {
 					Namespace: namespace,
 				},
 				Spec: kdexv1alpha1.KDexTranslationSpec{
-					HostRef: v1.LocalObjectReference{
-						Name: "test-host",
-					},
 					Translations: []kdexv1alpha1.Translation{
 						{
 							Lang: "fr",
@@ -106,16 +94,13 @@ var _ = Describe("KDexTranslation Controller", func() {
 			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 		})
 
-		It("should only reconcile when host ready", func() {
+		It("should reconcile when valid", func() {
 			resource := &kdexv1alpha1.KDexTranslation{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
 					Namespace: namespace,
 				},
 				Spec: kdexv1alpha1.KDexTranslationSpec{
-					HostRef: v1.LocalObjectReference{
-						Name: "test-host",
-					},
 					Translations: []kdexv1alpha1.Translation{
 						{
 							Lang: "fr",
@@ -128,66 +113,10 @@ var _ = Describe("KDexTranslation Controller", func() {
 			}
 
 			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
-
-			assertResourceReady(
-				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.KDexTranslation{}, false)
-		})
-
-		It("should reconcile when host ready", func() {
-			resource := &kdexv1alpha1.KDexTranslation{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      resourceName,
-					Namespace: namespace,
-				},
-				Spec: kdexv1alpha1.KDexTranslationSpec{
-					HostRef: v1.LocalObjectReference{
-						Name: "test-host",
-					},
-					Translations: []kdexv1alpha1.Translation{
-						{
-							Lang: "fr",
-							KeysAndValues: map[string]string{
-								"test": "test",
-							},
-						},
-					},
-				},
-			}
-
-			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
-
-			assertResourceReady(
-				ctx, k8sClient, resourceName, namespace,
-				&kdexv1alpha1.KDexTranslation{}, false)
-
-			addOrUpdateHost(
-				ctx, k8sClient, kdexv1alpha1.KDexHost{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-host",
-						Namespace: namespace,
-					},
-					Spec: kdexv1alpha1.KDexHostSpec{
-						BrandName:    "test-brand",
-						Organization: "test-organization",
-						Routing: kdexv1alpha1.Routing{
-							Domains: []string{
-								"test-domain",
-							},
-						},
-					},
-				})
-
-			assertResourceReady(
-				ctx, k8sClient, "test-host", namespace,
-				&kdexv1alpha1.KDexHost{}, true)
 
 			assertResourceReady(
 				ctx, k8sClient, resourceName, namespace,
 				&kdexv1alpha1.KDexTranslation{}, true)
-
-			internalTranslation := &kdexv1alpha1.KDexInternalTranslation{}
-			Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(resource), internalTranslation)).To(Succeed())
 		})
 	})
 })
