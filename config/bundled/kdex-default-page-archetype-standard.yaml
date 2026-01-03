@@ -1,0 +1,50 @@
+apiVersion: kdex.dev/v1alpha1
+kind: KDexClusterPageArchetype
+metadata:
+  labels:
+    control-plane: controller-manager
+    app.kubernetes.io/name: kdex-nexus
+    app.kubernetes.io/managed-by: kustomize
+  name: kdex-default-page-archetype-standard
+spec:
+  content: |
+    <!DOCTYPE html>
+    <html lang="{{ .Language }}">
+      <head>
+        {{ .Meta }}
+        <title>{{ l10n .Title }}</title>
+        {{ .Theme }}
+        {{ .HeadScript }}
+      </head>
+      <body>
+        <header>
+          {{ .Header }}
+        </header>
+        <nav>
+          {{ .Navigation.main }}
+        </nav>
+        <main>
+          {{ .Content.main }}
+        </main>
+        <footer>
+          {{ .Footer }}
+        </footer>
+        {{ .FootScript }}
+      </body>
+    </html>
+  defaultFooterRef:
+    kind: KDexClusterPageFooter
+    name: kdex-default-page-footer
+  defaultHeaderRef:
+    kind: KDexClusterPageHeader
+    name: kdex-default-page-header
+  defaultMainNavigationRef:
+    kind: KDexClusterPageNavigation
+    name: kdex-default-page-navigation-main
+  extraNavigations:
+    language:
+      kind: KDexClusterPageNavigation
+      name: kdex-default-page-navigation-language
+  scriptLibraryRef:
+    kind: KDexClusterScriptLibrary
+    name: kdex-default-script-library

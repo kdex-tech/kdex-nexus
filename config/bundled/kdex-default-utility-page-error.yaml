@@ -1,0 +1,26 @@
+apiVersion: kdex.dev/v1alpha1
+kind: KDexClusterUtilityPage
+metadata:
+  labels:
+    control-plane: controller-manager
+    app.kubernetes.io/name: kdex-nexus
+    app.kubernetes.io/managed-by: kustomize
+  name: kdex-default-utility-page-error
+spec:
+  contentEntries:
+  - rawHTML: |
+      <div class="container">
+          <h1>{{ l10n "error.title" .BrandName }}</h1>
+
+          <strong>{{ .Extra.ErrorCode }}</strong>
+          <p class="message">{{l10n "error.message" .Extra.ErrorCode}}</p>
+
+          <div class="footer">
+              <p>{{l10n "announcement.organization" .Organization}}</p>
+          </div>
+      </div>
+    slot: main
+  pageArchetypeRef:
+    kind: KDexClusterPageArchetype
+    name: kdex-default-page-archetype-utility
+  type: Error

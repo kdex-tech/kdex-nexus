@@ -4,138 +4,132 @@ kind: ClusterRole
 metadata:
   name: host-controller-role
 rules:
-  - apiGroups:
-      - ""
-    resources:
-      - configmaps
-      - secrets
-      - services
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - ""
-    resources:
-      - pods
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - apps
-    resources:
-      - deployments
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - batch
-    resources:
-      - jobs
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - gateway.networking.k8s.io
-    resources:
-      - httproutes
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - kdex.dev
-    resources:
-      - kdexapps
-      - kdexclusterapps
-      - kdexclusterpagearchetypes
-      - kdexclusterpagefooters
-      - kdexclusterpageheaders
-      - kdexclusterpagenavigations
-      - kdexclusterscriptlibraries
-      - kdexclusterthemes
-      - kdexpagearchetypes
-      - kdexpagefooters
-      - kdexpageheaders
-      - kdexpagenavigations
-      - kdexscriptlibraries
-      - kdexthemes
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - kdex.dev
-    resources:
-      - kdexhostcontrollers
-      - kdexinternalhosts
-      - kdexinternalpackagereferences
-      - kdexinternalpagebindings
-      - kdexinternaltranslations
-      - kdexpagebindings
-      - kdextranslations
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - kdex.dev
-    resources:
-      - kdexhostcontrollers/finalizers
-      - kdexinternalhosts/finalizers
-      - kdexinternalpackagereferences/finalizers
-      - kdexinternalpagebindings/finalizers
-      - kdexinternaltranslations/finalizers
-      - kdexpagebindings/finalizers
-      - kdextranslations/finalizers
-    verbs:
-      - update
-  - apiGroups:
-      - kdex.dev
-    resources:
-      - kdexhostcontrollers/status
-      - kdexinternalhosts/status
-      - kdexinternalpackagereferences/status
-      - kdexinternalpagebindings/status
-      - kdexinternaltranslations/status
-      - kdexpagebindings/status
-      - kdextranslations/status
-    verbs:
-      - get
-      - patch
-      - update
-  - apiGroups:
-      - networking.k8s.io
-    resources:
-      - ingresses
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  - secrets
+  - services
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - batch
+  resources:
+  - jobs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - gateway.networking.k8s.io
+  resources:
+  - httproutes
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - kdex.dev
+  resources:
+  - kdexapps
+  - kdexclusterapps
+  - kdexclusterpagearchetypes
+  - kdexclusterpagefooters
+  - kdexclusterpageheaders
+  - kdexclusterpagenavigations
+  - kdexclusterscriptlibraries
+  - kdexclusterthemes
+  - kdexpagearchetypes
+  - kdexpagefooters
+  - kdexpageheaders
+  - kdexpagenavigations
+  - kdexscriptlibraries
+  - kdexthemes
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - kdex.dev
+  resources:
+  - kdexinternalhosts
+  - kdexinternalpackagereferences
+  - kdexinternalpagebindings
+  - kdexinternaltranslations
+  - kdexinternalutilitypages
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - kdex.dev
+  resources:
+  - kdexinternalhosts/finalizers
+  - kdexinternalpackagereferences/finalizers
+  - kdexinternalpagebindings/finalizers
+  - kdexinternaltranslations/finalizers
+  - kdexinternalutilitypages/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - kdex.dev
+  resources:
+  - kdexinternalhosts/status
+  - kdexinternalpackagereferences/status
+  - kdexinternalpagebindings/status
+  - kdexinternaltranslations/status
+  - kdexinternalutilitypages/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - ingresses
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch

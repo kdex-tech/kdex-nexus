@@ -1,0 +1,15 @@
+resources:
+- kdex-default-page-archetype-standard.yaml
+- kdex-default-page-archetype-utility.yaml
+- kdex-default-page-footer.yaml
+- kdex-default-page-header.yaml
+- kdex-default-page-navigation-language.yaml
+- kdex-default-page-navigation-main.yaml
+- kdex-default-script-library.yaml
+- kdex-default-utility-page-announcement.yaml
+- kdex-default-utility-page-error.yaml
+
+#- kdex-default-utility-page-login.yaml
+
+# configurations:
+# - kustomizeconfig.yaml

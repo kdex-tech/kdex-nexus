@@ -1,0 +1,12 @@
+apiVersion: kdex.dev/v1alpha1
+kind: KDexClusterScriptLibrary
+metadata:
+  labels:
+    control-plane: controller-manager
+    app.kubernetes.io/name: kdex-nexus
+    app.kubernetes.io/managed-by: kustomize
+  name: kdex-default-script-library
+spec:
+  packageReference:
+    name: "@kdex/ui"
+    version: "1.1.3"

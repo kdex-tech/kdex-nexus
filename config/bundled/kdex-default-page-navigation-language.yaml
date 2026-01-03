@@ -1,0 +1,25 @@
+apiVersion: kdex.dev/v1alpha1
+kind: KDexClusterPageNavigation
+metadata:
+  labels:
+    control-plane: controller-manager
+    app.kubernetes.io/name: kdex-nexus
+    app.kubernetes.io/managed-by: kustomize
+  name: kdex-default-page-navigation-language
+spec:
+  content: |
+    <ul class="navigation languages">
+    {{- range $language := .Languages }}
+      {{ $langPath := "" }}
+      {{ if ne $language $.DefaultLanguage }}
+        {{ $langPath = print "/" $language }}
+      {{ end }}
+      <li class="navigation language">
+        <a
+          class="navigation language-link flag-{{ $language }} {{ if eq $language $.Language }}selected{{ end }}"
+          href="{{ print $langPath $.BasePath }}"
+
+        >{{ l10n $language }}</a>
+      </li>
+    {{- end -}}
+    </ul>
