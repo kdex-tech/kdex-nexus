@@ -80,6 +80,7 @@ rules:
   - kdexinternalpackagereferences
   - kdexinternalpagebindings
   - kdexinternaltranslations
+  - kdexinternalutilitypages
   - kdexpagearchetypes
   - kdexpagebindings
   - kdexpagefooters

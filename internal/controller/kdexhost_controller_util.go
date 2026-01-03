@@ -110,7 +110,7 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 			directRef = false
 			ref = &kdexv1alpha1.KDexObjectReference{
 				Kind: "KDexClusterUtilityPage",
-				Name: fmt.Sprintf("kdex-default-%s", strings.ToLower(string(pageType))),
+				Name: fmt.Sprintf("kdex-default-utility-page-%s", strings.ToLower(string(pageType))),
 			}
 		}
 

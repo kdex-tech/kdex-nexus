@@ -343,7 +343,7 @@ var _ = Describe("KDexHost Controller", func() {
 
 			announcementPage := &kdexv1alpha1.KDexClusterUtilityPage{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "kdex-default-announcement",
+					Name: "kdex-default-utility-page-announcement",
 				},
 				Spec: kdexv1alpha1.KDexUtilityPageSpec{
 					ContentEntries: []kdexv1alpha1.ContentEntry{
