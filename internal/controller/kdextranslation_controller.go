@@ -18,11 +18,13 @@ package controller
 
 import (
 	"context"
+	"os"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
+	nexuswebhook "kdex.dev/nexus/internal/webhook"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -114,6 +116,24 @@ func (r *KDexTranslationReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *KDexTranslationReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	if os.Getenv("ENABLE_WEBHOOKS") != FALSE {
+		err := ctrl.NewWebhookManagedBy(mgr).
+			For(&kdexv1alpha1.KDexTranslation{}).
+			WithValidator(&nexuswebhook.KDexTranslationValidator{}).
+			Complete()
+		if err != nil {
+			return err
+		}
+
+		err = ctrl.NewWebhookManagedBy(mgr).
+			For(&kdexv1alpha1.KDexClusterTranslation{}).
+			WithValidator(&nexuswebhook.KDexTranslationValidator{}).
+			Complete()
+		if err != nil {
+			return err
+		}
+	}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&kdexv1alpha1.KDexTranslation{}).
 		Watches(

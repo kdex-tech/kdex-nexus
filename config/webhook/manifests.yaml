@@ -456,6 +456,26 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
+      path: /validate-kdex-dev-v1alpha1-kdexclustertranslation
+  failurePolicy: Fail
+  name: validate.kdexclustertranslation.kdex.dev
+  rules:
+  - apiGroups:
+    - kdex.dev
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - kdexclustertranslations
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
       path: /validate-kdex-dev-v1alpha1-kdexclusterutilitypage
   failurePolicy: Fail
   name: validate.kdexclusterutilitypage.kdex.dev
@@ -549,6 +569,26 @@ webhooks:
     - UPDATE
     resources:
     - kdexthemes
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-kdex-dev-v1alpha1-kdextranslation
+  failurePolicy: Fail
+  name: validate.kdextranslation.kdex.dev
+  rules:
+  - apiGroups:
+    - kdex.dev
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - kdextranslations
   sideEffects: None
 - admissionReviewVersions:
   - v1
