@@ -34,7 +34,7 @@ spec:
         label: home
         pageArchetypeRef:
           kind: KDexClusterPageArchetype
-          name: kdex-default-page-archetype</code></pre>
+          name: kdex-default-page-archetype-standard</code></pre>
               </kdex-highlight>
           </div>
 
