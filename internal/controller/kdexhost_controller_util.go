@@ -304,9 +304,8 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 				}
 			}
 
-			// 3. Main Navigation
-			navRef := spec.OverrideMainNavigationRef
-			if navRef != nil {
+			// 3. Navigations
+			for _, navRef := range spec.OverrideNavigationRefs {
 				navObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, navRef, r.RequeueDelay)
 				if shouldReturn {
 					return nil, nil, nil, nil, err

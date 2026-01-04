@@ -57,14 +57,30 @@ var _ = Describe("KDexPageArchetype Controller", func() {
 				},
 				Spec: kdexv1alpha1.KDexPageArchetypeSpec{
 					Content: "<h1>Hello, World!</h1>",
-					ExtraNavigations: map[string]*kdexv1alpha1.KDexObjectReference{
+					DefaultNavigationRefs: map[string]*kdexv1alpha1.KDexObjectReference{
 						"non-existent-navigation": {
 							Kind: "KDexPageNavigation",
 							Name: "non-existent-navigation",
 						},
+						"main": {
+							Kind: "KDexPageNavigation",
+							Name: "main-navigation",
+						},
 					},
 				},
 			}
+
+			addOrUpdatePageNavigation(
+				ctx, k8sClient, kdexv1alpha1.KDexPageNavigation{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "main-navigation",
+						Namespace: namespace,
+					},
+					Spec: kdexv1alpha1.KDexPageNavigationSpec{
+						Content: "<h1>Main Navigation</h1>",
+					},
+				},
+			)
 
 			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 
@@ -97,9 +113,11 @@ var _ = Describe("KDexPageArchetype Controller", func() {
 				},
 				Spec: kdexv1alpha1.KDexPageArchetypeSpec{
 					Content: "<h1>Hello, World!</h1>",
-					DefaultMainNavigationRef: &kdexv1alpha1.KDexObjectReference{
-						Kind: "KDexPageNavigation",
-						Name: "non-existent-main-navigation",
+					DefaultNavigationRefs: map[string]*kdexv1alpha1.KDexObjectReference{
+						"main": {
+							Kind: "KDexPageNavigation",
+							Name: "non-existent-main-navigation",
+						},
 					},
 				},
 			}

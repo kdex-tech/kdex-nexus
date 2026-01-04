@@ -50,10 +50,10 @@ spec:
   defaultHeaderRef:
     kind: KDexClusterPageHeader
     name: kdex-default-page-header
-  defaultMainNavigationRef:
-    kind: KDexClusterPageNavigation
-    name: kdex-default-page-navigation-main
-  extraNavigations:
+  defaultNavigationRefs:
+    main:
+      kind: KDexClusterPageNavigation
+      name: kdex-default-page-navigation-main
     language:
       kind: KDexClusterPageNavigation
       name: kdex-default-page-navigation-language

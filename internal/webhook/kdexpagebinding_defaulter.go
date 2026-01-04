@@ -40,8 +40,10 @@ func (a *KDexPageBindingDefaulter) Default(ctx context.Context, ro runtime.Objec
 		spec.OverrideHeaderRef.Kind = "KDexPageHeader"
 	}
 
-	if spec.OverrideMainNavigationRef != nil && spec.OverrideMainNavigationRef.Kind == "" {
-		spec.OverrideMainNavigationRef.Kind = KDexPageNavigation
+	for _, v := range spec.OverrideNavigationRefs {
+		if v.Kind == "" {
+			v.Kind = KDexPageNavigation
+		}
 	}
 
 	if spec.PageArchetypeRef.Kind == "" {

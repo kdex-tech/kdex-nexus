@@ -126,7 +126,7 @@ func (r *KDexPageArchetypeReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		status.Attributes["header.generation"] = fmt.Sprintf("%d", headerObj.GetGeneration())
 	}
 
-	navigations, shouldReturn, response, err := ResolvePageNavigations(ctx, r.Client, o, &status.Conditions, spec.DefaultMainNavigationRef, spec.ExtraNavigations, r.RequeueDelay)
+	navigations, shouldReturn, response, err := ResolvePageNavigations(ctx, r.Client, o, &status.Conditions, spec.DefaultNavigationRefs, r.RequeueDelay)
 	if shouldReturn {
 		return response, err
 	}
@@ -207,13 +207,13 @@ func (r *KDexPageArchetypeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexClusterPageArchetype{}, &kdexv1alpha1.KDexClusterPageArchetypeList{}, "{.Spec.DefaultHeaderRef}")).
 		Watches(
 			&kdexv1alpha1.KDexPageNavigation{},
-			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexPageArchetype{}, &kdexv1alpha1.KDexPageArchetypeList{}, "{.Spec.DefaultMainNavigationRef}{.Spec.ExtraNavigations.*}")).
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexPageArchetype{}, &kdexv1alpha1.KDexPageArchetypeList{}, "{.Spec.DefaultNavigationRefs.*}")).
 		Watches(
 			&kdexv1alpha1.KDexClusterPageNavigation{},
-			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexPageArchetype{}, &kdexv1alpha1.KDexPageArchetypeList{}, "{.Spec.DefaultMainNavigationRef}{.Spec.ExtraNavigations.*}")).
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexPageArchetype{}, &kdexv1alpha1.KDexPageArchetypeList{}, "{.Spec.DefaultNavigationRefs.*}")).
 		Watches(
 			&kdexv1alpha1.KDexClusterPageNavigation{},
-			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexClusterPageArchetype{}, &kdexv1alpha1.KDexClusterPageArchetypeList{}, "{.Spec.DefaultMainNavigationRef}{.Spec.ExtraNavigations.*}")).
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexClusterPageArchetype{}, &kdexv1alpha1.KDexClusterPageArchetypeList{}, "{.Spec.DefaultNavigationRefs.*}")).
 		Watches(
 			&kdexv1alpha1.KDexScriptLibrary{},
 			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexPageArchetype{}, &kdexv1alpha1.KDexPageArchetypeList{}, "{.Spec.ScriptLibraryRef}")).

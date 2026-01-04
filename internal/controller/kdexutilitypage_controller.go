@@ -140,13 +140,13 @@ func (r *KDexUtilityPageReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		status.Attributes["footer.generation"] = fmt.Sprintf("%d", footerObj.GetGeneration())
 	}
 
-	mainNavRef := spec.OverrideMainNavigationRef
-	mainNavObj, shouldReturn, r1, err := ResolveKDexObjectReference(ctx, r.Client, o, &status.Conditions, mainNavRef, r.RequeueDelay)
+	navigations, shouldReturn, r1, err := ResolvePageNavigations(ctx, r.Client, o, &status.Conditions, spec.OverrideNavigationRefs, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
-	if mainNavObj != nil {
-		status.Attributes["mainNavigation.generation"] = fmt.Sprintf("%d", mainNavObj.GetGeneration())
+
+	for k, navigation := range navigations {
+		status.Attributes[k+".navigation.generation"] = fmt.Sprintf("%d", navigation.Generation)
 	}
 
 	scriptLibraryObj, shouldReturn, r1, err := ResolveKDexObjectReference(ctx, r.Client, o, &status.Conditions, spec.ScriptLibraryRef, r.RequeueDelay)
@@ -240,13 +240,13 @@ func (r *KDexUtilityPageReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexClusterUtilityPage{}, &kdexv1alpha1.KDexClusterUtilityPageList{}, "{.Spec.OverrideHeaderRef}")).
 		Watches(
 			&kdexv1alpha1.KDexPageNavigation{},
-			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexUtilityPage{}, &kdexv1alpha1.KDexUtilityPageList{}, "{.Spec.OverrideMainNavigationRef}")).
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexUtilityPage{}, &kdexv1alpha1.KDexUtilityPageList{}, "{.Spec.OverrideNavigationRefs.*}")).
 		Watches(
 			&kdexv1alpha1.KDexClusterPageNavigation{},
-			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexUtilityPage{}, &kdexv1alpha1.KDexUtilityPageList{}, "{.Spec.OverrideMainNavigationRef}")).
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexUtilityPage{}, &kdexv1alpha1.KDexUtilityPageList{}, "{.Spec.OverrideNavigationRefs.*}")).
 		Watches(
 			&kdexv1alpha1.KDexClusterPageNavigation{},
-			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexClusterUtilityPage{}, &kdexv1alpha1.KDexClusterUtilityPageList{}, "{.Spec.OverrideMainNavigationRef}")).
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexClusterUtilityPage{}, &kdexv1alpha1.KDexClusterUtilityPageList{}, "{.Spec.OverrideNavigationRefs.*}")).
 		Watches(
 			&kdexv1alpha1.KDexScriptLibrary{},
 			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexUtilityPage{}, &kdexv1alpha1.KDexUtilityPageList{}, "{.Spec.ScriptLibraryRef}")).

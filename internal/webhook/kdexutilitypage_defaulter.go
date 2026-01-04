@@ -55,11 +55,13 @@ func (a *KDexUtilityPageDefaulter) Default(ctx context.Context, ro runtime.Objec
 		}
 	}
 
-	if spec.OverrideMainNavigationRef != nil && spec.OverrideMainNavigationRef.Kind == "" {
-		if clustered {
-			spec.OverrideMainNavigationRef.Kind = KDexClusterPageNavigation
-		} else {
-			spec.OverrideMainNavigationRef.Kind = KDexPageNavigation
+	for _, v := range spec.OverrideNavigationRefs {
+		if v.Kind == "" {
+			if clustered {
+				v.Kind = KDexClusterPageNavigation
+			} else {
+				v.Kind = KDexPageNavigation
+			}
 		}
 	}
 

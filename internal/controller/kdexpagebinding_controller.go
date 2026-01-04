@@ -149,11 +149,14 @@ func (r *KDexPageBindingReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		}
 	}
 
-	navigationRef := pageBinding.Spec.OverrideMainNavigationRef
-	if navigationRef == nil {
-		navigationRef = pageArchetypeSpec.DefaultMainNavigationRef
+	navigationRefs := pageArchetypeSpec.DefaultNavigationRefs
+	if len(pageBinding.Spec.OverrideNavigationRefs) > 0 {
+		if navigationRefs == nil {
+			navigationRefs = make(map[string]*kdexv1alpha1.KDexObjectReference)
+		}
+		maps.Copy(navigationRefs, pageBinding.Spec.OverrideNavigationRefs)
 	}
-	navigations, shouldReturn, response, err := ResolvePageNavigations(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, navigationRef, pageArchetypeSpec.ExtraNavigations, r.RequeueDelay)
+	navigations, shouldReturn, response, err := ResolvePageNavigations(ctx, r.Client, &pageBinding, &pageBinding.Status.Conditions, navigationRefs, r.RequeueDelay)
 	if shouldReturn {
 		return response, err
 	}
@@ -393,10 +396,10 @@ func (r *KDexPageBindingReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexPageBinding{}, &kdexv1alpha1.KDexPageBindingList{}, "{.Spec.OverrideHeaderRef}")).
 		Watches(
 			&kdexv1alpha1.KDexPageNavigation{},
-			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexPageBinding{}, &kdexv1alpha1.KDexPageBindingList{}, "{.Spec.OverrideMainNavigationRef}")).
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexPageBinding{}, &kdexv1alpha1.KDexPageBindingList{}, "{.Spec.OverrideNavigationRefs.*}")).
 		Watches(
 			&kdexv1alpha1.KDexClusterPageNavigation{},
-			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexPageBinding{}, &kdexv1alpha1.KDexPageBindingList{}, "{.Spec.OverrideMainNavigationRef}")).
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexPageBinding{}, &kdexv1alpha1.KDexPageBindingList{}, "{.Spec.OverrideNavigationRefs.*}")).
 		Watches(
 			&kdexv1alpha1.KDexScriptLibrary{},
 			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexPageBinding{}, &kdexv1alpha1.KDexPageBindingList{}, "{.Spec.ScriptLibraryRef}")).

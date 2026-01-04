@@ -45,19 +45,11 @@ func (a *KDexPageArchetypeDefaulter) Default(ctx context.Context, ro runtime.Obj
 		}
 	}
 
-	if spec.DefaultMainNavigationRef != nil && spec.DefaultMainNavigationRef.Kind == "" {
-		if clustered {
-			spec.DefaultMainNavigationRef.Kind = KDexClusterPageNavigation
-		} else {
-			spec.DefaultMainNavigationRef.Kind = KDexPageNavigation
-		}
-	}
-
-	for _, v := range spec.ExtraNavigations {
-		if clustered {
-			v.Kind = KDexClusterPageNavigation
-		} else {
-			if v.Kind == "" {
+	for _, v := range spec.DefaultNavigationRefs {
+		if v.Kind == "" {
+			if clustered {
+				v.Kind = KDexClusterPageNavigation
+			} else {
 				v.Kind = KDexPageNavigation
 			}
 		}
