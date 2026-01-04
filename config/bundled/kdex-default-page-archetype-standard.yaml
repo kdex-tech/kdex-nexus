@@ -17,15 +17,31 @@ spec:
           {{ .Header }}
         </header>
         <nav>
-          {{ .Navigation.main }}
+          {{/* use 'pop' to both render a slot in place and remove it from the Navigation map */}}
+          {{ pop .Navigation "main" }}
         </nav>
         <main>
-          {{ .Content.main }}
+          {{/* use 'pop' to both render a slot in place and remove it from the Content map */}}
+          {{ pop .Content "main" }}
         </main>
         <footer>
           {{ .Footer }}
         </footer>
         {{ .FootScript }}
+
+        {{/* render any remaining slots in the Content map as HTML templates */}}
+        {{- range $slot, $content := .Content }}
+          <template id="content-{{ $slot }}">
+            {{ $content }}
+          </template>
+        {{- end -}}
+
+        {{/* render any remaining slots in the Navigation map as HTML templates */}}
+        {{- range $slot, $content := .Navigation }}
+          <template id="navigation-{{ $slot }}">
+            {{ $content }}
+          </template>
+        {{- end -}}
       </body>
     </html>
   defaultFooterRef:
