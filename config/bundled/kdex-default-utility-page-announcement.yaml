@@ -67,7 +67,7 @@ spec:
               link2.href = 'https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@latest/build/styles/monokai-sublime.min.css';
 
               const style = document.createElement('style');
-              style.textContent = 'pre { margin: 0; background: #23241f !important; padding: 1.5rem; overflow-x: auto; border-radius: 0 0 1rem 1rem; } ' +
+              style.textContent = 'pre { margin: 0; background: #23241f !important; overflow-x: auto; border-radius: 0 0 1rem 1rem; } ' +
                   'code { font-family: "Fira Code", monospace !important; font-size: 0.95rem; line-height: 1.6; color: #f8f8f2; }';
 
               const pre = document.createElement('pre');
