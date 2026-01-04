@@ -159,6 +159,57 @@ func (r *KDexHostReconciler) Reconcile(ctx context.Context, req ctrl.Request) (r
 				return ctrl.Result{}, err
 			}
 
+			// Wait for internal translations to be gone
+			internalTranslations := &kdexv1alpha1.KDexInternalTranslationList{}
+			if err := r.List(ctx, internalTranslations, client.InNamespace(host.Namespace), client.MatchingFields{hostIndexKey: host.Name}); err != nil {
+				return ctrl.Result{}, err
+			}
+			if len(internalTranslations.Items) > 0 {
+				for _, it := range internalTranslations.Items {
+					if it.DeletionTimestamp.IsZero() {
+						if err := r.Delete(ctx, &it); err != nil {
+							return ctrl.Result{}, err
+						}
+					}
+				}
+				// KDexInternalTranslation still exists. We wait.
+				return ctrl.Result{Requeue: true}, nil
+			}
+
+			// Wait for internal page bindings to be gone
+			internalPageBindings := &kdexv1alpha1.KDexInternalPageBindingList{}
+			if err := r.List(ctx, internalPageBindings, client.InNamespace(host.Namespace), client.MatchingFields{hostIndexKey: host.Name}); err != nil {
+				return ctrl.Result{}, err
+			}
+			if len(internalPageBindings.Items) > 0 {
+				for _, ipb := range internalPageBindings.Items {
+					if ipb.DeletionTimestamp.IsZero() {
+						if err := r.Delete(ctx, &ipb); err != nil {
+							return ctrl.Result{}, err
+						}
+					}
+				}
+				// KDexInternalPageBinding still exists. We wait.
+				return ctrl.Result{Requeue: true}, nil
+			}
+
+			// Wait for internal utility pages to be gone
+			internalUtilityPages := &kdexv1alpha1.KDexInternalUtilityPageList{}
+			if err := r.List(ctx, internalUtilityPages, client.InNamespace(host.Namespace), client.MatchingFields{hostIndexKey: host.Name}); err != nil {
+				return ctrl.Result{}, err
+			}
+			if len(internalUtilityPages.Items) > 0 {
+				for _, iup := range internalUtilityPages.Items {
+					if iup.DeletionTimestamp.IsZero() {
+						if err := r.Delete(ctx, &iup); err != nil {
+							return ctrl.Result{}, err
+						}
+					}
+				}
+				// KDexInternalUtilityPage still exists. We wait.
+				return ctrl.Result{Requeue: true}, nil
+			}
+
 			deployment := &appsv1.Deployment{}
 			err = r.Get(ctx, req.NamespacedName, deployment)
 			if err == nil {
@@ -221,6 +272,26 @@ func (r *KDexHostReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			return nil
 		}
 		return []string{pageBinding.Spec.HostRef.Name}
+	}); err != nil {
+		return err
+	}
+
+	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &kdexv1alpha1.KDexInternalTranslation{}, hostIndexKey, func(rawObj client.Object) []string {
+		translation := rawObj.(*kdexv1alpha1.KDexInternalTranslation)
+		if translation.Spec.HostRef.Name == "" {
+			return nil
+		}
+		return []string{translation.Spec.HostRef.Name}
+	}); err != nil {
+		return err
+	}
+
+	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &kdexv1alpha1.KDexInternalUtilityPage{}, hostIndexKey, func(rawObj client.Object) []string {
+		utilityPage := rawObj.(*kdexv1alpha1.KDexInternalUtilityPage)
+		if utilityPage.Spec.HostRef.Name == "" {
+			return nil
+		}
+		return []string{utilityPage.Spec.HostRef.Name}
 	}); err != nil {
 		return err
 	}
