@@ -232,6 +232,7 @@ func (r *KDexHostReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&corev1.Service{}).
 		Owns(&corev1.ServiceAccount{}).
 		Owns(&kdexv1alpha1.KDexInternalHost{}).
+		Owns(&kdexv1alpha1.KDexInternalTranslation{}).
 		Owns(&kdexv1alpha1.KDexInternalUtilityPage{}).
 		Owns(&rbacv1.ClusterRoleBinding{}).
 		Watches(
