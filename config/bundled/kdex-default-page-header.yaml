@@ -15,7 +15,7 @@ spec:
               {{ l10n .BrandName }}
             </a>
           </nav>
-          {{ .Navigation.language }}
+          {{ pop .Navigation "language" }}
         </div>
       </div>
     </div>
