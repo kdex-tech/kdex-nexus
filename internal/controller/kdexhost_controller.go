@@ -176,23 +176,6 @@ func (r *KDexHostReconciler) Reconcile(ctx context.Context, req ctrl.Request) (r
 				return ctrl.Result{Requeue: true}, nil
 			}
 
-			// Wait for internal page bindings to be gone
-			internalPageBindings := &kdexv1alpha1.KDexInternalPageBindingList{}
-			if err := r.List(ctx, internalPageBindings, client.InNamespace(host.Namespace), client.MatchingFields{hostIndexKey: host.Name}); err != nil {
-				return ctrl.Result{}, err
-			}
-			if len(internalPageBindings.Items) > 0 {
-				for _, ipb := range internalPageBindings.Items {
-					if ipb.DeletionTimestamp.IsZero() {
-						if err := r.Delete(ctx, &ipb); err != nil {
-							return ctrl.Result{}, err
-						}
-					}
-				}
-				// KDexInternalPageBinding still exists. We wait.
-				return ctrl.Result{Requeue: true}, nil
-			}
-
 			// Wait for internal utility pages to be gone
 			internalUtilityPages := &kdexv1alpha1.KDexInternalUtilityPageList{}
 			if err := r.List(ctx, internalUtilityPages, client.InNamespace(host.Namespace), client.MatchingFields{hostIndexKey: host.Name}); err != nil {
