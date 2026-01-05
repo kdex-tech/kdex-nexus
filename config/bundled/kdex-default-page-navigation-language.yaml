@@ -10,9 +10,9 @@ spec:
       {{ if ne $language $.DefaultLanguage }}
         {{ $langPath = print "/" $language }}
       {{ end }}
-      <li class="navigation language">
+      <li class="navigation language{{ if eq $language $.Language }} selected{{ end }}">
         <a
-          class="navigation language-link flag-{{ $language }} {{ if eq $language $.Language }}selected{{ end }}"
+          class="navigation language-link flag-{{ $language }}{{ if eq $language $.Language }} selected{{ end }}"
           href="{{ print $langPath $.BasePath }}"
 
         >{{ l10n $language }}</a>

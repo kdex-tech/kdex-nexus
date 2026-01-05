@@ -7,7 +7,7 @@ spec:
     {{- define "navigation" -}}
       <ul class="navigation pages">
         {{- range $value := .PageMap | values | sortBy "Weight" true }}
-          <li class="navigation page">
+          <li class="navigation page{{ if eq $value.BasePath $.RequestedBasePath }} selected{{ end }}">
             {{- if ne $value.Href "" -}}
               <a
                 class="navigation page-link{{ if eq $value.BasePath $.RequestedBasePath }} selected{{ end }}"
