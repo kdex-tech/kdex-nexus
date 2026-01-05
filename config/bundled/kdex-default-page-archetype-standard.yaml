@@ -13,20 +13,14 @@ spec:
         {{ .HeadScript }}
       </head>
       <body>
-        <header>
-          {{ .Header }}
-        </header>
-        <nav>
-          {{/* use 'pop' to both render a slot in place and remove it from the Navigation map */}}
-          {{ pop .Navigation "main" }}
-        </nav>
+        {{ .Header }}
+        {{/* use 'pop' to both render a slot in place and remove it from the Navigation map */}}
+        {{ pop .Navigation "main" }}
         <main>
           {{/* use 'pop' to both render a slot in place and remove it from the Content map */}}
           {{ pop .Content "main" }}
         </main>
-        <footer>
-          {{ .Footer }}
-        </footer>
+        {{ .Footer }}
         {{ .FootScript }}
 
         {{/* render any remaining slots in the Content map as HTML templates */}}

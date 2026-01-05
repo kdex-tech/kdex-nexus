@@ -4,18 +4,16 @@ metadata:
   name: kdex-default-page-header
 spec:
   content: |
-    <div>
+    <header class="page-header">
       <div>
-        <div>
-          <nav id="navigation-header">
-            <a href="/">
-              <img alt="{{ l10n .BrandName }}">
-            </a>
-            <a href="/">
-              {{ l10n .BrandName }}
-            </a>
-          </nav>
-          {{ pop .Navigation "language" }}
-        </div>
+        <nav id="page-brand">
+          <a class="page-logo" href="/">
+            <img alt="{{ l10n .BrandName }}">
+          </a>
+          <a class="page-brand-name" href="/">
+            {{ l10n .BrandName }}
+          </a>
+        </nav>
+        {{ pop .Navigation "language" }}
       </div>
-    </div>
+    </header>
