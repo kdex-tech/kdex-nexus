@@ -446,6 +446,7 @@ func (r *KDexPageBindingReconciler) createOrUpdateInternalPageBinding(
 
 		internalPageBinding.Labels["kdex.dev/generation"] = fmt.Sprintf("%d", pageBinding.Generation)
 		internalPageBinding.Spec.KDexPageBindingSpec = pageBinding.Spec
+		internalPageBinding.Spec.PackageReferences = packageReferences
 		internalPageBinding.Spec.RequiredBackends = requiredBackends
 		internalPageBinding.Spec.Scripts = scripts
 
