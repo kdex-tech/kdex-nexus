@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"maps"
 	"os"
 	"time"
 
@@ -111,6 +112,15 @@ func (r *KDexUtilityPageReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		status.Attributes["archetype.generation"] = fmt.Sprintf("%d", archetypeObj.GetGeneration())
 	}
 
+	var pageArchetypeSpec kdexv1alpha1.KDexPageArchetypeSpec
+
+	switch v := archetypeObj.(type) {
+	case *kdexv1alpha1.KDexPageArchetype:
+		pageArchetypeSpec = v.Spec
+	case *kdexv1alpha1.KDexClusterPageArchetype:
+		pageArchetypeSpec = v.Spec
+	}
+
 	contents, shouldReturn, response, err := ResolveContents(ctx, r.Client, o, &status.Conditions, spec.ContentEntries, r.RequeueDelay)
 	if shouldReturn {
 		return response, err
@@ -140,7 +150,14 @@ func (r *KDexUtilityPageReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		status.Attributes["footer.generation"] = fmt.Sprintf("%d", footerObj.GetGeneration())
 	}
 
-	navigations, shouldReturn, r1, err := ResolvePageNavigations(ctx, r.Client, o, &status.Conditions, spec.OverrideNavigationRefs, r.RequeueDelay)
+	navigationRefs := pageArchetypeSpec.DefaultNavigationRefs
+	if len(spec.OverrideNavigationRefs) > 0 {
+		if navigationRefs == nil {
+			navigationRefs = make(map[string]*kdexv1alpha1.KDexObjectReference)
+		}
+		maps.Copy(navigationRefs, spec.OverrideNavigationRefs)
+	}
+	navigations, shouldReturn, r1, err := ResolvePageNavigations(ctx, r.Client, o, &status.Conditions, navigationRefs, r.RequeueDelay)
 	if shouldReturn {
 		return r1, err
 	}
