@@ -5,7 +5,7 @@ metadata:
 spec:
   contentEntries:
   - rawHTML: |
-      <div class="container ep1">
+      <div class="error-container">
         <strong>{{ l10n "error.title" .BrandName }}</strong>
 
         <h2>{{ .Extra.ErrorCode }}: {{ l10n .Extra.ErrorCodeString }}</h2>
