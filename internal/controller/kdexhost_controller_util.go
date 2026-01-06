@@ -265,7 +265,8 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 
 			// === Collect Backends ===
 
-			// 1. Archetype
+			var archetypeSpec kdexv1alpha1.KDexPageArchetypeSpec
+
 			archetypeObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, &spec.PageArchetypeRef, r.RequeueDelay)
 			if shouldReturn {
 				return nil, nil, nil, nil, err
@@ -273,7 +274,6 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 			if archetypeObj != nil {
 				CollectBackend(&requiredBackends, archetypeObj)
 
-				var archetypeSpec kdexv1alpha1.KDexPageArchetypeSpec
 				switch v := archetypeObj.(type) {
 				case *kdexv1alpha1.KDexPageArchetype:
 					archetypeSpec = v.Spec
@@ -291,7 +291,6 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 				}
 			}
 
-			// 2. Content Entries
 			for _, content := range spec.ContentEntries {
 				if content.AppRef != nil {
 					appObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, content.AppRef, r.RequeueDelay)
@@ -304,33 +303,10 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 				}
 			}
 
-			// 3. Navigations
-			for _, navRef := range spec.OverrideNavigationRefs {
-				navObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, navRef, r.RequeueDelay)
-				if shouldReturn {
-					return nil, nil, nil, nil, err
-				}
-				if navObj != nil {
-					var navSpec kdexv1alpha1.KDexPageNavigationSpec
-					switch v := navObj.(type) {
-					case *kdexv1alpha1.KDexPageNavigation:
-						navSpec = v.Spec
-					case *kdexv1alpha1.KDexClusterPageNavigation:
-						navSpec = v.Spec
-					}
-
-					navSLObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, navSpec.ScriptLibraryRef, r.RequeueDelay)
-					if shouldReturn {
-						return nil, nil, nil, nil, err
-					}
-					if navSLObj != nil {
-						CollectBackend(&requiredBackends, navSLObj)
-					}
-				}
+			headerRef := archetypeSpec.DefaultHeaderRef
+			if spec.OverrideHeaderRef != nil {
+				headerRef = spec.OverrideHeaderRef
 			}
-
-			// 4. Header
-			headerRef := spec.OverrideHeaderRef
 			if headerRef != nil {
 				headerObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, headerRef, r.RequeueDelay)
 				if shouldReturn {
@@ -355,8 +331,10 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 				}
 			}
 
-			// 5. Footer
-			footerRef := spec.OverrideFooterRef
+			footerRef := archetypeSpec.DefaultFooterRef
+			if spec.OverrideFooterRef != nil {
+				footerRef = spec.OverrideFooterRef
+			}
 			if footerRef != nil {
 				footerObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, footerRef, r.RequeueDelay)
 				if shouldReturn {
@@ -381,7 +359,37 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 				}
 			}
 
-			// 6. Page Script Library
+			navigationRefs := maps.Clone(archetypeSpec.DefaultNavigationRefs)
+			if spec.OverrideNavigationRefs != nil {
+				if navigationRefs == nil {
+					navigationRefs = map[string]*kdexv1alpha1.KDexObjectReference{}
+				}
+				maps.Copy(navigationRefs, spec.OverrideNavigationRefs)
+			}
+			for _, navRef := range navigationRefs {
+				navObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, navRef, r.RequeueDelay)
+				if shouldReturn {
+					return nil, nil, nil, nil, err
+				}
+				if navObj != nil {
+					var navSpec kdexv1alpha1.KDexPageNavigationSpec
+					switch v := navObj.(type) {
+					case *kdexv1alpha1.KDexPageNavigation:
+						navSpec = v.Spec
+					case *kdexv1alpha1.KDexClusterPageNavigation:
+						navSpec = v.Spec
+					}
+
+					navSLObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, navSpec.ScriptLibraryRef, r.RequeueDelay)
+					if shouldReturn {
+						return nil, nil, nil, nil, err
+					}
+					if navSLObj != nil {
+						CollectBackend(&requiredBackends, navSLObj)
+					}
+				}
+			}
+
 			pageSLObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, spec.ScriptLibraryRef, r.RequeueDelay)
 			if shouldReturn {
 				return nil, nil, nil, nil, err
