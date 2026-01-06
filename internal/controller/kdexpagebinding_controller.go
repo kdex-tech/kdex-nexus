@@ -149,7 +149,7 @@ func (r *KDexPageBindingReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		}
 	}
 
-	navigationRefs := pageArchetypeSpec.DefaultNavigationRefs
+	navigationRefs := maps.Clone(pageArchetypeSpec.DefaultNavigationRefs)
 	if len(pageBinding.Spec.OverrideNavigationRefs) > 0 {
 		if navigationRefs == nil {
 			navigationRefs = make(map[string]*kdexv1alpha1.KDexObjectReference)

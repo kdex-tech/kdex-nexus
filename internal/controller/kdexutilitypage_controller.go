@@ -150,7 +150,7 @@ func (r *KDexUtilityPageReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		status.Attributes["footer.generation"] = fmt.Sprintf("%d", footerObj.GetGeneration())
 	}
 
-	navigationRefs := pageArchetypeSpec.DefaultNavigationRefs
+	navigationRefs := maps.Clone(pageArchetypeSpec.DefaultNavigationRefs)
 	if len(spec.OverrideNavigationRefs) > 0 {
 		if navigationRefs == nil {
 			navigationRefs = make(map[string]*kdexv1alpha1.KDexObjectReference)
