@@ -1,0 +1,13 @@
+apiVersion: kdex.dev/v1alpha1
+kind: KDexClusterUtilityPage
+metadata:
+    name: kdex-default-utility-page-login
+spec:
+    contentEntries:
+      - rawHTML: |
+            <h3>Not yet implemented</h3>
+        slot: main
+    pageArchetypeRef:
+        kind: KDexClusterPageArchetype
+        name: kdex-default-page-archetype-utility
+    type: Login

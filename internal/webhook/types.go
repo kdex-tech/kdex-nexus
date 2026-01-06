@@ -9,6 +9,7 @@ const (
 	KDexClusterPageNavigation = "KDexClusterPageNavigation"
 	KDexClusterScriptLibrary  = "KDexClusterScriptLibrary"
 	KDexClusterTheme          = "KDexClusterTheme"
+	KDexClusterUtilityPage    = "KDexClusterUtilityPage"
 	KDexPageArchetype         = "KDexPageArchetype"
 	KDexPageFooter            = "KDexPageFooter"
 	KDexPageHeader            = "KDexPageHeader"

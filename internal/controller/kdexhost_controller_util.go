@@ -223,21 +223,8 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 			}
 		}
 
-		directRef := true
-
-		if ref == nil {
-			directRef = false
-			ref = &kdexv1alpha1.KDexObjectReference{
-				Kind: "KDexClusterUtilityPage",
-				Name: fmt.Sprintf("kdex-default-utility-page-%s", strings.ToLower(string(pageType))),
-			}
-		}
-
 		resolvedObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, ref, r.RequeueDelay)
 		if shouldReturn {
-			if directRef && err == nil {
-				err = fmt.Errorf("utility page %s not found", ref.Name)
-			}
 			return nil, nil, nil, nil, err
 		}
 

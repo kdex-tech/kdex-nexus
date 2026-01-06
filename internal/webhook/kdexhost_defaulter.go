@@ -44,6 +44,39 @@ func (a *KDexHostDefaulter) Default(ctx context.Context, ro runtime.Object) erro
 		spec.ScriptLibraryRef.Kind = KDexScriptLibrary
 	}
 
+	if spec.UtilityPages == nil {
+		spec.UtilityPages = &kdexv1alpha1.UtilityPages{}
+	}
+	if spec.UtilityPages.AnnouncementRef == nil {
+		spec.UtilityPages.AnnouncementRef = &kdexv1alpha1.KDexObjectReference{}
+	}
+	if spec.UtilityPages.AnnouncementRef.Kind == "" {
+		spec.UtilityPages.AnnouncementRef.Kind = KDexClusterUtilityPage
+	}
+	if spec.UtilityPages.AnnouncementRef.Name == "" {
+		spec.UtilityPages.AnnouncementRef.Name = "kdex-default-utility-page-announcement"
+	}
+
+	if spec.UtilityPages.ErrorRef == nil {
+		spec.UtilityPages.ErrorRef = &kdexv1alpha1.KDexObjectReference{}
+	}
+	if spec.UtilityPages.ErrorRef.Kind == "" {
+		spec.UtilityPages.ErrorRef.Kind = KDexClusterUtilityPage
+	}
+	if spec.UtilityPages.ErrorRef.Name == "" {
+		spec.UtilityPages.ErrorRef.Name = "kdex-default-utility-page-error"
+	}
+
+	if spec.UtilityPages.LoginRef == nil {
+		spec.UtilityPages.LoginRef = &kdexv1alpha1.KDexObjectReference{}
+	}
+	if spec.UtilityPages.LoginRef.Kind == "" {
+		spec.UtilityPages.LoginRef.Kind = KDexClusterUtilityPage
+	}
+	if spec.UtilityPages.LoginRef.Name == "" {
+		spec.UtilityPages.LoginRef.Name = "kdex-default-utility-page-login"
+	}
+
 	spec.IngressPath = "/_host"
 
 	BackendDefaults(&spec.Backend)

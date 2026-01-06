@@ -120,7 +120,7 @@ spec:
             overflow-x: auto;
         }
 
-        code {
+        pre > code {
             font-family: 'Fira Code', monospace !important;
             font-size: 0.95rem;
             line-height: 1.6;
