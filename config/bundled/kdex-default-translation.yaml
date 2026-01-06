@@ -9,54 +9,54 @@ spec:
       announcement.message: This host is ready to serve requests, but no pages have been deployed yet. Please deploy pages to start serving content.
       announcement.organization: "Organization: %s"
       announcement.title: Welcome to %s
-      error.message: "The following error occurred while processing your request: %s"
-      error.title: Error
+      error.label: "The following error occurred while processing your request:"
+      error.title: An error occurred on %s
   - lang: de
     keysAndValues:
       announcement.message: Dieser Host ist bereit, Anfragen zu bearbeiten, aber es wurden noch keine Seiten bereitgestellt. Bitte stellen Sie Seiten bereit, um mit der Bereitstellung von Inhalten zu beginnen.
       announcement.organization: "Organisation: %s"
       announcement.title: Willkommen bei %s
-      error.message: "Ein Fehler ist aufgetreten, während Ihre Anfrage verarbeitet wurde: %s"
-      error.title: Fehler
+      error.label: "Ein Fehler ist aufgetreten, während Ihre Anfrage verarbeitet wurde:"
+      error.title: Fehler auf %s
   - lang: es
     keysAndValues:
       announcement.message: Este host está listo para servir solicitudes, pero aún no se han desplegado páginas. Por favor, despliegue páginas para comenzar a servir contenido.
       announcement.organization: "Organización: %s"
       announcement.title: Bienvenido a %s
-      error.message: "El siguiente error ocurrió al procesar su solicitud: %s"
-      error.title: Error
+      error.label: "El siguiente error ocurrió al procesar su solicitud:"
+      error.title: Error en %s
   - lang: fr
     keysAndValues:
       announcement.message: Ce serveur est prêt à traiter les requêtes, mais aucune page n'a encore été déployée. Veuillez déployer des pages pour commencer à servir du contenu.
       announcement.organization: "Organisation : %s"
       announcement.title: Bienvenue sur %s
-      error.message: "Une erreur est survenue lors du traitement de votre demande: %s"
-      error.title: Erreur
+      error.label: "Une erreur est survenue lors du traitement de votre demande:"
+      error.title: Erreur sur %s
   - lang: it
     keysAndValues:
       announcement.message: Questo host è pronto a gestire le richieste, ma non sono state ancora distribuite pagine. Si prega di distribuire pagine per iniziare a servire contenuti.
       announcement.organization: "Organizzazione: %s"
       announcement.title: Benvenuto su %s
-      error.message: "Si è verificato un errore durante il trattamento della sua richiesta: %s"
-      error.title: Errore
+      error.label: "Si è verificato un errore durante il trattamento della sua richiesta:"
+      error.title: Errore su %s
   - lang: pt
     keysAndValues:
       announcement.message: Este host está pronto para atender solicitações, mas nenhuma página foi implantada ainda. Por favor, implante páginas para começar a servir conteúdo.
       announcement.organization: "Organização: %s"
       announcement.title: Bem-vindo ao %s
-      error.message: "Ocorreu um erro ao processar sua solicitação: %s"
-      error.title: Erro
+      error.label: "Ocorreu um erro ao processar sua solicitação:"
+      error.title: Erro no %s
   - lang: ru
     keysAndValues:
       announcement.message: Этот хост готов обрабатывать запросы, но пока не были развернуты страницы. Пожалуйста, разверните страницы, чтобы начать обслуживание содержимого.
       announcement.organization: "Организация: %s"
       announcement.title: Добро пожаловать на %s
-      error.message: "Произошла ошибка при обработке вашего запроса: %s"
-      error.title: Ошибка
+      error.label: "Произошла ошибка при обработке вашего запроса:"
+      error.title: Ошибка на %s
   - lang: zh
     keysAndValues:
       announcement.message: 这个主机准备处理请求，但还没有部署页面。请部署页面以开始提供内容。
       announcement.organization: "组织: %s"
       announcement.title: 欢迎来到 %s
-      error.message: "在处理您的请求时发生错误: %s"
-      error.title: 错误
+      error.label: "在处理您的请求时发生错误:"
+      error.title: 错误在 %s

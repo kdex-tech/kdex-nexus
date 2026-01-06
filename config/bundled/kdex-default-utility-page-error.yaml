@@ -5,11 +5,12 @@ metadata:
 spec:
   contentEntries:
   - rawHTML: |
-      <div class="container">
-          <h1>{{ l10n "error.title" .BrandName }}</h1>
+      <div class="container error-report">
+          <h1>{{ .Extra.ErrorCode }}: {{ l10n .Extra.ErrorCodeString }}</h1>
 
-          <strong>{{ .Extra.ErrorCode }}</strong>
-          <p class="message">{{l10n "error.message" .Extra.ErrorCode}}</p>
+          <strong>{{ l10n "error.title" .BrandName }}</strong>
+          <p class="error-label">{{l10n "error.label"}}</p>
+          <code class="error-message">{{ .Extra.ErrorMessage }}</code>
 
           <div class="footer">
               <p>{{l10n "announcement.organization" .Organization}}</p>
