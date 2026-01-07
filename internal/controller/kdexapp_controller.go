@@ -45,15 +45,6 @@ type KDexAppReconciler struct {
 	Scheme          *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=core,resources=secrets,                       verbs=get;list;watch
-
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexapps,                  verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexapps/status,           verbs=get;update;patch
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexapps/finalizers,       verbs=update
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterapps,           verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterapps/status,    verbs=get;update;patch
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterapps/finalizers,verbs=update
-
 func (r *KDexAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, err error) {
 	log := logf.FromContext(ctx)
 

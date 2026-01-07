@@ -115,6 +115,7 @@ rules:
   - kdexhosts/finalizers
   - kdexinternalhosts/finalizers
   - kdexinternalpackagereferences/finalizers
+  - kdexinternalpagebindings/finalizers
   - kdexinternaltranslations/finalizers
   - kdexinternalutilitypages/finalizers
   - kdexpagearchetypes/finalizers
@@ -144,6 +145,7 @@ rules:
   - kdexhosts/status
   - kdexinternalhosts/status
   - kdexinternalpackagereferences/status
+  - kdexinternalpagebindings/status
   - kdexinternaltranslations/status
   - kdexinternalutilitypages/status
   - kdexpagearchetypes/status

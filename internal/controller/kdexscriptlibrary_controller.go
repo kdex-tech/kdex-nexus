@@ -45,15 +45,6 @@ type KDexScriptLibraryReconciler struct {
 	Scheme          *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch
-
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexscriptlibraries,                  verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexscriptlibraries/status,           verbs=get;update;patch
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexscriptlibraries/finalizers,       verbs=update
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterscriptlibraries,           verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterscriptlibraries/status,    verbs=get;update;patch
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterscriptlibraries/finalizers,verbs=update
-
 func (r *KDexScriptLibraryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, err error) {
 	log := logf.FromContext(ctx)
 

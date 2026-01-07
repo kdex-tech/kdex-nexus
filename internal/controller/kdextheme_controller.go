@@ -41,15 +41,6 @@ type KDexThemeReconciler struct {
 	Scheme       *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexthemes,                  verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexthemes/status,           verbs=get;update;patch
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexthemes/finalizers,       verbs=update
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterthemes,           verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterthemes/status,    verbs=get;update;patch
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterthemes/finalizers,verbs=update
-
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexscriptlibraries,verbs=get;list;watch
-
 func (r *KDexThemeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, err error) {
 	log := logf.FromContext(ctx)
 

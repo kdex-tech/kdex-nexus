@@ -43,15 +43,6 @@ type KDexPageHeaderReconciler struct {
 	Scheme       *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpageheaders,                  verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpageheaders/status,           verbs=get;update;patch
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpageheaders/finalizers,       verbs=update
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterpageheaders,           verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterpageheaders/status,    verbs=get;update;patch
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterpageheaders/finalizers,verbs=update
-
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexscriptlibraries,verbs=get;list;watch
-
 func (r *KDexPageHeaderReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, err error) {
 	log := logf.FromContext(ctx)
 

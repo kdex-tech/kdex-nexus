@@ -42,18 +42,6 @@ type KDexPageArchetypeReconciler struct {
 	RequeueDelay time.Duration
 }
 
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagearchetypes,                  verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagearchetypes/status,           verbs=get;update;patch
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagearchetypes/finalizers,       verbs=update
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterpagearchetypes,           verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterpagearchetypes/status,    verbs=get;update;patch
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterpagearchetypes/finalizers,verbs=update
-
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagefooters,verbs=get;list;watch
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpageheaders,verbs=get;list;watch
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagenavigations,verbs=get;list;watch
-// +kubebuilder:rbac:groups=kdex.dev,resources=kdexscriptlibraries,verbs=get;list;watch
-
 func (r *KDexPageArchetypeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, err error) {
 	log := logf.FromContext(ctx)
 
