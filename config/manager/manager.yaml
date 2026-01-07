@@ -133,8 +133,8 @@ data:
           spec:
             containers:
             - args:
-              - --named-log-level=hosts.pages=error
-              - --named-log-level=hosts=debug
+              - --named-log-level=host.pages=error
+              - --named-log-level=host=2
               - --zap-encoder=console
               - --zap-log-level=info
               - --zap-stacktrace-level=error
