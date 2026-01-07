@@ -113,23 +113,6 @@ func (r *KDexHostReconciler) Reconcile(ctx context.Context, req ctrl.Request) (r
 				return ctrl.Result{}, err
 			}
 
-			// Wait for internal translations to be gone
-			internalTranslations := &kdexv1alpha1.KDexInternalTranslationList{}
-			if err := r.List(ctx, internalTranslations, client.InNamespace(host.Namespace), client.MatchingFields{hostIndexKey: host.Name}); err != nil {
-				return ctrl.Result{}, err
-			}
-			if len(internalTranslations.Items) > 0 {
-				for _, it := range internalTranslations.Items {
-					if it.DeletionTimestamp.IsZero() {
-						if err := r.Delete(ctx, &it); err != nil {
-							return ctrl.Result{}, err
-						}
-					}
-				}
-				// KDexInternalTranslation still exists. We wait.
-				return ctrl.Result{Requeue: true}, nil
-			}
-
 			// Wait for internal utility pages to be gone
 			internalUtilityPages := &kdexv1alpha1.KDexInternalUtilityPageList{}
 			if err := r.List(ctx, internalUtilityPages, client.InNamespace(host.Namespace), client.MatchingFields{hostIndexKey: host.Name}); err != nil {
@@ -144,6 +127,23 @@ func (r *KDexHostReconciler) Reconcile(ctx context.Context, req ctrl.Request) (r
 					}
 				}
 				// KDexInternalUtilityPage still exists. We wait.
+				return ctrl.Result{Requeue: true}, nil
+			}
+
+			// Wait for internal translations to be gone
+			internalTranslations := &kdexv1alpha1.KDexInternalTranslationList{}
+			if err := r.List(ctx, internalTranslations, client.InNamespace(host.Namespace), client.MatchingFields{hostIndexKey: host.Name}); err != nil {
+				return ctrl.Result{}, err
+			}
+			if len(internalTranslations.Items) > 0 {
+				for _, it := range internalTranslations.Items {
+					if it.DeletionTimestamp.IsZero() {
+						if err := r.Delete(ctx, &it); err != nil {
+							return ctrl.Result{}, err
+						}
+					}
+				}
+				// KDexInternalTranslation still exists. We wait.
 				return ctrl.Result{Requeue: true}, nil
 			}
 
@@ -437,6 +437,9 @@ func (r *KDexHostReconciler) innerReconcile(ctx context.Context, host *kdexv1alp
 	}
 
 	requiredBackends = append(requiredBackends, utilityPageBackends...)
+
+	// TODO: make sure host controllers survive an operator redeployment (full undeploy and reapply)
+	// Just don't delete the ClusterRoles associated with the manager
 
 	configMapOp, err := r.createOrUpdateConfigMap(ctx, host)
 	if err != nil {

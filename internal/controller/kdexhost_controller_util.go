@@ -36,8 +36,6 @@ func (r *KDexHostReconciler) createOrUpdateInternalTranslation(
 	generation int64,
 	host *kdexv1alpha1.KDexHost,
 ) (*kdexv1alpha1.KDexInternalTranslation, error) {
-	log := logf.FromContext(ctx)
-
 	name := fmt.Sprintf("%s-%s", host.Name, translationName)
 	internalTranslation := &kdexv1alpha1.KDexInternalTranslation{
 		ObjectMeta: metav1.ObjectMeta{
@@ -64,7 +62,14 @@ func (r *KDexHostReconciler) createOrUpdateInternalTranslation(
 		return ctrl.SetControllerReference(host, internalTranslation, r.Scheme)
 	})
 
-	log.V(2).Info("createOrUpdateInternalTranslation", "op", op, "err", err)
+	log := logf.FromContext(ctx)
+
+	log.V(2).Info(
+		"createOrUpdateInternalTranslation",
+		"name", internalTranslation.Name,
+		"op", op,
+		"err", err,
+	)
 
 	if err != nil {
 		kdexv1alpha1.SetConditions(
@@ -90,8 +95,6 @@ func (r *KDexHostReconciler) createOrUpdateInternalUtilityPage(
 	pageType kdexv1alpha1.KDexUtilityPageType,
 	utilityPageGeneration int64,
 ) (*corev1.LocalObjectReference, error) {
-	log := logf.FromContext(ctx)
-
 	name := fmt.Sprintf("%s-%s", host.Name, strings.ToLower(string(pageType)))
 	internalUtilityPage := &kdexv1alpha1.KDexInternalUtilityPage{
 		ObjectMeta: metav1.ObjectMeta{
@@ -119,9 +122,11 @@ func (r *KDexHostReconciler) createOrUpdateInternalUtilityPage(
 		return ctrl.SetControllerReference(host, internalUtilityPage, r.Scheme)
 	})
 
-	log.V(1).Info(
+	log := logf.FromContext(ctx)
+
+	log.V(2).Info(
 		"createOrUpdateInternalUtilityPage",
-		"name", name,
+		"name", internalUtilityPage.Name,
 		"type", pageType,
 		"op", op,
 		"err", err,
