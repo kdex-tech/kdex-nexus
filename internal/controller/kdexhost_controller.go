@@ -602,6 +602,15 @@ func (r *KDexHostReconciler) createOrUpdateConfigMap(
 		return ctrl.SetControllerReference(host, configMap, r.Scheme)
 	})
 
+	log := logf.FromContext(ctx)
+
+	log.V(2).Info(
+		"createOrUpdateConfigMap",
+		"name", configMap.Name,
+		"op", op,
+		"err", err,
+	)
+
 	if err != nil {
 		kdexv1alpha1.SetConditions(
 			&host.Status.Conditions,
@@ -659,6 +668,20 @@ func (r *KDexHostReconciler) createOrUpdateInternalHostResource(
 
 		return ctrl.SetControllerReference(host, internalHost, r.Scheme)
 	})
+
+	log := logf.FromContext(ctx)
+
+	log.V(2).Info(
+		"createOrUpdateInternalHostResource",
+		"name", internalHost.Name,
+		"op", op,
+		"requiredBackends", requiredBackends,
+		"announcementRef", announcementRef,
+		"errorRef", errorRef,
+		"loginRef", loginRef,
+		"translationRefs", translationRefs,
+		"err", err,
+	)
 
 	if err != nil {
 		kdexv1alpha1.SetConditions(
@@ -768,6 +791,15 @@ func (r *KDexHostReconciler) createOrUpdateDeployment(
 		},
 	)
 
+	log := logf.FromContext(ctx)
+
+	log.V(2).Info(
+		"createOrUpdateDeployment",
+		"name", deployment.Name,
+		"op", op,
+		"err", err,
+	)
+
 	if err != nil {
 		kdexv1alpha1.SetConditions(
 			&host.Status.Conditions,
@@ -827,6 +859,15 @@ func (r *KDexHostReconciler) createOrUpdateClusterRoleBinding(
 			controllerutil.AddFinalizer(clusterRoleBinding, hostFinalizerName)
 			return nil
 		},
+	)
+
+	log := logf.FromContext(ctx)
+
+	log.V(2).Info(
+		"createOrUpdateClusterRoleBinding",
+		"name", clusterRoleBinding.Name,
+		"op", op,
+		"err", err,
 	)
 
 	if err != nil {
@@ -890,6 +931,15 @@ func (r *KDexHostReconciler) createOrUpdateService(
 		},
 	)
 
+	log := logf.FromContext(ctx)
+
+	log.V(2).Info(
+		"createOrUpdateService",
+		"name", service.Name,
+		"op", op,
+		"err", err,
+	)
+
 	if err != nil {
 		kdexv1alpha1.SetConditions(
 			&host.Status.Conditions,
@@ -941,6 +991,15 @@ func (r *KDexHostReconciler) createOrUpdateServiceAccount(
 			controllerutil.AddFinalizer(serviceAccount, hostFinalizerName)
 			return ctrl.SetControllerReference(host, serviceAccount, r.Scheme)
 		},
+	)
+
+	log := logf.FromContext(ctx)
+
+	log.V(2).Info(
+		"createOrUpdateServiceAccount",
+		"name", serviceAccount.Name,
+		"op", op,
+		"err", err,
 	)
 
 	if err != nil {
