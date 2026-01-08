@@ -264,7 +264,7 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 				return nil, nil, nil, nil, err
 			}
 			if archetypeObj != nil {
-				CollectBackend(&requiredBackends, archetypeObj)
+				CollectBackend(r.Configuration, &requiredBackends, archetypeObj)
 
 				switch v := archetypeObj.(type) {
 				case *kdexv1alpha1.KDexPageArchetype:
@@ -279,7 +279,7 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 					return nil, nil, nil, nil, err
 				}
 				if archetypeSLObj != nil {
-					CollectBackend(&requiredBackends, archetypeSLObj)
+					CollectBackend(r.Configuration, &requiredBackends, archetypeSLObj)
 				}
 			}
 
@@ -290,7 +290,7 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 						return nil, nil, nil, nil, err
 					}
 					if appObj != nil {
-						CollectBackend(&requiredBackends, appObj)
+						CollectBackend(r.Configuration, &requiredBackends, appObj)
 					}
 				}
 			}
@@ -318,7 +318,7 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 						return nil, nil, nil, nil, err
 					}
 					if headerSLObj != nil {
-						CollectBackend(&requiredBackends, headerSLObj)
+						CollectBackend(r.Configuration, &requiredBackends, headerSLObj)
 					}
 				}
 			}
@@ -346,7 +346,7 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 						return nil, nil, nil, nil, err
 					}
 					if footerSLObj != nil {
-						CollectBackend(&requiredBackends, footerSLObj)
+						CollectBackend(r.Configuration, &requiredBackends, footerSLObj)
 					}
 				}
 			}
@@ -377,7 +377,7 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 						return nil, nil, nil, nil, err
 					}
 					if navSLObj != nil {
-						CollectBackend(&requiredBackends, navSLObj)
+						CollectBackend(r.Configuration, &requiredBackends, navSLObj)
 					}
 				}
 			}
@@ -387,7 +387,7 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 				return nil, nil, nil, nil, err
 			}
 			if pageSLObj != nil {
-				CollectBackend(&requiredBackends, pageSLObj)
+				CollectBackend(r.Configuration, &requiredBackends, pageSLObj)
 			}
 		}
 	}

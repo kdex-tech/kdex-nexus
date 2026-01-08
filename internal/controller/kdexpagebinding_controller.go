@@ -26,6 +26,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
+	"kdex.dev/crds/configuration"
 	nexuswebhook "kdex.dev/nexus/internal/webhook"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -37,8 +38,9 @@ import (
 // KDexPageBindingReconciler reconciles a KDexPageBinding object
 type KDexPageBindingReconciler struct {
 	client.Client
-	RequeueDelay time.Duration
-	Scheme       *runtime.Scheme
+	Configuration configuration.NexusConfiguration
+	RequeueDelay  time.Duration
+	Scheme        *runtime.Scheme
 }
 
 //nolint:gocyclo
@@ -84,7 +86,7 @@ func (r *KDexPageBindingReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		return r1, err
 	}
 
-	CollectBackend(&requiredBackends, archetypeObj)
+	CollectBackend(r.Configuration, &requiredBackends, archetypeObj)
 
 	pageBinding.Status.Attributes["archetype.generation"] = fmt.Sprintf("%d", archetypeObj.GetGeneration())
 
@@ -103,7 +105,7 @@ func (r *KDexPageBindingReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	}
 
 	if archetypeScriptLibraryObj != nil {
-		CollectBackend(&requiredBackends, archetypeScriptLibraryObj)
+		CollectBackend(r.Configuration, &requiredBackends, archetypeScriptLibraryObj)
 
 		pageBinding.Status.Attributes["archetype.scriptLibrary.generation"] = fmt.Sprintf("%d", archetypeScriptLibraryObj.GetGeneration())
 
@@ -126,7 +128,7 @@ func (r *KDexPageBindingReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 
 	for k, content := range contents {
 		if content.AppObj != nil {
-			CollectBackend(&requiredBackends, content.AppObj)
+			CollectBackend(r.Configuration, &requiredBackends, content.AppObj)
 
 			pageBinding.Status.Attributes[k+".content.generation"] = fmt.Sprintf("%d", content.AppObj.GetGeneration())
 		}
@@ -153,7 +155,7 @@ func (r *KDexPageBindingReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		}
 
 		if navigationScriptLibraryObj != nil {
-			CollectBackend(&requiredBackends, navigationScriptLibraryObj)
+			CollectBackend(r.Configuration, &requiredBackends, navigationScriptLibraryObj)
 
 			pageBinding.Status.Attributes[k+".navigation.scriptLibrary.generation"] = fmt.Sprintf("%d", navigationScriptLibraryObj.GetGeneration())
 
@@ -206,7 +208,7 @@ func (r *KDexPageBindingReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		}
 
 		if headerScriptLibraryObj != nil {
-			CollectBackend(&requiredBackends, headerScriptLibraryObj)
+			CollectBackend(r.Configuration, &requiredBackends, headerScriptLibraryObj)
 
 			pageBinding.Status.Attributes["header.scriptLibrary.generation"] = fmt.Sprintf("%d", headerScriptLibraryObj.GetGeneration())
 
@@ -250,7 +252,7 @@ func (r *KDexPageBindingReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		}
 
 		if footerScriptLibraryObj != nil {
-			CollectBackend(&requiredBackends, footerScriptLibraryObj)
+			CollectBackend(r.Configuration, &requiredBackends, footerScriptLibraryObj)
 
 			pageBinding.Status.Attributes["footer.scriptLibrary.generation"] = fmt.Sprintf("%d", footerScriptLibraryObj.GetGeneration())
 
@@ -273,7 +275,7 @@ func (r *KDexPageBindingReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	}
 
 	if scriptLibraryObj != nil {
-		CollectBackend(&requiredBackends, scriptLibraryObj)
+		CollectBackend(r.Configuration, &requiredBackends, scriptLibraryObj)
 
 		pageBinding.Status.Attributes["scriptLibrary.generation"] = fmt.Sprintf("%d", scriptLibraryObj.GetGeneration())
 

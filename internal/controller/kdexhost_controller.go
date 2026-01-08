@@ -396,7 +396,7 @@ func (r *KDexHostReconciler) innerReconcile(ctx context.Context, host *kdexv1alp
 	if themeObj != nil {
 		host.Status.Attributes["theme.generation"] = fmt.Sprintf("%d", themeObj.GetGeneration())
 
-		CollectBackend(&requiredBackends, themeObj)
+		CollectBackend(r.Configuration, &requiredBackends, themeObj)
 
 		var spec kdexv1alpha1.KDexThemeSpec
 		switch v := themeObj.(type) {
@@ -411,7 +411,7 @@ func (r *KDexHostReconciler) innerReconcile(ctx context.Context, host *kdexv1alp
 			return err
 		}
 		if themeScriptLibraryObj != nil {
-			CollectBackend(&requiredBackends, themeScriptLibraryObj)
+			CollectBackend(r.Configuration, &requiredBackends, themeScriptLibraryObj)
 		}
 	}
 
@@ -423,7 +423,7 @@ func (r *KDexHostReconciler) innerReconcile(ctx context.Context, host *kdexv1alp
 	if scriptLibraryObj != nil {
 		host.Status.Attributes["scriptLibrary.generation"] = fmt.Sprintf("%d", scriptLibraryObj.GetGeneration())
 
-		CollectBackend(&requiredBackends, scriptLibraryObj)
+		CollectBackend(r.Configuration, &requiredBackends, scriptLibraryObj)
 	}
 
 	translationRefs, shouldReturn, err := r.resolveTranslations(ctx, host)

@@ -287,9 +287,10 @@ func main() {
 		os.Exit(1)
 	}
 	if err := (&controller.KDexPageBindingReconciler{
-		Client:       mgr.GetClient(),
-		RequeueDelay: requeueDelay,
-		Scheme:       mgr.GetScheme(),
+		Client:        mgr.GetClient(),
+		Configuration: conf,
+		RequeueDelay:  requeueDelay,
+		Scheme:        mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "KDexPageBinding")
 		os.Exit(1)
