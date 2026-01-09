@@ -206,8 +206,7 @@ func (r *KDexHostReconciler) resolveTranslations(
 func (r *KDexHostReconciler) resolveUtilityPages(
 	ctx context.Context,
 	host *kdexv1alpha1.KDexHost,
-) ([]kdexv1alpha1.KDexObjectReference, *corev1.LocalObjectReference, *corev1.LocalObjectReference, *corev1.LocalObjectReference, bool, error) {
-	requiredBackends := []kdexv1alpha1.KDexObjectReference{}
+) (*corev1.LocalObjectReference, *corev1.LocalObjectReference, *corev1.LocalObjectReference, bool, error) {
 	refs := map[kdexv1alpha1.KDexUtilityPageType]*corev1.LocalObjectReference{}
 
 	types := []kdexv1alpha1.KDexUtilityPageType{
@@ -231,7 +230,7 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 
 		resolvedObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, ref, r.RequeueDelay)
 		if shouldReturn && !isDefaultUtilityPage(ref) {
-			return nil, nil, nil, nil, true, err
+			return nil, nil, nil, true, err
 		}
 
 		if resolvedObj != nil {
@@ -245,155 +244,20 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 
 			// Validate Type matches
 			if spec.Type != pageType {
-				return nil, nil, nil, nil, true, fmt.Errorf("utility page type %s does not match requested type %s", spec.Type, pageType)
+				return nil, nil, nil, true, fmt.Errorf("utility page type %s does not match requested type %s", spec.Type, pageType)
 			}
 
 			internalRef, err := r.createOrUpdateInternalUtilityPage(ctx, host, spec, pageType, resolvedObj.GetGeneration())
 			if err != nil {
-				return nil, nil, nil, nil, true, err
+				return nil, nil, nil, true, err
 			}
 			refs[pageType] = internalRef
 
 			host.Status.Attributes[strings.ToLower(string(pageType))+".utilitypage.generation"] = fmt.Sprintf("%d", resolvedObj.GetGeneration())
-
-			// === Collect Backends ===
-
-			var archetypeSpec kdexv1alpha1.KDexPageArchetypeSpec
-
-			archetypeObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, &spec.PageArchetypeRef, r.RequeueDelay)
-			if shouldReturn {
-				return nil, nil, nil, nil, true, err
-			}
-			if archetypeObj != nil {
-				CollectBackend(r.Configuration, &requiredBackends, archetypeObj)
-
-				switch v := archetypeObj.(type) {
-				case *kdexv1alpha1.KDexPageArchetype:
-					archetypeSpec = v.Spec
-				case *kdexv1alpha1.KDexClusterPageArchetype:
-					archetypeSpec = v.Spec
-				}
-
-				// Archetype ScriptLibrary
-				archetypeSLObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, archetypeSpec.ScriptLibraryRef, r.RequeueDelay)
-				if shouldReturn {
-					return nil, nil, nil, nil, true, err
-				}
-				if archetypeSLObj != nil {
-					CollectBackend(r.Configuration, &requiredBackends, archetypeSLObj)
-				}
-			}
-
-			for _, content := range spec.ContentEntries {
-				if content.AppRef != nil {
-					appObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, content.AppRef, r.RequeueDelay)
-					if shouldReturn {
-						return nil, nil, nil, nil, true, err
-					}
-					if appObj != nil {
-						CollectBackend(r.Configuration, &requiredBackends, appObj)
-					}
-				}
-			}
-
-			headerRef := archetypeSpec.DefaultHeaderRef
-			if spec.OverrideHeaderRef != nil {
-				headerRef = spec.OverrideHeaderRef
-			}
-			if headerRef != nil {
-				headerObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, headerRef, r.RequeueDelay)
-				if shouldReturn {
-					return nil, nil, nil, nil, true, err
-				}
-				if headerObj != nil {
-					var headerSpec kdexv1alpha1.KDexPageHeaderSpec
-					switch v := headerObj.(type) {
-					case *kdexv1alpha1.KDexPageHeader:
-						headerSpec = v.Spec
-					case *kdexv1alpha1.KDexClusterPageHeader:
-						headerSpec = v.Spec
-					}
-
-					headerSLObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, headerSpec.ScriptLibraryRef, r.RequeueDelay)
-					if shouldReturn {
-						return nil, nil, nil, nil, true, err
-					}
-					if headerSLObj != nil {
-						CollectBackend(r.Configuration, &requiredBackends, headerSLObj)
-					}
-				}
-			}
-
-			footerRef := archetypeSpec.DefaultFooterRef
-			if spec.OverrideFooterRef != nil {
-				footerRef = spec.OverrideFooterRef
-			}
-			if footerRef != nil {
-				footerObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, footerRef, r.RequeueDelay)
-				if shouldReturn {
-					return nil, nil, nil, nil, true, err
-				}
-				if footerObj != nil {
-					var footerSpec kdexv1alpha1.KDexPageFooterSpec
-					switch v := footerObj.(type) {
-					case *kdexv1alpha1.KDexPageFooter:
-						footerSpec = v.Spec
-					case *kdexv1alpha1.KDexClusterPageFooter:
-						footerSpec = v.Spec
-					}
-
-					footerSLObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, footerSpec.ScriptLibraryRef, r.RequeueDelay)
-					if shouldReturn {
-						return nil, nil, nil, nil, true, err
-					}
-					if footerSLObj != nil {
-						CollectBackend(r.Configuration, &requiredBackends, footerSLObj)
-					}
-				}
-			}
-
-			navigationRefs := maps.Clone(archetypeSpec.DefaultNavigationRefs)
-			if spec.OverrideNavigationRefs != nil {
-				if navigationRefs == nil {
-					navigationRefs = map[string]*kdexv1alpha1.KDexObjectReference{}
-				}
-				maps.Copy(navigationRefs, spec.OverrideNavigationRefs)
-			}
-			for _, navRef := range navigationRefs {
-				navObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, navRef, r.RequeueDelay)
-				if shouldReturn {
-					return nil, nil, nil, nil, true, err
-				}
-				if navObj != nil {
-					var navSpec kdexv1alpha1.KDexPageNavigationSpec
-					switch v := navObj.(type) {
-					case *kdexv1alpha1.KDexPageNavigation:
-						navSpec = v.Spec
-					case *kdexv1alpha1.KDexClusterPageNavigation:
-						navSpec = v.Spec
-					}
-
-					navSLObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, navSpec.ScriptLibraryRef, r.RequeueDelay)
-					if shouldReturn {
-						return nil, nil, nil, nil, true, err
-					}
-					if navSLObj != nil {
-						CollectBackend(r.Configuration, &requiredBackends, navSLObj)
-					}
-				}
-			}
-
-			pageSLObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, spec.ScriptLibraryRef, r.RequeueDelay)
-			if shouldReturn {
-				return nil, nil, nil, nil, true, err
-			}
-			if pageSLObj != nil {
-				CollectBackend(r.Configuration, &requiredBackends, pageSLObj)
-			}
 		}
 	}
 
-	return requiredBackends, refs[kdexv1alpha1.AnnouncementUtilityPageType], refs[kdexv1alpha1.ErrorUtilityPageType], refs[kdexv1alpha1.LoginUtilityPageType], false, nil
+	return refs[kdexv1alpha1.AnnouncementUtilityPageType], refs[kdexv1alpha1.ErrorUtilityPageType], refs[kdexv1alpha1.LoginUtilityPageType], false, nil
 }
 
 func isDefaultUtilityPage(ref *kdexv1alpha1.KDexObjectReference) bool {

@@ -358,9 +358,13 @@ func (r *KDexHostReconciler) getMemoizedService() *corev1.ServiceSpec {
 }
 
 func (r *KDexHostReconciler) innerReconcile(ctx context.Context, host *kdexv1alpha1.KDexHost) error {
-	requiredBackends := []kdexv1alpha1.KDexObjectReference{}
-
 	// Resolve direct requirements from host spec
+
+	announcementRef, errorRef, loginRef, shouldReturn, err := r.resolveUtilityPages(ctx, host)
+	if shouldReturn {
+		return err
+	}
+
 	themeObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, host.Spec.ThemeRef, r.RequeueDelay)
 	if shouldReturn {
 		return err
@@ -368,24 +372,6 @@ func (r *KDexHostReconciler) innerReconcile(ctx context.Context, host *kdexv1alp
 
 	if themeObj != nil {
 		host.Status.Attributes["theme.generation"] = fmt.Sprintf("%d", themeObj.GetGeneration())
-
-		CollectBackend(r.Configuration, &requiredBackends, themeObj)
-
-		var spec kdexv1alpha1.KDexThemeSpec
-		switch v := themeObj.(type) {
-		case *kdexv1alpha1.KDexTheme:
-			spec = v.Spec
-		case *kdexv1alpha1.KDexClusterTheme:
-			spec = v.Spec
-		}
-
-		themeScriptLibraryObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, themeObj, &host.Status.Conditions, spec.ScriptLibraryRef, r.RequeueDelay)
-		if shouldReturn {
-			return err
-		}
-		if themeScriptLibraryObj != nil {
-			CollectBackend(r.Configuration, &requiredBackends, themeScriptLibraryObj)
-		}
 	}
 
 	scriptLibraryObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, host.Spec.ScriptLibraryRef, r.RequeueDelay)
@@ -395,21 +381,12 @@ func (r *KDexHostReconciler) innerReconcile(ctx context.Context, host *kdexv1alp
 
 	if scriptLibraryObj != nil {
 		host.Status.Attributes["scriptLibrary.generation"] = fmt.Sprintf("%d", scriptLibraryObj.GetGeneration())
-
-		CollectBackend(r.Configuration, &requiredBackends, scriptLibraryObj)
 	}
 
 	translationRefs, shouldReturn, err := r.resolveTranslations(ctx, host)
 	if shouldReturn {
 		return err
 	}
-
-	utilityPageBackends, announcementRef, errorRef, loginRef, shouldReturn, err := r.resolveUtilityPages(ctx, host)
-	if shouldReturn {
-		return err
-	}
-
-	requiredBackends = append(requiredBackends, utilityPageBackends...)
 
 	// TODO: make sure host controllers survive an operator redeployment (full undeploy and reapply)
 	// Just don't delete the ClusterRoles associated with the manager
@@ -439,7 +416,7 @@ func (r *KDexHostReconciler) innerReconcile(ctx context.Context, host *kdexv1alp
 		return err
 	}
 
-	internalHostOp, err := r.createOrUpdateInternalHostResource(ctx, host, requiredBackends, announcementRef, errorRef, loginRef, translationRefs)
+	internalHostOp, err := r.createOrUpdateInternalHostResource(ctx, host, announcementRef, errorRef, loginRef, translationRefs)
 	if err != nil {
 		return err
 	}
@@ -540,7 +517,6 @@ func (r *KDexHostReconciler) createOrUpdateConfigMap(
 func (r *KDexHostReconciler) createOrUpdateInternalHostResource(
 	ctx context.Context,
 	host *kdexv1alpha1.KDexHost,
-	requiredBackends []kdexv1alpha1.KDexObjectReference,
 	announcementRef *corev1.LocalObjectReference,
 	errorRef *corev1.LocalObjectReference,
 	loginRef *corev1.LocalObjectReference,
@@ -569,7 +545,6 @@ func (r *KDexHostReconciler) createOrUpdateInternalHostResource(
 		}
 
 		internalHost.Spec.KDexHostSpec = host.Spec
-		internalHost.Spec.RequiredBackends = requiredBackends
 		internalHost.Spec.AnnouncementRef = announcementRef
 		internalHost.Spec.ErrorRef = errorRef
 		internalHost.Spec.LoginRef = loginRef
@@ -584,7 +559,6 @@ func (r *KDexHostReconciler) createOrUpdateInternalHostResource(
 		"createOrUpdateInternalHostResource",
 		"name", internalHost.Name,
 		"op", op,
-		"requiredBackends", requiredBackends,
 		"announcementRef", announcementRef,
 		"errorRef", errorRef,
 		"loginRef", loginRef,
