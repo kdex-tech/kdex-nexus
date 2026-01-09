@@ -25,6 +25,7 @@ const (
 	FALSE = "false"
 )
 
+// nolint:gocyclo
 func MakeHandlerByReferencePath(
 	c client.Client,
 	scheme *runtime.Scheme,
