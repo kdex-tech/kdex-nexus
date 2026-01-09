@@ -15,5 +15,10 @@ const (
 	KDexPageHeader            = "KDexPageHeader"
 	KDexPageNavigation        = "KDexPageNavigation"
 	KDexScriptLibrary         = "KDexScriptLibrary"
+	KDexUtilityPage           = "KDexUtilityPage"
 	KDexTheme                 = "KDexTheme"
+
+	KDexDefaultUtilityPageAnnouncement = "kdex-default-utility-page-announcement"
+	KDexDefaultUtilityPageError        = "kdex-default-utility-page-error"
+	KDexDefaultUtilityPageLogin        = "kdex-default-utility-page-login"
 )

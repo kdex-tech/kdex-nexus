@@ -25,6 +25,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
+	"kdex.dev/nexus/internal/webhook"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -205,7 +206,7 @@ func (r *KDexHostReconciler) resolveTranslations(
 func (r *KDexHostReconciler) resolveUtilityPages(
 	ctx context.Context,
 	host *kdexv1alpha1.KDexHost,
-) ([]kdexv1alpha1.KDexObjectReference, *corev1.LocalObjectReference, *corev1.LocalObjectReference, *corev1.LocalObjectReference, error) {
+) ([]kdexv1alpha1.KDexObjectReference, *corev1.LocalObjectReference, *corev1.LocalObjectReference, *corev1.LocalObjectReference, bool, error) {
 	requiredBackends := []kdexv1alpha1.KDexObjectReference{}
 	refs := map[kdexv1alpha1.KDexUtilityPageType]*corev1.LocalObjectReference{}
 
@@ -229,8 +230,8 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 		}
 
 		resolvedObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, ref, r.RequeueDelay)
-		if shouldReturn {
-			return nil, nil, nil, nil, err
+		if shouldReturn && !isDefaultUtilityPage(ref) {
+			return nil, nil, nil, nil, true, err
 		}
 
 		if resolvedObj != nil {
@@ -244,12 +245,12 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 
 			// Validate Type matches
 			if spec.Type != pageType {
-				return nil, nil, nil, nil, fmt.Errorf("utility page type %s does not match requested type %s", spec.Type, pageType)
+				return nil, nil, nil, nil, true, fmt.Errorf("utility page type %s does not match requested type %s", spec.Type, pageType)
 			}
 
 			internalRef, err := r.createOrUpdateInternalUtilityPage(ctx, host, spec, pageType, resolvedObj.GetGeneration())
 			if err != nil {
-				return nil, nil, nil, nil, err
+				return nil, nil, nil, nil, true, err
 			}
 			refs[pageType] = internalRef
 
@@ -261,7 +262,7 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 
 			archetypeObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, &spec.PageArchetypeRef, r.RequeueDelay)
 			if shouldReturn {
-				return nil, nil, nil, nil, err
+				return nil, nil, nil, nil, true, err
 			}
 			if archetypeObj != nil {
 				CollectBackend(r.Configuration, &requiredBackends, archetypeObj)
@@ -276,7 +277,7 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 				// Archetype ScriptLibrary
 				archetypeSLObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, archetypeSpec.ScriptLibraryRef, r.RequeueDelay)
 				if shouldReturn {
-					return nil, nil, nil, nil, err
+					return nil, nil, nil, nil, true, err
 				}
 				if archetypeSLObj != nil {
 					CollectBackend(r.Configuration, &requiredBackends, archetypeSLObj)
@@ -287,7 +288,7 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 				if content.AppRef != nil {
 					appObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, content.AppRef, r.RequeueDelay)
 					if shouldReturn {
-						return nil, nil, nil, nil, err
+						return nil, nil, nil, nil, true, err
 					}
 					if appObj != nil {
 						CollectBackend(r.Configuration, &requiredBackends, appObj)
@@ -302,7 +303,7 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 			if headerRef != nil {
 				headerObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, headerRef, r.RequeueDelay)
 				if shouldReturn {
-					return nil, nil, nil, nil, err
+					return nil, nil, nil, nil, true, err
 				}
 				if headerObj != nil {
 					var headerSpec kdexv1alpha1.KDexPageHeaderSpec
@@ -315,7 +316,7 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 
 					headerSLObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, headerSpec.ScriptLibraryRef, r.RequeueDelay)
 					if shouldReturn {
-						return nil, nil, nil, nil, err
+						return nil, nil, nil, nil, true, err
 					}
 					if headerSLObj != nil {
 						CollectBackend(r.Configuration, &requiredBackends, headerSLObj)
@@ -330,7 +331,7 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 			if footerRef != nil {
 				footerObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, footerRef, r.RequeueDelay)
 				if shouldReturn {
-					return nil, nil, nil, nil, err
+					return nil, nil, nil, nil, true, err
 				}
 				if footerObj != nil {
 					var footerSpec kdexv1alpha1.KDexPageFooterSpec
@@ -343,7 +344,7 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 
 					footerSLObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, footerSpec.ScriptLibraryRef, r.RequeueDelay)
 					if shouldReturn {
-						return nil, nil, nil, nil, err
+						return nil, nil, nil, nil, true, err
 					}
 					if footerSLObj != nil {
 						CollectBackend(r.Configuration, &requiredBackends, footerSLObj)
@@ -361,7 +362,7 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 			for _, navRef := range navigationRefs {
 				navObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, navRef, r.RequeueDelay)
 				if shouldReturn {
-					return nil, nil, nil, nil, err
+					return nil, nil, nil, nil, true, err
 				}
 				if navObj != nil {
 					var navSpec kdexv1alpha1.KDexPageNavigationSpec
@@ -374,7 +375,7 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 
 					navSLObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, navSpec.ScriptLibraryRef, r.RequeueDelay)
 					if shouldReturn {
-						return nil, nil, nil, nil, err
+						return nil, nil, nil, nil, true, err
 					}
 					if navSLObj != nil {
 						CollectBackend(r.Configuration, &requiredBackends, navSLObj)
@@ -384,7 +385,7 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 
 			pageSLObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, spec.ScriptLibraryRef, r.RequeueDelay)
 			if shouldReturn {
-				return nil, nil, nil, nil, err
+				return nil, nil, nil, nil, true, err
 			}
 			if pageSLObj != nil {
 				CollectBackend(r.Configuration, &requiredBackends, pageSLObj)
@@ -392,5 +393,11 @@ func (r *KDexHostReconciler) resolveUtilityPages(
 		}
 	}
 
-	return requiredBackends, refs[kdexv1alpha1.AnnouncementUtilityPageType], refs[kdexv1alpha1.ErrorUtilityPageType], refs[kdexv1alpha1.LoginUtilityPageType], nil
+	return requiredBackends, refs[kdexv1alpha1.AnnouncementUtilityPageType], refs[kdexv1alpha1.ErrorUtilityPageType], refs[kdexv1alpha1.LoginUtilityPageType], false, nil
+}
+
+func isDefaultUtilityPage(ref *kdexv1alpha1.KDexObjectReference) bool {
+	return ref.Name == webhook.KDexDefaultUtilityPageAnnouncement ||
+		ref.Name == webhook.KDexDefaultUtilityPageError ||
+		ref.Name == webhook.KDexDefaultUtilityPageLogin
 }

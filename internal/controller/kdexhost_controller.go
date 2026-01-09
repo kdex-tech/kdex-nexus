@@ -41,7 +41,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -203,16 +202,6 @@ func (r *KDexHostReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		}
 	}
 
-	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &kdexv1alpha1.KDexInternalPageBinding{}, hostIndexKey, func(rawObj client.Object) []string {
-		pageBinding := rawObj.(*kdexv1alpha1.KDexInternalPageBinding)
-		if pageBinding.Spec.HostRef.Name == "" {
-			return nil
-		}
-		return []string{pageBinding.Spec.HostRef.Name}
-	}); err != nil {
-		return err
-	}
-
 	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &kdexv1alpha1.KDexInternalTranslation{}, hostIndexKey, func(rawObj client.Object) []string {
 		translation := rawObj.(*kdexv1alpha1.KDexInternalTranslation)
 		if translation.Spec.HostRef.Name == "" {
@@ -243,22 +232,6 @@ func (r *KDexHostReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&kdexv1alpha1.KDexInternalTranslation{}).
 		Owns(&kdexv1alpha1.KDexInternalUtilityPage{}).
 		Owns(&rbacv1.ClusterRoleBinding{}).
-		Watches(
-			&kdexv1alpha1.KDexInternalPageBinding{},
-			handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
-				pageBinding, ok := obj.(*kdexv1alpha1.KDexInternalPageBinding)
-				if !ok {
-					return nil
-				}
-				return []reconcile.Request{
-					{
-						NamespacedName: types.NamespacedName{
-							Name:      pageBinding.Spec.HostRef.Name,
-							Namespace: pageBinding.Namespace,
-						},
-					},
-				}
-			})).
 		Watches(
 			&kdexv1alpha1.KDexScriptLibrary{},
 			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexHost{}, &kdexv1alpha1.KDexHostList{}, "{.Spec.ScriptLibraryRef}")).
@@ -431,8 +404,8 @@ func (r *KDexHostReconciler) innerReconcile(ctx context.Context, host *kdexv1alp
 		return err
 	}
 
-	utilityPageBackends, announcementRef, errorRef, loginRef, err := r.resolveUtilityPages(ctx, host)
-	if err != nil {
+	utilityPageBackends, announcementRef, errorRef, loginRef, shouldReturn, err := r.resolveUtilityPages(ctx, host)
+	if shouldReturn {
 		return err
 	}
 
@@ -466,28 +439,7 @@ func (r *KDexHostReconciler) innerReconcile(ctx context.Context, host *kdexv1alp
 		return err
 	}
 
-	internalPages := &kdexv1alpha1.KDexInternalPageBindingList{}
-	if err := r.List(ctx, internalPages, client.InNamespace(host.Namespace), client.MatchingFields{hostIndexKey: host.Name}); err != nil {
-		return err
-	}
-
-	for _, internalPage := range internalPages.Items {
-		requiredBackends = append(requiredBackends, internalPage.Spec.RequiredBackends...)
-	}
-
-	// Deduplicate
-	uniqueBackends := []kdexv1alpha1.KDexObjectReference{}
-	seen := map[string]bool{}
-	for _, backend := range requiredBackends {
-		key := fmt.Sprintf("%s/%s/%s", backend.Kind, backend.Namespace, backend.Name)
-		if seen[key] {
-			continue
-		}
-		seen[key] = true
-		uniqueBackends = append(uniqueBackends, backend)
-	}
-
-	internalHostOp, err := r.createOrUpdateInternalHostResource(ctx, host, uniqueBackends, announcementRef, errorRef, loginRef, translationRefs)
+	internalHostOp, err := r.createOrUpdateInternalHostResource(ctx, host, requiredBackends, announcementRef, errorRef, loginRef, translationRefs)
 	if err != nil {
 		return err
 	}

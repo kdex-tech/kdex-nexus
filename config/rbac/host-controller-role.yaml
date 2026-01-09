@@ -88,7 +88,6 @@ rules:
   resources:
   - kdexinternalhosts
   - kdexinternalpackagereferences
-  - kdexinternalpagebindings
   - kdexinternaltranslations
   - kdexinternalutilitypages
   verbs:
@@ -104,7 +103,6 @@ rules:
   resources:
   - kdexinternalhosts/finalizers
   - kdexinternalpackagereferences/finalizers
-  - kdexinternalpagebindings/finalizers
   - kdexinternaltranslations/finalizers
   - kdexinternalutilitypages/finalizers
   verbs:
@@ -114,7 +112,6 @@ rules:
   resources:
   - kdexinternalhosts/status
   - kdexinternalpackagereferences/status
-  - kdexinternalpagebindings/status
   - kdexinternaltranslations/status
   - kdexinternalutilitypages/status
   verbs:
