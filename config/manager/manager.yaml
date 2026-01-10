@@ -135,6 +135,12 @@ data:
             - args:
               - --named-log-level=host.pages=error
               - --named-log-level=host=2
+              - --named-log-level=kdexinternalhost=2
+              - --named-log-level=kdexinternalutilitypage=2
+              - --named-log-level=kdexpagebinding=2
+              - --named-log-level=kdexinternalhost.watch=info
+              - --named-log-level=kdexinternalutilitypage.watch=info
+              - --named-log-level=kdexpagebinding.watch=info
               - --zap-encoder=console
               - --zap-log-level=info
               - --zap-stacktrace-level=error
