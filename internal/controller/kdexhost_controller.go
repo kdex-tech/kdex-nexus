@@ -388,9 +388,6 @@ func (r *KDexHostReconciler) innerReconcile(ctx context.Context, host *kdexv1alp
 		return err
 	}
 
-	// TODO: make sure host controllers survive an operator redeployment (full undeploy and reapply)
-	// Just don't delete the ClusterRoles associated with the manager
-
 	configMapOp, err := r.createOrUpdateConfigMap(ctx, host)
 	if err != nil {
 		return err
