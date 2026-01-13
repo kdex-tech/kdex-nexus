@@ -76,6 +76,7 @@ rules:
   - kdexclusterthemes
   - kdexclustertranslations
   - kdexclusterutilitypages
+  - kdexfunctions
   - kdexhosts
   - kdexinternalhosts
   - kdexinternalpackagereferences
@@ -111,6 +112,7 @@ rules:
   - kdexclusterthemes/finalizers
   - kdexclustertranslations/finalizers
   - kdexclusterutilitypages/finalizers
+  - kdexfunctions/finalizers
   - kdexhosts/finalizers
   - kdexinternalhosts/finalizers
   - kdexinternalpackagereferences/finalizers
@@ -140,6 +142,7 @@ rules:
   - kdexclusterthemes/status
   - kdexclustertranslations/status
   - kdexclusterutilitypages/status
+  - kdexfunctions/status
   - kdexhosts/status
   - kdexinternalhosts/status
   - kdexinternalpackagereferences/status
