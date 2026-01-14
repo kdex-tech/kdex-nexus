@@ -1,6 +1,7 @@
 package scaffolder
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -141,7 +142,7 @@ type FunctionData struct {
 	Spec kdexv1alpha1.KDexOpenAPIInternal
 }
 
-func Scaffold(funcObj *kdexv1alpha1.KDexFunction) (*kdexv1alpha1.StubDetails, error) {
+func Scaffold(funcObj *kdexv1alpha1.KDexFunction) (stub *kdexv1alpha1.StubDetails, err error) {
 	data := FunctionData{
 		Name: funcObj.Name,
 		Path: funcObj.Spec.API.Path,
@@ -165,7 +166,12 @@ func Scaffold(funcObj *kdexv1alpha1.KDexFunction) (*kdexv1alpha1.StubDetails, er
 	if err != nil {
 		return nil, fmt.Errorf("failed to create file: %w", err)
 	}
-	defer f.Close()
+	defer func() {
+		closeErr := f.Close()
+		if closeErr != nil {
+			err = errors.Join(err, closeErr)
+		}
+	}()
 
 	tmpl, err := template.New("go-func").Parse(goTemplate)
 	if err != nil {
