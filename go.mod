@@ -2,7 +2,7 @@ module kdex.dev/nexus
 
 go 1.25.0
 
-replace kdex.dev/crds => github.com/kdex-tech/kdex-crds v0.14.52
+replace kdex.dev/crds => github.com/kdex-tech/kdex-crds v0.14.53
 
 require (
 	github.com/go-logr/logr v1.4.3
@@ -14,7 +14,7 @@ require (
 	k8s.io/apimachinery v0.35.0
 	k8s.io/client-go v0.35.0
 	kdex.dev/crds v0.0.0-00010101000000-000000000000
-	sigs.k8s.io/controller-runtime v0.22.4
+	sigs.k8s.io/controller-runtime v0.23.0
 )
 
 require (
