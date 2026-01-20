@@ -39,10 +39,9 @@ type KDexPageBindingReconciler struct {
 // SetupWithManager sets up the controller with the Manager.
 func (r *KDexPageBindingReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	if os.Getenv("ENABLE_WEBHOOKS") != FALSE {
-		return ctrl.NewWebhookManagedBy(mgr).
-			For(&kdexv1alpha1.KDexPageBinding{}).
-			WithDefaulter(&nexuswebhook.KDexPageBindingDefaulter{}).
-			WithValidator(&nexuswebhook.KDexPageBindingValidator{}).
+		return ctrl.NewWebhookManagedBy(mgr, &kdexv1alpha1.KDexPageBinding{}).
+			WithDefaulter(&nexuswebhook.KDexPageBindingDefaulter[*kdexv1alpha1.KDexPageBinding]{}).
+			WithValidator(&nexuswebhook.KDexPageBindingValidator[*kdexv1alpha1.KDexPageBinding]{}).
 			Complete()
 	}
 

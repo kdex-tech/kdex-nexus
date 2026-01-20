@@ -142,20 +142,18 @@ func (r *KDexAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 // SetupWithManager sets up the controller with the Manager.
 func (r *KDexAppReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	if os.Getenv("ENABLE_WEBHOOKS") != FALSE {
-		err := ctrl.NewWebhookManagedBy(mgr).
-			For(&kdexv1alpha1.KDexApp{}).
-			WithDefaulter(&nexuswebhook.KDexAppDefaulter{}).
-			WithValidator(&nexuswebhook.KDexAppValidator{}).
+		err := ctrl.NewWebhookManagedBy(mgr, &kdexv1alpha1.KDexApp{}).
+			WithDefaulter(&nexuswebhook.KDexAppDefaulter[*kdexv1alpha1.KDexApp]{}).
+			WithValidator(&nexuswebhook.KDexAppValidator[*kdexv1alpha1.KDexApp]{}).
 			Complete()
 
 		if err != nil {
 			return err
 		}
 
-		err = ctrl.NewWebhookManagedBy(mgr).
-			For(&kdexv1alpha1.KDexClusterApp{}).
-			WithDefaulter(&nexuswebhook.KDexAppDefaulter{}).
-			WithValidator(&nexuswebhook.KDexAppValidator{}).
+		err = ctrl.NewWebhookManagedBy(mgr, &kdexv1alpha1.KDexClusterApp{}).
+			WithDefaulter(&nexuswebhook.KDexAppDefaulter[*kdexv1alpha1.KDexClusterApp]{}).
+			WithValidator(&nexuswebhook.KDexAppValidator[*kdexv1alpha1.KDexClusterApp]{}).
 			Complete()
 
 		if err != nil {

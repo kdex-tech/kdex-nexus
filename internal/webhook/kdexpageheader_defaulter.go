@@ -12,14 +12,14 @@ import (
 // +kubebuilder:webhook:path=/mutate-kdex-dev-v1alpha1-kdexpageheader,mutating=true,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexpageheaders,verbs=create;update,versions=v1alpha1,name=mutate.kdexpageheader.kdex.dev,admissionReviewVersions=v1
 // +kubebuilder:webhook:path=/mutate-kdex-dev-v1alpha1-kdexclusterpageheader,mutating=true,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexclusterpageheaders,verbs=create;update,versions=v1alpha1,name=mutate.kdexclusterpageheader.kdex.dev,admissionReviewVersions=v1
 
-type KDexPageHeaderDefaulter struct {
+type KDexPageHeaderDefaulter[T runtime.Object] struct {
 }
 
-func (a *KDexPageHeaderDefaulter) Default(ctx context.Context, ro runtime.Object) error {
+func (a *KDexPageHeaderDefaulter[T]) Default(ctx context.Context, obj T) error {
 	var spec *kdexv1alpha1.KDexPageHeaderSpec
 	clustered := false
 
-	switch t := ro.(type) {
+	switch t := any(obj).(type) {
 	case *kdexv1alpha1.KDexPageHeader:
 		spec = &t.Spec
 	case *kdexv1alpha1.KDexClusterPageHeader:

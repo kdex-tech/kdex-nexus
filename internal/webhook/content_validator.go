@@ -20,27 +20,27 @@ import (
 // +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexclusterpageheader,mutating=false,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexclusterpageheaders,verbs=create;update,versions=v1alpha1,name=validation.kdexclusterpageheader.kdex.dev,admissionReviewVersions=v1
 // +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexclusterpagenavigation,mutating=false,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexclusterpagenavigations,verbs=create;update,versions=v1alpha1,name=validation.kdexclusterpagenavigation.kdex.dev,admissionReviewVersions=v1
 
-type PageContentValidator struct{}
+type PageContentValidator[T runtime.Object] struct{}
 
-var _ admission.CustomValidator = &PageContentValidator{}
+var _ admission.Validator[*kdexv1alpha1.KDexPageArchetype] = &PageContentValidator[*kdexv1alpha1.KDexPageArchetype]{}
 
-func (v *PageContentValidator) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+func (v *PageContentValidator[T]) ValidateCreate(ctx context.Context, obj T) (admission.Warnings, error) {
 	return v.validate(ctx, obj)
 }
 
-func (v *PageContentValidator) ValidateUpdate(ctx context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
+func (v *PageContentValidator[T]) ValidateUpdate(ctx context.Context, oldObj, newObj T) (admission.Warnings, error) {
 	return v.validate(ctx, newObj)
 }
 
-func (v *PageContentValidator) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+func (v *PageContentValidator[T]) ValidateDelete(ctx context.Context, obj T) (admission.Warnings, error) {
 	return nil, nil
 }
 
-func (v *PageContentValidator) validate(_ context.Context, ro runtime.Object) (admission.Warnings, error) {
+func (v *PageContentValidator[T]) validate(_ context.Context, obj T) (admission.Warnings, error) {
 	var content string
 	var name string
 
-	switch t := ro.(type) {
+	switch t := any(obj).(type) {
 	case *kdexv1alpha1.KDexPageArchetype:
 		content = t.Spec.Content
 		name = t.Name

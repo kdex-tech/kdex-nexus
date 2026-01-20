@@ -12,14 +12,14 @@ import (
 // +kubebuilder:webhook:path=/mutate-kdex-dev-v1alpha1-kdextheme,mutating=true,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexthemes,verbs=create;update,versions=v1alpha1,name=mutate.kdextheme.kdex.dev,admissionReviewVersions=v1
 // +kubebuilder:webhook:path=/mutate-kdex-dev-v1alpha1-kdexclustertheme,mutating=true,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexclusterthemes,verbs=create;update,versions=v1alpha1,name=mutate.kdexclustertheme.kdex.dev,admissionReviewVersions=v1
 
-type KDexThemeDefaulter struct {
+type KDexThemeDefaulter[T runtime.Object] struct {
 }
 
-func (a *KDexThemeDefaulter) Default(ctx context.Context, ro runtime.Object) error {
+func (a *KDexThemeDefaulter[T]) Default(ctx context.Context, obj T) error {
 	var spec *kdexv1alpha1.KDexThemeSpec
 	clustered := false
 
-	switch t := ro.(type) {
+	switch t := any(obj).(type) {
 	case *kdexv1alpha1.KDexTheme:
 		spec = &t.Spec
 	case *kdexv1alpha1.KDexClusterTheme:

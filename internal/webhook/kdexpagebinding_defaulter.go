@@ -11,13 +11,13 @@ import (
 
 // +kubebuilder:webhook:path=/mutate-kdex-dev-v1alpha1-kdexpagebinding,mutating=true,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexpagebindings,verbs=create;update,versions=v1alpha1,name=mutate.kdexpagebinding.kdex.dev,admissionReviewVersions=v1
 
-type KDexPageBindingDefaulter struct {
+type KDexPageBindingDefaulter[T runtime.Object] struct {
 }
 
-func (a *KDexPageBindingDefaulter) Default(ctx context.Context, ro runtime.Object) error {
+func (a *KDexPageBindingDefaulter[T]) Default(ctx context.Context, obj T) error {
 	var spec *kdexv1alpha1.KDexPageBindingSpec
 
-	switch t := ro.(type) {
+	switch t := any(obj).(type) {
 	case *kdexv1alpha1.KDexPageBinding:
 		spec = &t.Spec
 	default:

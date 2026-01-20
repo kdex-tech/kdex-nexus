@@ -13,27 +13,27 @@ import (
 // +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdextranslation,mutating=false,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdextranslations,verbs=create;update,versions=v1alpha1,name=validate.kdextranslation.kdex.dev,admissionReviewVersions=v1
 // +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexclustertranslation,mutating=false,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexclustertranslations,verbs=create;update,versions=v1alpha1,name=validate.kdexclustertranslation.kdex.dev,admissionReviewVersions=v1
 
-type KDexTranslationValidator struct {
+type KDexTranslationValidator[T runtime.Object] struct {
 }
 
-var _ admission.CustomValidator = &KDexTranslationValidator{}
+var _ admission.Validator[*kdexv1alpha1.KDexTranslation] = &KDexTranslationValidator[*kdexv1alpha1.KDexTranslation]{}
 
-func (v *KDexTranslationValidator) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+func (v *KDexTranslationValidator[T]) ValidateCreate(ctx context.Context, obj T) (admission.Warnings, error) {
 	return v.validate(ctx, obj)
 }
 
-func (v *KDexTranslationValidator) ValidateUpdate(ctx context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
+func (v *KDexTranslationValidator[T]) ValidateUpdate(ctx context.Context, oldObj, newObj T) (admission.Warnings, error) {
 	return v.validate(ctx, newObj)
 }
 
-func (v *KDexTranslationValidator) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+func (v *KDexTranslationValidator[T]) ValidateDelete(ctx context.Context, obj T) (admission.Warnings, error) {
 	return nil, nil
 }
 
-func (v *KDexTranslationValidator) validate(_ context.Context, ro runtime.Object) (admission.Warnings, error) {
+func (v *KDexTranslationValidator[T]) validate(_ context.Context, obj T) (admission.Warnings, error) {
 	var spec *kdexv1alpha1.KDexTranslationSpec
 
-	switch t := ro.(type) {
+	switch t := any(obj).(type) {
 	case *kdexv1alpha1.KDexTranslation:
 		spec = &t.Spec
 	case *kdexv1alpha1.KDexClusterTranslation:

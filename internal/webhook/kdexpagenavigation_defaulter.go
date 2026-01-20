@@ -12,14 +12,14 @@ import (
 // +kubebuilder:webhook:path=/mutate-kdex-dev-v1alpha1-kdexpagenavigation,mutating=true,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexpagenavigations,verbs=create;update,versions=v1alpha1,name=mutate.kdexpagenavigation.kdex.dev,admissionReviewVersions=v1
 // +kubebuilder:webhook:path=/mutate-kdex-dev-v1alpha1-kdexclusterpagenavigation,mutating=true,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexclusterpagenavigations,verbs=create;update,versions=v1alpha1,name=mutate.kdexclusterpagenavigation.kdex.dev,admissionReviewVersions=v1
 
-type KDexPageNavigationDefaulter struct {
+type KDexPageNavigationDefaulter[T runtime.Object] struct {
 }
 
-func (a *KDexPageNavigationDefaulter) Default(ctx context.Context, ro runtime.Object) error {
+func (a *KDexPageNavigationDefaulter[T]) Default(ctx context.Context, obj T) error {
 	var spec *kdexv1alpha1.KDexPageNavigationSpec
 	clustered := false
 
-	switch t := ro.(type) {
+	switch t := any(obj).(type) {
 	case *kdexv1alpha1.KDexPageNavigation:
 		spec = &t.Spec
 	case *kdexv1alpha1.KDexClusterPageNavigation:

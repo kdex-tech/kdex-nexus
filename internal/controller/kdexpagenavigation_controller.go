@@ -124,19 +124,17 @@ func (r *KDexPageNavigationReconciler) Reconcile(ctx context.Context, req ctrl.R
 // SetupWithManager sets up the controller with the Manager.
 func (r *KDexPageNavigationReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	if os.Getenv("ENABLE_WEBHOOKS") != FALSE {
-		err := ctrl.NewWebhookManagedBy(mgr).
-			For(&kdexv1alpha1.KDexPageNavigation{}).
-			WithDefaulter(&nexuswebhook.KDexPageNavigationDefaulter{}).
-			WithValidator(&nexuswebhook.PageContentValidator{}).
+		err := ctrl.NewWebhookManagedBy(mgr, &kdexv1alpha1.KDexPageNavigation{}).
+			WithDefaulter(&nexuswebhook.KDexPageNavigationDefaulter[*kdexv1alpha1.KDexPageNavigation]{}).
+			WithValidator(&nexuswebhook.PageContentValidator[*kdexv1alpha1.KDexPageNavigation]{}).
 			Complete()
 		if err != nil {
 			return err
 		}
 
-		err = ctrl.NewWebhookManagedBy(mgr).
-			For(&kdexv1alpha1.KDexClusterPageNavigation{}).
-			WithDefaulter(&nexuswebhook.KDexPageNavigationDefaulter{}).
-			WithValidator(&nexuswebhook.PageContentValidator{}).
+		err = ctrl.NewWebhookManagedBy(mgr, &kdexv1alpha1.KDexClusterPageNavigation{}).
+			WithDefaulter(&nexuswebhook.KDexPageNavigationDefaulter[*kdexv1alpha1.KDexClusterPageNavigation]{}).
+			WithValidator(&nexuswebhook.PageContentValidator[*kdexv1alpha1.KDexClusterPageNavigation]{}).
 			Complete()
 		if err != nil {
 			return err

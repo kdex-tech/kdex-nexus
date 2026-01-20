@@ -186,20 +186,18 @@ func (r *KDexUtilityPageReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 // SetupWithManager sets up the controller with the Manager.
 func (r *KDexUtilityPageReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
-		err := ctrl.NewWebhookManagedBy(mgr).
-			For(&kdexv1alpha1.KDexUtilityPage{}).
-			WithDefaulter(&nexuswebhook.KDexUtilityPageDefaulter{}).
-			WithValidator(&nexuswebhook.KDexUtilityPageValidator{}).
+		err := ctrl.NewWebhookManagedBy(mgr, &kdexv1alpha1.KDexUtilityPage{}).
+			WithDefaulter(&nexuswebhook.KDexUtilityPageDefaulter[*kdexv1alpha1.KDexUtilityPage]{}).
+			WithValidator(&nexuswebhook.KDexUtilityPageValidator[*kdexv1alpha1.KDexUtilityPage]{}).
 			Complete()
 
 		if err != nil {
 			return err
 		}
 
-		err = ctrl.NewWebhookManagedBy(mgr).
-			For(&kdexv1alpha1.KDexClusterUtilityPage{}).
-			WithDefaulter(&nexuswebhook.KDexUtilityPageDefaulter{}).
-			WithValidator(&nexuswebhook.KDexUtilityPageValidator{}).
+		err = ctrl.NewWebhookManagedBy(mgr, &kdexv1alpha1.KDexClusterUtilityPage{}).
+			WithDefaulter(&nexuswebhook.KDexUtilityPageDefaulter[*kdexv1alpha1.KDexClusterUtilityPage]{}).
+			WithValidator(&nexuswebhook.KDexUtilityPageValidator[*kdexv1alpha1.KDexClusterUtilityPage]{}).
 			Complete()
 
 		if err != nil {

@@ -151,19 +151,17 @@ func (r *KDexPageArchetypeReconciler) Reconcile(ctx context.Context, req ctrl.Re
 // SetupWithManager sets up the controller with the Manager.
 func (r *KDexPageArchetypeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	if os.Getenv("ENABLE_WEBHOOKS") != FALSE {
-		err := ctrl.NewWebhookManagedBy(mgr).
-			For(&kdexv1alpha1.KDexPageArchetype{}).
-			WithDefaulter(&nexuswebhook.KDexPageArchetypeDefaulter{}).
-			WithValidator(&nexuswebhook.PageContentValidator{}).
+		err := ctrl.NewWebhookManagedBy(mgr, &kdexv1alpha1.KDexPageArchetype{}).
+			WithDefaulter(&nexuswebhook.KDexPageArchetypeDefaulter[*kdexv1alpha1.KDexPageArchetype]{}).
+			WithValidator(&nexuswebhook.PageContentValidator[*kdexv1alpha1.KDexPageArchetype]{}).
 			Complete()
 		if err != nil {
 			return err
 		}
 
-		err = ctrl.NewWebhookManagedBy(mgr).
-			For(&kdexv1alpha1.KDexClusterPageArchetype{}).
-			WithDefaulter(&nexuswebhook.KDexPageArchetypeDefaulter{}).
-			WithValidator(&nexuswebhook.PageContentValidator{}).
+		err = ctrl.NewWebhookManagedBy(mgr, &kdexv1alpha1.KDexClusterPageArchetype{}).
+			WithDefaulter(&nexuswebhook.KDexPageArchetypeDefaulter[*kdexv1alpha1.KDexClusterPageArchetype]{}).
+			WithValidator(&nexuswebhook.PageContentValidator[*kdexv1alpha1.KDexClusterPageArchetype]{}).
 			Complete()
 		if err != nil {
 			return err

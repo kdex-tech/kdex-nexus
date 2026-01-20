@@ -12,27 +12,27 @@ import (
 
 // +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexpagebinding,mutating=false,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexpagebindings,verbs=create;update,versions=v1alpha1,name=validate.kdexpagebinding.kdex.dev,admissionReviewVersions=v1
 
-type KDexPageBindingValidator struct {
+type KDexPageBindingValidator[T runtime.Object] struct {
 }
 
-var _ admission.CustomValidator = &KDexPageBindingValidator{}
+var _ admission.Validator[*kdexv1alpha1.KDexPageBinding] = &KDexPageBindingValidator[*kdexv1alpha1.KDexPageBinding]{}
 
-func (v *KDexPageBindingValidator) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+func (v *KDexPageBindingValidator[T]) ValidateCreate(ctx context.Context, obj T) (admission.Warnings, error) {
 	return v.validate(ctx, obj)
 }
 
-func (v *KDexPageBindingValidator) ValidateUpdate(ctx context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
+func (v *KDexPageBindingValidator[T]) ValidateUpdate(ctx context.Context, oldObj, newObj T) (admission.Warnings, error) {
 	return v.validate(ctx, newObj)
 }
 
-func (v *KDexPageBindingValidator) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+func (v *KDexPageBindingValidator[T]) ValidateDelete(ctx context.Context, obj T) (admission.Warnings, error) {
 	return nil, nil
 }
 
-func (v *KDexPageBindingValidator) validate(_ context.Context, ro runtime.Object) (admission.Warnings, error) {
+func (v *KDexPageBindingValidator[T]) validate(_ context.Context, obj T) (admission.Warnings, error) {
 	var spec *kdexv1alpha1.KDexPageBindingSpec
 
-	switch t := ro.(type) {
+	switch t := any(obj).(type) {
 	case *kdexv1alpha1.KDexPageBinding:
 		spec = &t.Spec
 	default:

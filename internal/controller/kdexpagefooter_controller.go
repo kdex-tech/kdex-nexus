@@ -124,19 +124,17 @@ func (r *KDexPageFooterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 // SetupWithManager sets up the controller with the Manager.
 func (r *KDexPageFooterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	if os.Getenv("ENABLE_WEBHOOKS") != FALSE {
-		err := ctrl.NewWebhookManagedBy(mgr).
-			For(&kdexv1alpha1.KDexPageFooter{}).
-			WithDefaulter(&nexuswebhook.KDexPageFooterDefaulter{}).
-			WithValidator(&nexuswebhook.PageContentValidator{}).
+		err := ctrl.NewWebhookManagedBy(mgr, &kdexv1alpha1.KDexPageFooter{}).
+			WithDefaulter(&nexuswebhook.KDexPageFooterDefaulter[*kdexv1alpha1.KDexPageFooter]{}).
+			WithValidator(&nexuswebhook.PageContentValidator[*kdexv1alpha1.KDexPageFooter]{}).
 			Complete()
 		if err != nil {
 			return err
 		}
 
-		err = ctrl.NewWebhookManagedBy(mgr).
-			For(&kdexv1alpha1.KDexClusterPageFooter{}).
-			WithDefaulter(&nexuswebhook.KDexPageFooterDefaulter{}).
-			WithValidator(&nexuswebhook.PageContentValidator{}).
+		err = ctrl.NewWebhookManagedBy(mgr, &kdexv1alpha1.KDexClusterPageFooter{}).
+			WithDefaulter(&nexuswebhook.KDexPageFooterDefaulter[*kdexv1alpha1.KDexClusterPageFooter]{}).
+			WithValidator(&nexuswebhook.PageContentValidator[*kdexv1alpha1.KDexClusterPageFooter]{}).
 			Complete()
 		if err != nil {
 			return err

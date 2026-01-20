@@ -144,20 +144,18 @@ func (r *KDexScriptLibraryReconciler) Reconcile(ctx context.Context, req ctrl.Re
 // SetupWithManager sets up the controller with the Manager.
 func (r *KDexScriptLibraryReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	if os.Getenv("ENABLE_WEBHOOKS") != FALSE {
-		err := ctrl.NewWebhookManagedBy(mgr).
-			For(&kdexv1alpha1.KDexScriptLibrary{}).
-			WithDefaulter(&nexuswebhook.KDexScriptLibraryDefaulter{}).
-			WithValidator(&nexuswebhook.KDexScriptLibraryValidator{}).
+		err := ctrl.NewWebhookManagedBy(mgr, &kdexv1alpha1.KDexScriptLibrary{}).
+			WithDefaulter(&nexuswebhook.KDexScriptLibraryDefaulter[*kdexv1alpha1.KDexScriptLibrary]{}).
+			WithValidator(&nexuswebhook.KDexScriptLibraryValidator[*kdexv1alpha1.KDexScriptLibrary]{}).
 			Complete()
 
 		if err != nil {
 			return err
 		}
 
-		err = ctrl.NewWebhookManagedBy(mgr).
-			For(&kdexv1alpha1.KDexClusterScriptLibrary{}).
-			WithDefaulter(&nexuswebhook.KDexScriptLibraryDefaulter{}).
-			WithValidator(&nexuswebhook.KDexScriptLibraryValidator{}).
+		err = ctrl.NewWebhookManagedBy(mgr, &kdexv1alpha1.KDexClusterScriptLibrary{}).
+			WithDefaulter(&nexuswebhook.KDexScriptLibraryDefaulter[*kdexv1alpha1.KDexClusterScriptLibrary]{}).
+			WithValidator(&nexuswebhook.KDexScriptLibraryValidator[*kdexv1alpha1.KDexClusterScriptLibrary]{}).
 			Complete()
 
 		if err != nil {

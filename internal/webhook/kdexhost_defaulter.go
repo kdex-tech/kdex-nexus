@@ -5,19 +5,21 @@ import (
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/runtime"
-
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:webhook:path=/mutate-kdex-dev-v1alpha1-kdexhost,mutating=true,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexhosts,verbs=create;update,versions=v1alpha1,name=mutate.kdexhost.kdex.dev,admissionReviewVersions=v1
 
-type KDexHostDefaulter struct {
+type KDexHostDefaulter[T runtime.Object] struct {
 }
 
-func (a *KDexHostDefaulter) Default(ctx context.Context, ro runtime.Object) error {
+var _ admission.Defaulter[*kdexv1alpha1.KDexHost] = &KDexHostDefaulter[*kdexv1alpha1.KDexHost]{}
+
+func (a *KDexHostDefaulter[T]) Default(ctx context.Context, obj T) error {
 	var spec *kdexv1alpha1.KDexHostSpec
 
-	switch t := ro.(type) {
+	switch t := any(obj).(type) {
 	case *kdexv1alpha1.KDexHost:
 		spec = &t.Spec
 	default:

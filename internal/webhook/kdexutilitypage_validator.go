@@ -13,27 +13,27 @@ import (
 // +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexutilitypage,mutating=false,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexutilitypages,verbs=create;update,versions=v1alpha1,name=validate.kdexutilitypage.kdex.dev,admissionReviewVersions=v1
 // +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexclusterutilitypage,mutating=false,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexclusterutilitypages,verbs=create;update,versions=v1alpha1,name=validate.kdexclusterutilitypage.kdex.dev,admissionReviewVersions=v1
 
-type KDexUtilityPageValidator struct {
+type KDexUtilityPageValidator[T runtime.Object] struct {
 }
 
-var _ admission.CustomValidator = &KDexUtilityPageValidator{}
+var _ admission.Validator[*kdexv1alpha1.KDexUtilityPage] = &KDexUtilityPageValidator[*kdexv1alpha1.KDexUtilityPage]{}
 
-func (v *KDexUtilityPageValidator) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+func (v *KDexUtilityPageValidator[T]) ValidateCreate(ctx context.Context, obj T) (admission.Warnings, error) {
 	return v.validate(ctx, obj)
 }
 
-func (v *KDexUtilityPageValidator) ValidateUpdate(ctx context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
+func (v *KDexUtilityPageValidator[T]) ValidateUpdate(ctx context.Context, oldObj, newObj T) (admission.Warnings, error) {
 	return v.validate(ctx, newObj)
 }
 
-func (v *KDexUtilityPageValidator) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+func (v *KDexUtilityPageValidator[T]) ValidateDelete(ctx context.Context, obj T) (admission.Warnings, error) {
 	return nil, nil
 }
 
-func (v *KDexUtilityPageValidator) validate(_ context.Context, ro runtime.Object) (admission.Warnings, error) {
+func (v *KDexUtilityPageValidator[T]) validate(_ context.Context, obj T) (admission.Warnings, error) {
 	var spec *kdexv1alpha1.KDexUtilityPageSpec
 
-	switch t := ro.(type) {
+	switch t := any(obj).(type) {
 	case *kdexv1alpha1.KDexUtilityPage:
 		spec = &t.Spec
 	case *kdexv1alpha1.KDexClusterUtilityPage:

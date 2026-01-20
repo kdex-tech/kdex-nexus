@@ -123,20 +123,18 @@ func (r *KDexThemeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 // SetupWithManager sets up the controller with the Manager.
 func (r *KDexThemeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	if os.Getenv("ENABLE_WEBHOOKS") != FALSE {
-		err := ctrl.NewWebhookManagedBy(mgr).
-			For(&kdexv1alpha1.KDexTheme{}).
-			WithDefaulter(&nexuswebhook.KDexThemeDefaulter{}).
-			WithValidator(&nexuswebhook.KDexThemeValidator{}).
+		err := ctrl.NewWebhookManagedBy(mgr, &kdexv1alpha1.KDexTheme{}).
+			WithDefaulter(&nexuswebhook.KDexThemeDefaulter[*kdexv1alpha1.KDexTheme]{}).
+			WithValidator(&nexuswebhook.KDexThemeValidator[*kdexv1alpha1.KDexTheme]{}).
 			Complete()
 
 		if err != nil {
 			return err
 		}
 
-		err = ctrl.NewWebhookManagedBy(mgr).
-			For(&kdexv1alpha1.KDexClusterTheme{}).
-			WithDefaulter(&nexuswebhook.KDexThemeDefaulter{}).
-			WithValidator(&nexuswebhook.KDexThemeValidator{}).
+		err = ctrl.NewWebhookManagedBy(mgr, &kdexv1alpha1.KDexClusterTheme{}).
+			WithDefaulter(&nexuswebhook.KDexThemeDefaulter[*kdexv1alpha1.KDexClusterTheme]{}).
+			WithValidator(&nexuswebhook.KDexThemeValidator[*kdexv1alpha1.KDexClusterTheme]{}).
 			Complete()
 
 		if err != nil {

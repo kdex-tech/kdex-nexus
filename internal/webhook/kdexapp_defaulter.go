@@ -5,21 +5,20 @@ import (
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/runtime"
-
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 )
 
 // +kubebuilder:webhook:path=/mutate-kdex-dev-v1alpha1-kdexapp,mutating=true,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexapps,verbs=create;update,versions=v1alpha1,name=mutate.kdexapp.kdex.dev,admissionReviewVersions=v1
 // +kubebuilder:webhook:path=/mutate-kdex-dev-v1alpha1-kdexclusterapp,mutating=true,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexclusterapps,verbs=create;update,versions=v1alpha1,name=mutate.kdexclusterapp.kdex.dev,admissionReviewVersions=v1
 
-type KDexAppDefaulter struct {
+type KDexAppDefaulter[T runtime.Object] struct {
 }
 
-func (a *KDexAppDefaulter) Default(ctx context.Context, ro runtime.Object) error {
+func (a *KDexAppDefaulter[T]) Default(ctx context.Context, obj T) error {
 	var name string
 	var spec *kdexv1alpha1.KDexAppSpec
 
-	switch t := ro.(type) {
+	switch t := any(obj).(type) {
 	case *kdexv1alpha1.KDexApp:
 		name = t.Name
 		spec = &t.Spec

@@ -110,17 +110,15 @@ func (r *KDexTranslationReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 // SetupWithManager sets up the controller with the Manager.
 func (r *KDexTranslationReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	if os.Getenv("ENABLE_WEBHOOKS") != FALSE {
-		err := ctrl.NewWebhookManagedBy(mgr).
-			For(&kdexv1alpha1.KDexTranslation{}).
-			WithValidator(&nexuswebhook.KDexTranslationValidator{}).
+		err := ctrl.NewWebhookManagedBy(mgr, &kdexv1alpha1.KDexTranslation{}).
+			WithValidator(&nexuswebhook.KDexTranslationValidator[*kdexv1alpha1.KDexTranslation]{}).
 			Complete()
 		if err != nil {
 			return err
 		}
 
-		err = ctrl.NewWebhookManagedBy(mgr).
-			For(&kdexv1alpha1.KDexClusterTranslation{}).
-			WithValidator(&nexuswebhook.KDexTranslationValidator{}).
+		err = ctrl.NewWebhookManagedBy(mgr, &kdexv1alpha1.KDexClusterTranslation{}).
+			WithValidator(&nexuswebhook.KDexTranslationValidator[*kdexv1alpha1.KDexClusterTranslation]{}).
 			Complete()
 		if err != nil {
 			return err
