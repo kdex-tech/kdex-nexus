@@ -19,29 +19,47 @@ import (
 )
 
 // get, put, post, delete, options, head, patch, trace
-var methods = []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"}
+var methods = []string{"CONNECT", "DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT", "TRACE"}
 
 func main() {
-	{{ if .Spec.Get }}
-	http.HandleFunc("GET {{ .Path }}", GetHandler)
+	{{ $path, $info := range .Paths }}
+
+	{{ if $info.Connect }}
+	http.HandleFunc("CONNECT {{ $path }}", ConnectHandler)
 	{{ end }}
-	{{ if .Spec.Post }}
-	http.HandleFunc("POST {{ .Path }}", PostHandler)
+
+	{{ if $info.Delete }}
+	http.HandleFunc("DELETE {{ $path }}", DeleteHandler)
 	{{ end }}
-	{{ if .Spec.Put }}
-	http.HandleFunc("PUT {{ .Path }}", PutHandler)
+
+	{{ if $info.Get }}
+	http.HandleFunc("GET {{ $path }}", GetHandler)
 	{{ end }}
-	{{ if .Spec.Delete }}
-	http.HandleFunc("DELETE {{ .Path }}", DeleteHandler)
+
+	{{ if $info.Head }}
+	http.HandleFunc("HEAD {{ $path }}", HeadHandler)
 	{{ end }}
-	{{ if .Spec.Patch }}
-	http.HandleFunc("PATCH {{ .Path }}", PatchHandler)
+
+	{{ if $info.Options }}
+	http.HandleFunc("OPTIONS {{ $path }}", OptionsHandler)
 	{{ end }}
-	{{ if .Spec.Options }}
-	http.HandleFunc("OPTIONS {{ .Path }}", OptionsHandler)
+
+	{{ if $info.Patch }}
+	http.HandleFunc("PATCH {{ $path }}", PatchHandler)
 	{{ end }}
-	{{ if .Spec.Head }}
-	http.HandleFunc("HEAD {{ .Path }}", HeadHandler)
+
+	{{ if $info.Post }}
+	http.HandleFunc("POST {{ $path }}", PostHandler)
+	{{ end }}
+
+	{{ if $info.Put }}
+	http.HandleFunc("PUT {{ $path }}", PutHandler)
+	{{ end }}
+
+	{{ if $info.Trace }}
+	http.HandleFunc("TRACE {{ $path }}", TraceHandler)
+	{{ end }}
+
 	{{ end }}
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -51,9 +69,11 @@ func main() {
 	http.ListenAndServe(":"+port, nil)
 }
 
-{{ if .Spec.Get }}
-func GetHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
+{{ $path, $info := range .Paths }}
+
+{{ if $info.Connect }}
+func ConnectHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "CONNECT" {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
@@ -63,31 +83,7 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 }
 {{ end }}
 
-{{ if .Spec.Post }}
-func PostHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-	fmt.Fprint(w, "Hello from KDex Function: {{ .Name }}\n")
-	fmt.Fprintf(w, "Path: %s\n", r.URL.Path)
-	fmt.Fprintf(w, "Method: %s\n", r.Method)
-}
-{{ end }}
-
-{{ if .Spec.Put }}
-func PutHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "PUT" {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-	fmt.Fprint(w, "Hello from KDex Function: {{ .Name }}\n")
-	fmt.Fprintf(w, "Path: %s\n", r.URL.Path)
-	fmt.Fprintf(w, "Method: %s\n", r.Method)
-}
-{{ end }}
-
-{{ if .Spec.Delete }}
+{{ if $info.Delete }}
 func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "DELETE" {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -99,7 +95,43 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 }
 {{ end }}
 
-{{ if .Spec.Patch }}
+{{ if $info.Get }}
+func GetHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	fmt.Fprint(w, "Hello from KDex Function: {{ .Name }}\n")
+	fmt.Fprintf(w, "Path: %s\n", r.URL.Path)
+	fmt.Fprintf(w, "Method: %s\n", r.Method)
+}
+{{ end }}
+
+{{ if $info.Post }}
+func PostHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	fmt.Fprint(w, "Hello from KDex Function: {{ .Name }}\n")
+	fmt.Fprintf(w, "Path: %s\n", r.URL.Path)
+	fmt.Fprintf(w, "Method: %s\n", r.Method)
+}
+{{ end }}
+
+{{ if $info.Put }}
+func PutHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "PUT" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	fmt.Fprint(w, "Hello from KDex Function: {{ .Name }}\n")
+	fmt.Fprintf(w, "Path: %s\n", r.URL.Path)
+	fmt.Fprintf(w, "Method: %s\n", r.Method)
+}
+{{ end }}
+
+{{ if $info.Patch }}
 func PatchHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "PATCH" {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -111,7 +143,7 @@ func PatchHandler(w http.ResponseWriter, r *http.Request) {
 }
 {{ end }}
 
-{{ if .Spec.Options }}
+{{ if $info.Options }}
 func OptionsHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "OPTIONS" {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -123,7 +155,7 @@ func OptionsHandler(w http.ResponseWriter, r *http.Request) {
 }
 {{ end }}
 
-{{ if .Spec.Head }}
+{{ if $info.Head }}
 func HeadHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "HEAD" {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -134,19 +166,21 @@ func HeadHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Method: %s\n", r.Method)
 }
 {{ end }}
+
+{{ end }}
 `
 
 type FunctionData struct {
-	Name string
-	Path string
-	Spec kdexv1alpha1.KDexOpenAPIInternal
+	Name  string
+	Path  string
+	Paths map[string]kdexv1alpha1.PathItem
 }
 
 func Scaffold(funcObj *kdexv1alpha1.KDexFunction) (stub *kdexv1alpha1.StubDetails, err error) {
 	data := FunctionData{
-		Name: funcObj.Name,
-		Path: funcObj.Spec.API.Path,
-		Spec: funcObj.Spec.API.KDexOpenAPIInternal,
+		Name:  funcObj.Name,
+		Path:  funcObj.Spec.API.BasePath,
+		Paths: funcObj.Spec.API.Paths,
 	}
 
 	// For simulation, we'll write to a "generated" directory in the workspace if SourceRepository is empty
