@@ -496,6 +496,26 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
+      path: /validate-kdex-dev-v1alpha1-kdexfunction
+  failurePolicy: Fail
+  name: validate.kdexfunction.kdex.dev
+  rules:
+  - apiGroups:
+    - kdex.dev
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - kdexfunctions
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
       path: /validate-kdex-dev-v1alpha1-kdexhost
   failurePolicy: Fail
   name: validate.kdexhost.kdex.dev
