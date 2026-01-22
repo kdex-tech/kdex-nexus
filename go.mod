@@ -2,18 +2,20 @@ module kdex.dev/nexus
 
 go 1.25.0
 
-replace kdex.dev/crds => github.com/kdex-tech/kdex-crds v0.14.61
+replace kdex.dev/crds => github.com/kdex-tech/kdex-crds v0.14.62
 
 require (
 	github.com/go-logr/logr v1.4.3
 	github.com/onsi/ginkgo/v2 v2.27.5
 	github.com/onsi/gomega v1.38.2
+	github.com/opencontainers/image-spec v1.1.1
 	github.com/stretchr/testify v1.11.1
 	k8s.io/api v0.35.0
 	k8s.io/apiextensions-apiserver v0.35.0
 	k8s.io/apimachinery v0.35.0
 	k8s.io/client-go v0.35.0
 	kdex.dev/crds v0.0.0-00010101000000-000000000000
+	oras.land/oras-go/v2 v2.6.0
 	sigs.k8s.io/controller-runtime v0.23.0
 )
 
@@ -63,6 +65,7 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
+	github.com/klauspost/compress v1.18.1 // indirect
 	github.com/mailru/easyjson v0.9.1 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
@@ -72,6 +75,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/oasdiff/yaml v0.0.0-20250309154309-f31be36b4037 // indirect
 	github.com/oasdiff/yaml3 v0.0.0-20250309153720-d2182401db90 // indirect
+	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_golang v1.23.2 // indirect
