@@ -196,7 +196,7 @@ func Scaffold(funcObj *kdexv1alpha1.KDexFunction, config configuration.NexusConf
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp directory: %w", err)
 	}
-	defer os.RemoveAll(basePath)
+	defer func() { _ = os.RemoveAll(basePath) }()
 
 	filePath := filepath.Join(basePath, "main.go")
 	f, err := os.Create(filePath)
@@ -206,15 +206,15 @@ func Scaffold(funcObj *kdexv1alpha1.KDexFunction, config configuration.NexusConf
 
 	tmpl, err := template.New("go-func").Parse(goTemplate)
 	if err != nil {
-		f.Close()
+		_ = f.Close()
 		return nil, fmt.Errorf("failed to parse template: %w", err)
 	}
 
 	if err := tmpl.Execute(f, data); err != nil {
-		f.Close()
+		_ = f.Close()
 		return nil, fmt.Errorf("failed to execute template: %w", err)
 	}
-	f.Close()
+	_ = f.Close()
 
 	// Create a simple go.mod
 	goModPath := filepath.Join(basePath, "go.mod")
@@ -228,11 +228,11 @@ func Scaffold(funcObj *kdexv1alpha1.KDexFunction, config configuration.NexusConf
 	if err != nil {
 		return nil, fmt.Errorf("failed to create file store: %w", err)
 	}
-	defer store.Close()
+	defer func() { _ = store.Close() }()
 
 	// Add files to the store and get their descriptors
 	files := []string{"main.go", "go.mod"}
-	var descs []ocispec.Descriptor
+	descs := make([]ocispec.Descriptor, 0, len(files))
 	for _, name := range files {
 		desc, err := store.Add(ctx, name, "", "")
 		if err != nil {
@@ -243,8 +243,8 @@ func Scaffold(funcObj *kdexv1alpha1.KDexFunction, config configuration.NexusConf
 
 	// Pack the files into a manifest
 	// We use application/vnd.kdex.function.source.v1+json as the artifact type
-	manifestDesc, err := oras.Pack(ctx, store, "application/vnd.kdex.function.source.v1+json", descs, oras.PackOptions{
-		PackImageManifest: true,
+	manifestDesc, err := oras.PackManifest(ctx, store, oras.PackManifestVersion1_0, "application/vnd.kdex.function.source.v1+json", oras.PackManifestOptions{
+		Layers: descs,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to pack files: %w", err)
