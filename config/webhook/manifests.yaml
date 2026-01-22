@@ -509,6 +509,7 @@ webhooks:
     - UPDATE
     resources:
     - kdexfunctions
+    - kdexfunctions/status
   sideEffects: None
 - admissionReviewVersions:
   - v1

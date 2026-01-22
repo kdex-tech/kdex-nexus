@@ -289,6 +289,16 @@ var _ = BeforeSuite(func() {
 	err = utilityPageReconciler.SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 
+	// Function
+	functionReconciler := &KDexFunctionReconciler{
+		Client:        k8sClient,
+		Configuration: configuration,
+		RequeueDelay:  0,
+		Scheme:        k8sClient.Scheme(),
+	}
+	err = functionReconciler.SetupWithManager(k8sManager)
+	Expect(err).ToNot(HaveOccurred())
+
 	go func() {
 		defer GinkgoRecover()
 		err := k8sManager.Start(ctx)

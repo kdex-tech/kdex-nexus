@@ -29,7 +29,7 @@ import (
 var methods = []string{"CONNECT", "DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT", "TRACE"}
 
 func main() {
-	{{ $path, $info := range .Paths }}
+	{{ range $path, $info := .Paths }}
 
 	{{ if $info.Connect }}
 	http.HandleFunc("CONNECT {{ $path }}", ConnectHandler)
@@ -76,7 +76,7 @@ func main() {
 	http.ListenAndServe(":"+port, nil)
 }
 
-{{ $path, $info := range .Paths }}
+{{ range $path, $info := .Paths }}
 
 {{ if $info.Connect }}
 func ConnectHandler(w http.ResponseWriter, r *http.Request) {

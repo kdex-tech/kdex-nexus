@@ -285,6 +285,7 @@ func cleanupResources(namespace string) {
 		{&kdexv1alpha1.KDexScriptLibrary{}, &kdexv1alpha1.KDexScriptLibraryList{}},
 		{&kdexv1alpha1.KDexTranslation{}, &kdexv1alpha1.KDexTranslationList{}},
 		{&kdexv1alpha1.KDexTheme{}, &kdexv1alpha1.KDexThemeList{}},
+		{&kdexv1alpha1.KDexFunction{}, &kdexv1alpha1.KDexFunctionList{}},
 		{&kdexv1alpha1.KDexUtilityPage{}, &kdexv1alpha1.KDexUtilityPageList{}},
 		{&corev1.Secret{}, &corev1.SecretList{}},
 	} {
