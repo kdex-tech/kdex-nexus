@@ -18,7 +18,6 @@ package controller
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"time"
 
@@ -26,7 +25,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	"kdex.dev/crds/configuration"
-	"kdex.dev/nexus/internal/scaffolder"
 	nexuswebhook "kdex.dev/nexus/internal/webhook"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -82,24 +80,26 @@ func (r *KDexFunctionReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		if function.Status.State != kdexv1alpha1.KDexFunctionStateStubGenerated {
 			log.Info("Function is auto-generated and pending")
 
-			details, err := scaffolder.Scaffold(&function, r.Configuration)
-			if err != nil {
-				log.Error(err, "Failed to scaffold function")
-				kdexv1alpha1.SetConditions(
-					&function.Status.Conditions,
-					kdexv1alpha1.ConditionStatuses{
-						Degraded:    metav1.ConditionFalse,
-						Progressing: metav1.ConditionTrue,
-						Ready:       metav1.ConditionFalse,
-					},
-					kdexv1alpha1.ConditionReasonReconcileError,
-					fmt.Sprintf("Scaffolding failed: %v", err),
-				)
-				return ctrl.Result{}, err
-			}
+			// details, err := scaffolder.Scaffold(&function, r.Configuration)
+			// if err != nil {
+			// 	log.Error(err, "Failed to scaffold function")
+			// 	kdexv1alpha1.SetConditions(
+			// 		&function.Status.Conditions,
+			// 		kdexv1alpha1.ConditionStatuses{
+			// 			Degraded:    metav1.ConditionFalse,
+			// 			Progressing: metav1.ConditionTrue,
+			// 			Ready:       metav1.ConditionFalse,
+			// 		},
+			// 		kdexv1alpha1.ConditionReasonReconcileError,
+			// 		fmt.Sprintf("Scaffolding failed: %v", err),
+			// 	)
+			// 	return ctrl.Result{}, err
+			// }
 
-			function.Status.StubDetails = details
-			function.Status.State = kdexv1alpha1.KDexFunctionStateStubGenerated
+			// function.Status.StubDetails = details
+			// function.Status.State = kdexv1alpha1.KDexFunctionStateStubGenerated
+
+			function.Status.State = kdexv1alpha1.KDexFunctionStatePending
 
 			kdexv1alpha1.SetConditions(
 				&function.Status.Conditions,
