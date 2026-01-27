@@ -11,6 +11,10 @@ spec:
       announcement.title: Welcome to %s
       error.label: "The following error occurred while processing your request:"
       error.title: An error occurred on %s
+      login.password: Password
+      login.signin: Sign In
+      login.title: Login to %s
+      login.username: Username
   - lang: de
     keysAndValues:
       announcement.message: Dieser Host ist bereit, Anfragen zu bearbeiten, aber es wurden noch keine Seiten bereitgestellt. Bitte stellen Sie Seiten bereit, um mit der Bereitstellung von Inhalten zu beginnen.
@@ -18,6 +22,10 @@ spec:
       announcement.title: Willkommen bei %s
       error.label: "Ein Fehler ist aufgetreten, während Ihre Anfrage verarbeitet wurde:"
       error.title: Fehler auf %s
+      login.password: Passwort
+      login.signin: Anmelden
+      login.title: Login bei %s
+      login.username: Benutzername
   - lang: es
     keysAndValues:
       announcement.message: Este host está listo para servir solicitudes, pero aún no se han desplegado páginas. Por favor, despliegue páginas para comenzar a servir contenido.
@@ -25,6 +33,10 @@ spec:
       announcement.title: Bienvenido a %s
       error.label: "El siguiente error ocurrió al procesar su solicitud:"
       error.title: Error en %s
+      login.password: Contraseña
+      login.signin: Iniciar sesión
+      login.title: Iniciar sesión en %s
+      login.username: Nombre de usuario
   - lang: fr
     keysAndValues:
       announcement.message: Ce serveur est prêt à traiter les requêtes, mais aucune page n'a encore été déployée. Veuillez déployer des pages pour commencer à servir du contenu.
@@ -32,6 +44,10 @@ spec:
       announcement.title: Bienvenue sur %s
       error.label: "Une erreur est survenue lors du traitement de votre demande:"
       error.title: Erreur sur %s
+      login.password: Mot de passe
+      login.signin: Se connecter
+      login.title: Connexion à %s
+      login.username: Nom d'utilisateur
   - lang: it
     keysAndValues:
       announcement.message: Questo host è pronto a gestire le richieste, ma non sono state ancora distribuite pagine. Si prega di distribuire pagine per iniziare a servire contenuti.
@@ -39,6 +55,10 @@ spec:
       announcement.title: Benvenuto su %s
       error.label: "Si è verificato un errore durante il trattamento della sua richiesta:"
       error.title: Errore su %s
+      login.password: Password
+      login.signin: Accedi
+      login.title: Accedi a %s
+      login.username: Nome utente
   - lang: pt
     keysAndValues:
       announcement.message: Este host está pronto para atender solicitações, mas nenhuma página foi implantada ainda. Por favor, implante páginas para começar a servir conteúdo.
@@ -46,6 +66,10 @@ spec:
       announcement.title: Bem-vindo ao %s
       error.label: "Ocorreu um erro ao processar sua solicitação:"
       error.title: Erro no %s
+      login.password: Senha
+      login.signin: Entrar
+      login.title: Entrar em %s
+      login.username: Nome de usuário
   - lang: ru
     keysAndValues:
       announcement.message: Этот хост готов обрабатывать запросы, но пока не были развернуты страницы. Пожалуйста, разверните страницы, чтобы начать обслуживание содержимого.
@@ -53,6 +77,10 @@ spec:
       announcement.title: Добро пожаловать на %s
       error.label: "Произошла ошибка при обработке вашего запроса:"
       error.title: Ошибка на %s
+      login.password: Пароль
+      login.signin: Войти
+      login.title: Вход в %s
+      login.username: Имя пользователя
   - lang: zh
     keysAndValues:
       announcement.message: 这个主机准备处理请求，但还没有部署页面。请部署页面以开始提供内容。
@@ -60,3 +88,7 @@ spec:
       announcement.title: 欢迎来到 %s
       error.label: "在处理您的请求时发生错误:"
       error.title: 错误在 %s
+      login.password: 密码
+      login.signin: 登录
+      login.title: 登录到 %s
+      login.username: 用户名

@@ -1,13 +1,43 @@
 apiVersion: kdex.dev/v1alpha1
 kind: KDexClusterUtilityPage
 metadata:
-    name: kdex-default-utility-page-login
+  name: kdex-default-utility-page-login
 spec:
-    contentEntries:
-      - rawHTML: |
-            <h3>Not yet implemented</h3>
-        slot: main
-    pageArchetypeRef:
-        kind: KDexClusterPageArchetype
-        name: kdex-default-page-archetype-utility
-    type: Login
+  contentEntries:
+  - rawHTML: |
+      <div class="login-container">
+        <strong>{{ l10n "login.title" .BrandName }}</strong>
+
+        <form action="/~/login" method="POST" class="login-form">
+          <p class="error-message" style="color: red;"></p>
+
+          <div class="form-group">
+            <input type="text" id="username" name="username" required placeholder="{{ l10n "login.username" }}">
+          </div>
+
+          <div class="form-group">
+            <input type="password" id="password" name="password" required placeholder="{{ l10n "login.password" }}">
+          </div>
+
+          <button type="submit">{{ l10n "login.signin" }}</button>
+        </form>
+
+        <div class="footer">
+          <p>{{l10n "announcement.organization" .Organization}}</p>
+        </div>
+      </div>
+
+      <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const error = urlParams.get('error');
+        if (error) {
+          const display = document.getElementById('error-message');
+          display.textContent = error;
+          display.style.display = 'block';
+        }
+      </script>
+    slot: main
+  pageArchetypeRef:
+    kind: KDexClusterPageArchetype
+    name: kdex-default-page-archetype-utility
+  type: Login
