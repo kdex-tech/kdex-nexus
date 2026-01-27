@@ -9,7 +9,7 @@ spec:
         <strong>{{ l10n "login.title" .BrandName }}</strong>
 
         <form action="/~/login" method="POST" class="login-form">
-          <p class="error-message" style="color: red;"></p>
+          <p id="error-message" class="error-message" style="display: none;"></p>
 
           <div class="form-group">
             <input type="text" id="username" name="username" required placeholder="{{ l10n "login.username" }}">
