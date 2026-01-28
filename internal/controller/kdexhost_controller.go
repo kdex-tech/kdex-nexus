@@ -540,6 +540,7 @@ func (r *KDexHostReconciler) createOrUpdateInternalHostResource(
 			internalHost.Labels["kdex.dev/instance"] = host.Name
 		}
 
+		internalHost.Labels["kdex.dev/generation"] = fmt.Sprintf("%d", host.Generation)
 		internalHost.Spec.KDexHostSpec = host.Spec
 		internalHost.Spec.AnnouncementRef = announcementRef
 		internalHost.Spec.ErrorRef = errorRef
