@@ -22,7 +22,7 @@ spec:
           <button type="submit">{{ l10n "login.signin" }}</button>
         </form>
 
-        <div class="footer">
+        <div class="footer-organization">
           <p>{{l10n "announcement.organization" .Organization}}</p>
         </div>
       </div>

@@ -13,7 +13,7 @@ spec:
         <p class="error-label">{{l10n "error.label"}}</p>
         <code class="error-message">{{ .Extra.ErrorMessage }}</code>
 
-        <div class="footer">
+        <div class="footer-organization">
             <p>{{l10n "announcement.organization" .Organization}}</p>
         </div>
       </div>

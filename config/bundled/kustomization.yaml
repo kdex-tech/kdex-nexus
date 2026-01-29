@@ -6,6 +6,7 @@ resources:
 - kdex-default-page-navigation-language.yaml
 - kdex-default-page-navigation-login.yaml
 - kdex-default-page-navigation-main.yaml
+- kdex-default-theme.yaml
 - kdex-default-script-library.yaml
 - kdex-default-translation.yaml
 - kdex-default-utility-page-announcement.yaml
