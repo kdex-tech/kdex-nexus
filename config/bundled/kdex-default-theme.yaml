@@ -200,6 +200,11 @@ spec:
         justify-content: center;
       }
 
+      .language-dropdown .dropdown-content {
+        left: 0;
+        right: auto;
+      }
+
       .languages {
         list-style: none;
         margin: 0;
@@ -207,6 +212,7 @@ spec:
         display: flex;
         flex-direction: column;
         gap: 0.25rem;
+        align-items: stretch;
       }
 
       .language-link {
