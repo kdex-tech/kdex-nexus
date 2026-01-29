@@ -30,6 +30,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -185,7 +186,222 @@ func (r *KDexHostReconciler) Reconcile(ctx context.Context, req ctrl.Request) (r
 		"Reconciling",
 	)
 
-	return ctrl.Result{}, r.innerReconcile(ctx, &host)
+	// Resolve direct requirements from host spec
+
+	announcementRef, errorRef, loginRef, shouldReturn, err := r.resolveUtilityPages(ctx, &host)
+	if shouldReturn {
+		kdexv1alpha1.SetConditions(
+			&host.Status.Conditions,
+			kdexv1alpha1.ConditionStatuses{
+				Degraded:    metav1.ConditionTrue,
+				Progressing: metav1.ConditionFalse,
+				Ready:       metav1.ConditionFalse,
+			},
+			kdexv1alpha1.ConditionReasonReconcileSuccess,
+			err.Error(),
+		)
+		return ctrl.Result{}, err
+	}
+
+	themeObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, &host, &host.Status.Conditions, host.Spec.ThemeRef, r.RequeueDelay)
+	if shouldReturn {
+		kdexv1alpha1.SetConditions(
+			&host.Status.Conditions,
+			kdexv1alpha1.ConditionStatuses{
+				Degraded:    metav1.ConditionTrue,
+				Progressing: metav1.ConditionFalse,
+				Ready:       metav1.ConditionFalse,
+			},
+			kdexv1alpha1.ConditionReasonReconcileSuccess,
+			err.Error(),
+		)
+		return ctrl.Result{}, err
+	}
+
+	if themeObj != nil {
+		host.Status.Attributes["theme.generation"] = fmt.Sprintf("%d", themeObj.GetGeneration())
+	}
+
+	scriptLibraryObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, &host, &host.Status.Conditions, host.Spec.ScriptLibraryRef, r.RequeueDelay)
+	if shouldReturn {
+		kdexv1alpha1.SetConditions(
+			&host.Status.Conditions,
+			kdexv1alpha1.ConditionStatuses{
+				Degraded:    metav1.ConditionTrue,
+				Progressing: metav1.ConditionFalse,
+				Ready:       metav1.ConditionFalse,
+			},
+			kdexv1alpha1.ConditionReasonReconcileSuccess,
+			err.Error(),
+		)
+		return ctrl.Result{}, err
+	}
+
+	if scriptLibraryObj != nil {
+		host.Status.Attributes["scriptLibrary.generation"] = fmt.Sprintf("%d", scriptLibraryObj.GetGeneration())
+	}
+
+	translationRefs, shouldReturn, err := r.resolveTranslations(ctx, &host)
+	if shouldReturn {
+		kdexv1alpha1.SetConditions(
+			&host.Status.Conditions,
+			kdexv1alpha1.ConditionStatuses{
+				Degraded:    metav1.ConditionTrue,
+				Progressing: metav1.ConditionFalse,
+				Ready:       metav1.ConditionFalse,
+			},
+			kdexv1alpha1.ConditionReasonReconcileSuccess,
+			err.Error(),
+		)
+		return ctrl.Result{}, err
+	}
+
+	configMapOp, err := r.createOrUpdateConfigMap(ctx, &host)
+	if err != nil {
+		kdexv1alpha1.SetConditions(
+			&host.Status.Conditions,
+			kdexv1alpha1.ConditionStatuses{
+				Degraded:    metav1.ConditionTrue,
+				Progressing: metav1.ConditionFalse,
+				Ready:       metav1.ConditionFalse,
+			},
+			kdexv1alpha1.ConditionReasonReconcileSuccess,
+			err.Error(),
+		)
+		return ctrl.Result{}, err
+	}
+
+	serviceAccountOp, err := r.createOrUpdateServiceAccount(ctx, &host)
+	if err != nil {
+		kdexv1alpha1.SetConditions(
+			&host.Status.Conditions,
+			kdexv1alpha1.ConditionStatuses{
+				Degraded:    metav1.ConditionTrue,
+				Progressing: metav1.ConditionFalse,
+				Ready:       metav1.ConditionFalse,
+			},
+			kdexv1alpha1.ConditionReasonReconcileSuccess,
+			err.Error(),
+		)
+		return ctrl.Result{}, err
+	}
+
+	clusterRoleBindingOp, err := r.createOrUpdateClusterRoleBinding(ctx, &host)
+	if err != nil {
+		kdexv1alpha1.SetConditions(
+			&host.Status.Conditions,
+			kdexv1alpha1.ConditionStatuses{
+				Degraded:    metav1.ConditionTrue,
+				Progressing: metav1.ConditionFalse,
+				Ready:       metav1.ConditionFalse,
+			},
+			kdexv1alpha1.ConditionReasonReconcileSuccess,
+			err.Error(),
+		)
+		return ctrl.Result{}, err
+	}
+
+	deploymentOp, deployment, err := r.createOrUpdateDeployment(ctx, &host)
+	if err != nil {
+		kdexv1alpha1.SetConditions(
+			&host.Status.Conditions,
+			kdexv1alpha1.ConditionStatuses{
+				Degraded:    metav1.ConditionTrue,
+				Progressing: metav1.ConditionFalse,
+				Ready:       metav1.ConditionFalse,
+			},
+			kdexv1alpha1.ConditionReasonReconcileSuccess,
+			err.Error(),
+		)
+		return ctrl.Result{}, err
+	}
+
+	serviceOp, err := r.createOrUpdateService(ctx, &host)
+	if err != nil {
+		kdexv1alpha1.SetConditions(
+			&host.Status.Conditions,
+			kdexv1alpha1.ConditionStatuses{
+				Degraded:    metav1.ConditionTrue,
+				Progressing: metav1.ConditionFalse,
+				Ready:       metav1.ConditionFalse,
+			},
+			kdexv1alpha1.ConditionReasonReconcileSuccess,
+			err.Error(),
+		)
+		return ctrl.Result{}, err
+	}
+
+	for _, cond := range deployment.Status.Conditions {
+		if cond.Type == appsv1.DeploymentAvailable && cond.Status != corev1.ConditionTrue {
+			kdexv1alpha1.SetConditions(
+				&host.Status.Conditions,
+				kdexv1alpha1.ConditionStatuses{
+					Degraded:    metav1.ConditionFalse,
+					Progressing: metav1.ConditionTrue,
+					Ready:       metav1.ConditionFalse,
+				},
+				kdexv1alpha1.ConditionReasonReconcileSuccess,
+				fmt.Sprintf("Waiting for deployment %s/%s to be ready.", deployment.Namespace, deployment.Name),
+			)
+			return ctrl.Result{RequeueAfter: r.RequeueDelay}, err
+		}
+	}
+
+	internalHostOp, internalHost, err := r.createOrUpdateInternalHostResource(ctx, &host, announcementRef, errorRef, loginRef, translationRefs)
+	if err != nil {
+		kdexv1alpha1.SetConditions(
+			&host.Status.Conditions,
+			kdexv1alpha1.ConditionStatuses{
+				Degraded:    metav1.ConditionTrue,
+				Progressing: metav1.ConditionFalse,
+				Ready:       metav1.ConditionFalse,
+			},
+			kdexv1alpha1.ConditionReasonReconcileSuccess,
+			err.Error(),
+		)
+		return ctrl.Result{}, err
+	}
+
+	if meta.IsStatusConditionFalse(internalHost.Status.Conditions, string(kdexv1alpha1.ConditionTypeReady)) {
+		kdexv1alpha1.SetConditions(
+			&host.Status.Conditions,
+			kdexv1alpha1.ConditionStatuses{
+				Degraded:    metav1.ConditionFalse,
+				Progressing: metav1.ConditionTrue,
+				Ready:       metav1.ConditionFalse,
+			},
+			kdexv1alpha1.ConditionReasonReconcileSuccess,
+			"Waiting for internal host to be ready.",
+		)
+		return ctrl.Result{RequeueAfter: r.RequeueDelay}, err
+	}
+
+	if val, ok := internalHost.Status.Attributes["ingress"]; ok {
+		host.Status.Attributes["ingress"] = val
+	}
+
+	kdexv1alpha1.SetConditions(
+		&host.Status.Conditions,
+		kdexv1alpha1.ConditionStatuses{
+			Degraded:    metav1.ConditionFalse,
+			Progressing: metav1.ConditionFalse,
+			Ready:       metav1.ConditionTrue,
+		},
+		kdexv1alpha1.ConditionReasonReconcileSuccess,
+		"Reconciliation successful",
+	)
+
+	log.V(1).Info(
+		"reconciled",
+		"configMapOp", configMapOp,
+		"serviceAccountOp", serviceAccountOp,
+		"clusterRoleBindingOp", clusterRoleBindingOp,
+		"deploymentOp", deploymentOp,
+		"serviceOp", serviceOp,
+		"internalHostOp", internalHostOp,
+	)
+
+	return ctrl.Result{}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -356,96 +572,6 @@ func (r *KDexHostReconciler) getMemoizedService() *corev1.ServiceSpec {
 	return r.memoizedService
 }
 
-func (r *KDexHostReconciler) innerReconcile(ctx context.Context, host *kdexv1alpha1.KDexHost) error {
-	// Resolve direct requirements from host spec
-
-	announcementRef, errorRef, loginRef, shouldReturn, err := r.resolveUtilityPages(ctx, host)
-	if shouldReturn {
-		return err
-	}
-
-	themeObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, host.Spec.ThemeRef, r.RequeueDelay)
-	if shouldReturn {
-		return err
-	}
-
-	if themeObj != nil {
-		host.Status.Attributes["theme.generation"] = fmt.Sprintf("%d", themeObj.GetGeneration())
-	}
-
-	scriptLibraryObj, shouldReturn, _, err := ResolveKDexObjectReference(ctx, r.Client, host, &host.Status.Conditions, host.Spec.ScriptLibraryRef, r.RequeueDelay)
-	if shouldReturn {
-		return err
-	}
-
-	if scriptLibraryObj != nil {
-		host.Status.Attributes["scriptLibrary.generation"] = fmt.Sprintf("%d", scriptLibraryObj.GetGeneration())
-	}
-
-	translationRefs, shouldReturn, err := r.resolveTranslations(ctx, host)
-	if shouldReturn {
-		return err
-	}
-
-	configMapOp, err := r.createOrUpdateConfigMap(ctx, host)
-	if err != nil {
-		return err
-	}
-
-	serviceAccountOp, err := r.createOrUpdateServiceAccount(ctx, host)
-	if err != nil {
-		return err
-	}
-
-	clusterRoleBindingOp, err := r.createOrUpdateClusterRoleBinding(ctx, host)
-	if err != nil {
-		return err
-	}
-
-	deploymentOp, err := r.createOrUpdateDeployment(ctx, host)
-	if err != nil {
-		return err
-	}
-
-	serviceOp, err := r.createOrUpdateService(ctx, host)
-	if err != nil {
-		return err
-	}
-
-	internalHostOp, err := r.createOrUpdateInternalHostResource(ctx, host, announcementRef, errorRef, loginRef, translationRefs)
-	if err != nil {
-		return err
-	}
-
-	// TODO: we need to extract the ingress IP from the ingress resource, set it in the internal host status and
-	// proliferating it all the way to the host resource.
-
-	kdexv1alpha1.SetConditions(
-		&host.Status.Conditions,
-		kdexv1alpha1.ConditionStatuses{
-			Degraded:    metav1.ConditionFalse,
-			Progressing: metav1.ConditionFalse,
-			Ready:       metav1.ConditionTrue,
-		},
-		kdexv1alpha1.ConditionReasonReconcileSuccess,
-		"Reconciliation successful",
-	)
-
-	log := logf.FromContext(ctx)
-
-	log.V(1).Info(
-		"reconciled",
-		"configMapOp", configMapOp,
-		"serviceAccountOp", serviceAccountOp,
-		"clusterRoleBindingOp", clusterRoleBindingOp,
-		"deploymentOp", deploymentOp,
-		"serviceOp", serviceOp,
-		"internalHostOp", internalHostOp,
-	)
-
-	return nil
-}
-
 func (r *KDexHostReconciler) createOrUpdateConfigMap(
 	ctx context.Context,
 	host *kdexv1alpha1.KDexHost,
@@ -517,7 +643,7 @@ func (r *KDexHostReconciler) createOrUpdateInternalHostResource(
 	errorRef *corev1.LocalObjectReference,
 	loginRef *corev1.LocalObjectReference,
 	translationRefs []corev1.LocalObjectReference,
-) (controllerutil.OperationResult, error) {
+) (controllerutil.OperationResult, *kdexv1alpha1.KDexInternalHost, error) {
 	internalHost := &kdexv1alpha1.KDexInternalHost{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      host.Name,
@@ -575,16 +701,16 @@ func (r *KDexHostReconciler) createOrUpdateInternalHostResource(
 			err.Error(),
 		)
 
-		return controllerutil.OperationResultNone, err
+		return controllerutil.OperationResultNone, nil, err
 	}
 
-	return op, nil
+	return op, internalHost, nil
 }
 
 func (r *KDexHostReconciler) createOrUpdateDeployment(
 	ctx context.Context,
 	host *kdexv1alpha1.KDexHost,
-) (controllerutil.OperationResult, error) {
+) (controllerutil.OperationResult, *appsv1.Deployment, error) {
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      host.Name,
@@ -692,10 +818,10 @@ func (r *KDexHostReconciler) createOrUpdateDeployment(
 			err.Error(),
 		)
 
-		return controllerutil.OperationResultNone, err
+		return controllerutil.OperationResultNone, nil, err
 	}
 
-	return op, nil
+	return op, deployment, nil
 }
 
 func (r *KDexHostReconciler) createOrUpdateClusterRoleBinding(
