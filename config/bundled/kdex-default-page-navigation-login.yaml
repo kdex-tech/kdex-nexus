@@ -7,7 +7,7 @@ spec:
     <ul class="navigation login-status">
     {{- if .Extra.Identity -}}
       <li class="navigation user-profile dropdown">
-        <div class="user-trigger">
+        <div class="user-trigger dropdown-trigger">
           <div class="user-avatar">
             {{- if .Extra.Identity.Picture -}}
               <img src="{{ .Extra.Identity.Picture }}" alt="{{ .Extra.Identity.Email }}" class="avatar-image">
