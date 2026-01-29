@@ -4,6 +4,13 @@ metadata:
   name: kdex-default-page-header
 spec:
   content: |
+    <style>
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+      }
+    </style>
     <header class="page-header">
       <div>
         <nav id="page-brand">
@@ -14,6 +21,9 @@ spec:
             {{ l10n .BrandName }}
           </a>
         </nav>
-        {{ pop .Navigation "language" }}
+        <div class="header-actions">
+          {{ pop .Navigation "language" }}
+          {{ pop .Navigation "login" }}
+        </div>
       </div>
     </header>

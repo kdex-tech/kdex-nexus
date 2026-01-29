@@ -11,6 +11,7 @@ spec:
       announcement.title: Welcome to %s
       error.label: "The following error occurred while processing your request:"
       error.title: An error occurred on %s
+      login.logout: Logout
       login.password: Password
       login.signin: Sign In
       login.title: Login to %s
@@ -22,6 +23,7 @@ spec:
       announcement.title: Willkommen bei %s
       error.label: "Ein Fehler ist aufgetreten, während Ihre Anfrage verarbeitet wurde:"
       error.title: Fehler auf %s
+      login.logout: Abmelden
       login.password: Passwort
       login.signin: Anmelden
       login.title: Login bei %s
@@ -33,6 +35,7 @@ spec:
       announcement.title: Bienvenido a %s
       error.label: "El siguiente error ocurrió al procesar su solicitud:"
       error.title: Error en %s
+      login.logout: Cerrar sesión
       login.password: Contraseña
       login.signin: Iniciar sesión
       login.title: Iniciar sesión en %s
@@ -44,6 +47,7 @@ spec:
       announcement.title: Bienvenue sur %s
       error.label: "Une erreur est survenue lors du traitement de votre demande:"
       error.title: Erreur sur %s
+      login.logout: Déconnexion
       login.password: Mot de passe
       login.signin: Se connecter
       login.title: Connexion à %s
@@ -55,6 +59,7 @@ spec:
       announcement.title: Benvenuto su %s
       error.label: "Si è verificato un errore durante il trattamento della sua richiesta:"
       error.title: Errore su %s
+      login.logout: Logout
       login.password: Password
       login.signin: Accedi
       login.title: Accedi a %s
@@ -66,6 +71,7 @@ spec:
       announcement.title: Bem-vindo ao %s
       error.label: "Ocorreu um erro ao processar sua solicitação:"
       error.title: Erro no %s
+      login.logout: Sair
       login.password: Senha
       login.signin: Entrar
       login.title: Entrar em %s
@@ -77,6 +83,7 @@ spec:
       announcement.title: Добро пожаловать на %s
       error.label: "Произошла ошибка при обработке вашего запроса:"
       error.title: Ошибка на %s
+      login.logout: Выйти
       login.password: Пароль
       login.signin: Войти
       login.title: Вход в %s
@@ -88,6 +95,7 @@ spec:
       announcement.title: 欢迎来到 %s
       error.label: "在处理您的请求时发生错误:"
       error.title: 错误在 %s
+      login.logout: 退出登录
       login.password: 密码
       login.signin: 登录
       login.title: 登录到 %s

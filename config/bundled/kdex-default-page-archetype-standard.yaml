@@ -51,6 +51,9 @@ spec:
     language:
       kind: KDexClusterPageNavigation
       name: kdex-default-page-navigation-language
+    login:
+      kind: KDexClusterPageNavigation
+      name: kdex-default-page-navigation-login
   scriptLibraryRef:
     kind: KDexClusterScriptLibrary
     name: kdex-default-script-library
