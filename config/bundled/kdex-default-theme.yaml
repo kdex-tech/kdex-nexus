@@ -20,9 +20,9 @@ spec:
   - style: |
       /* Global Reset & Base Styles */
       :root {
-        --primary-color: #1a202c;
-        --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-        --secondary-color: #4a5568;
+        --primary-color: #227EE1;
+        --primary-gradient: linear-gradient(135deg, #227EE1 0%, #394959 100%);
+        --secondary-color: #394959;
         --bg-color: #0f172a;
         --text-color: #f1f5f9;
         --text-muted: #94a3b8;
@@ -230,7 +230,7 @@ spec:
 
       .language.selected .language-link {
         color: white;
-        background: rgba(99, 102, 241, 0.2);
+        background: rgba(34, 126, 225, 0.2);
         font-weight: 600;
       }
 
@@ -418,7 +418,7 @@ spec:
 
       .form-group input:focus {
         outline: none;
-        border-color: #6366f1;
+        border-color: var(--primary-color);
         background: rgba(255, 255, 255, 0.1);
       }
 
