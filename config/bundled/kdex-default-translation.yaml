@@ -6,6 +6,7 @@ spec:
   translations:
   - lang: en
     keysAndValues:
+      all-rights-reserved: All Rights Reserved.
       announcement.message: This host is ready to serve requests, but no pages have been deployed yet. Please deploy pages to start serving content.
       announcement.organization: "Organization: %s"
       announcement.title: Welcome to %s
@@ -18,6 +19,7 @@ spec:
       login.username: Username
   - lang: de
     keysAndValues:
+      all-rights-reserved: Alle Rechte vorbehalten.
       announcement.message: Dieser Host ist bereit, Anfragen zu bearbeiten, aber es wurden noch keine Seiten bereitgestellt. Bitte stellen Sie Seiten bereit, um mit der Bereitstellung von Inhalten zu beginnen.
       announcement.organization: "Organisation: %s"
       announcement.title: Willkommen bei %s
@@ -30,6 +32,7 @@ spec:
       login.username: Benutzername
   - lang: es
     keysAndValues:
+      all-rights-reserved: Todos los derechos reservados.
       announcement.message: Este host está listo para servir solicitudes, pero aún no se han desplegado páginas. Por favor, despliegue páginas para comenzar a servir contenido.
       announcement.organization: "Organización: %s"
       announcement.title: Bienvenido a %s
@@ -42,6 +45,7 @@ spec:
       login.username: Nombre de usuario
   - lang: fr
     keysAndValues:
+      all-rights-reserved: Tous droits réservés.
       announcement.message: Ce serveur est prêt à traiter les requêtes, mais aucune page n'a encore été déployée. Veuillez déployer des pages pour commencer à servir du contenu.
       announcement.organization: "Organisation : %s"
       announcement.title: Bienvenue sur %s
@@ -54,6 +58,7 @@ spec:
       login.username: Nom d'utilisateur
   - lang: it
     keysAndValues:
+      all-rights-reserved: Tutti i diritti riservati.
       announcement.message: Questo host è pronto a gestire le richieste, ma non sono state ancora distribuite pagine. Si prega di distribuire pagine per iniziare a servire contenuti.
       announcement.organization: "Organizzazione: %s"
       announcement.title: Benvenuto su %s
@@ -66,6 +71,7 @@ spec:
       login.username: Nome utente
   - lang: pt
     keysAndValues:
+      all-rights-reserved: Todos os direitos reservados.
       announcement.message: Este host está pronto para atender solicitações, mas nenhuma página foi implantada ainda. Por favor, implante páginas para começar a servir conteúdo.
       announcement.organization: "Organização: %s"
       announcement.title: Bem-vindo ao %s
@@ -78,6 +84,7 @@ spec:
       login.username: Nome de usuário
   - lang: ru
     keysAndValues:
+      all-rights-reserved: Все права защищены.
       announcement.message: Этот хост готов обрабатывать запросы, но пока не были развернуты страницы. Пожалуйста, разверните страницы, чтобы начать обслуживание содержимого.
       announcement.organization: "Организация: %s"
       announcement.title: Добро пожаловать на %s
@@ -90,6 +97,7 @@ spec:
       login.username: Имя пользователя
   - lang: zh
     keysAndValues:
+      all-rights-reserved: 版权所有
       announcement.message: 这个主机准备处理请求，但还没有部署页面。请部署页面以开始提供内容。
       announcement.organization: "组织: %s"
       announcement.title: 欢迎来到 %s
