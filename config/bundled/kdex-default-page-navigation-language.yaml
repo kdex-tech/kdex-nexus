@@ -4,18 +4,26 @@ metadata:
   name: kdex-default-page-navigation-language
 spec:
   content: |
-    <ul class="navigation languages">
-    {{- range $language := .Languages }}
-      {{ $langPath := "" }}
-      {{ if ne $language $.DefaultLanguage }}
-        {{ $langPath = print "/" $language }}
-      {{ end }}
-      <li class="navigation language{{ if eq $language $.Language }} selected{{ end }}">
-        <a
-          class="navigation language-link flag-{{ $language }}{{ if eq $language $.Language }} selected{{ end }}"
-          href="{{ print $langPath $.BasePath }}"
-
-        >{{ l10n $language }}</a>
-      </li>
-    {{- end -}}
-    </ul>
+    <div class="language-dropdown dropdown">
+      <div class="language-trigger dropdown-trigger">
+        <span class="language-code current-flag-{{ .Language }}">{{ .Language }}</span>
+      </div>
+      <div class="dropdown-content">
+        <ul class="languages">
+        {{- range $language := .Languages }}
+          {{ $langPath := "" }}
+          {{ if ne $language $.DefaultLanguage }}
+            {{ $langPath = print "/" $language }}
+          {{ end }}
+          <li class="language{{ if eq $language $.Language }} selected{{ end }}">
+            <a
+              class="language-link flag-{{ $language }}{{ if eq $language $.Language }} selected{{ end }}"
+              href="{{ print $langPath $.BasePath }}"
+            >
+              <span class="language-label">{{ l10n $language }}</span>
+            </a>
+          </li>
+        {{- end -}}
+        </ul>
+      </div>
+    </div>
