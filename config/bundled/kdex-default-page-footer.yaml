@@ -5,5 +5,7 @@ metadata:
 spec:
   content: |
     <footer class="page-footer">
-      <small>&copy; {{ .LastModified.Year }} {{ .Organization }} {{ l10n "all-rights-reserved" }}</small>
+      <div>
+        <small>&copy; {{ .LastModified.Year }} {{ .Organization }} {{ l10n "all-rights-reserved" }}</small>
+      </div>
     </footer>
