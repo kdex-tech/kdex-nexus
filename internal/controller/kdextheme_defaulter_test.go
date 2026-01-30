@@ -38,7 +38,7 @@ var _ = Describe("KDexTheme Defaulter", func() {
 			createdResource := &kdexv1alpha1.KDexTheme{}
 			Expect(k8sClient.Get(ctx, types.NamespacedName{Name: resourceName, Namespace: namespace}, createdResource)).To(Succeed())
 
-			Expect(createdResource.Spec.IngressPath).To(Equal("/_theme"))
+			Expect(createdResource.Spec.IngressPath).To(Equal("/-/theme"))
 		})
 
 		It("should overwrite IngressPath if set", func() {
@@ -49,7 +49,7 @@ var _ = Describe("KDexTheme Defaulter", func() {
 				},
 				Spec: kdexv1alpha1.KDexThemeSpec{
 					Assets: []kdexv1alpha1.Asset{
-						{LinkHref: "/_theme/styles.css"},
+						{LinkHref: "/-/theme/styles.css"},
 					},
 					Backend: kdexv1alpha1.Backend{
 						IngressPath: "/custom",
@@ -63,7 +63,7 @@ var _ = Describe("KDexTheme Defaulter", func() {
 			createdResource := &kdexv1alpha1.KDexTheme{}
 			Expect(k8sClient.Get(ctx, types.NamespacedName{Name: resourceName, Namespace: namespace}, createdResource)).To(Succeed())
 
-			Expect(createdResource.Spec.IngressPath).To(Equal("/_theme"))
+			Expect(createdResource.Spec.IngressPath).To(Equal("/-/theme"))
 		})
 	})
 })

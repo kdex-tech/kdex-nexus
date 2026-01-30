@@ -174,7 +174,7 @@ var _ = Describe("KDexHost Validator", func() {
 
 			err := k8sClient.Create(ctx, resource)
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring(`/foo is not prefixed by ingressPath: /_host`))
+			Expect(err.Error()).To(ContainSubstring(`/foo is not prefixed by ingressPath: /-/host`))
 		})
 
 		It("should succeed with relative assets, static image and correct prefix", func() {
@@ -186,7 +186,7 @@ var _ = Describe("KDexHost Validator", func() {
 				Spec: kdexv1alpha1.KDexHostSpec{
 					Assets: kdexv1alpha1.Assets{
 						{
-							LinkHref: "/_host/foo.css",
+							LinkHref: "/-/host/foo.css",
 						},
 					},
 					BrandName:    "valid",

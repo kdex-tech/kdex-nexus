@@ -79,7 +79,7 @@ func (a *KDexHostDefaulter[T]) Default(ctx context.Context, obj T) error {
 		spec.UtilityPages.LoginRef.Name = "kdex-default-utility-page-login"
 	}
 
-	spec.IngressPath = "/_host"
+	spec.IngressPath = "/-/host"
 
 	BackendDefaults(&spec.Backend)
 

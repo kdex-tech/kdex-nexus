@@ -43,7 +43,7 @@ var _ = Describe("KDexApp Defaulter", func() {
 			createdResource := &kdexv1alpha1.KDexApp{}
 			Expect(k8sClient.Get(ctx, types.NamespacedName{Name: resourceName, Namespace: namespace}, createdResource)).To(Succeed())
 
-			Expect(createdResource.Spec.IngressPath).To(Equal("/_a/" + resourceName))
+			Expect(createdResource.Spec.IngressPath).To(Equal("/-/a/" + resourceName))
 		})
 
 		It("should overwrite IngressPath if set", func() {
@@ -71,7 +71,7 @@ var _ = Describe("KDexApp Defaulter", func() {
 			createdResource := &kdexv1alpha1.KDexApp{}
 			Expect(k8sClient.Get(ctx, types.NamespacedName{Name: resourceName, Namespace: namespace}, createdResource)).To(Succeed())
 
-			Expect(createdResource.Spec.IngressPath).To(Equal("/_a/" + resourceName))
+			Expect(createdResource.Spec.IngressPath).To(Equal("/-/a/" + resourceName))
 		})
 	})
 })

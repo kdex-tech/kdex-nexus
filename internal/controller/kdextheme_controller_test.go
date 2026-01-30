@@ -132,11 +132,11 @@ var _ = Describe("KDexTheme Controller", func() {
 							Attributes: map[string]string{
 								"rel": "stylesheet",
 							},
-							LinkHref: "/_theme/style.css",
+							LinkHref: "/-/theme/style.css",
 						},
 					},
 					Backend: kdexv1alpha1.Backend{
-						IngressPath: "/_theme",
+						IngressPath: "/-/theme",
 					},
 				},
 			}
@@ -160,7 +160,7 @@ var _ = Describe("KDexTheme Controller", func() {
 						},
 					},
 					Backend: kdexv1alpha1.Backend{
-						IngressPath: "/_theme",
+						IngressPath: "/-/theme",
 						StaticImage: "foo/bar",
 					},
 				},
@@ -181,11 +181,11 @@ var _ = Describe("KDexTheme Controller", func() {
 							Attributes: map[string]string{
 								"rel": "stylesheet",
 							},
-							LinkHref: "/_theme/style.css",
+							LinkHref: "/-/theme/style.css",
 						},
 					},
 					Backend: kdexv1alpha1.Backend{
-						IngressPath: "/_theme",
+						IngressPath: "/-/theme",
 						StaticImage: "foo/bar",
 					},
 				},
@@ -206,7 +206,7 @@ var _ = Describe("KDexTheme Controller", func() {
 							Attributes: map[string]string{
 								"rel": "stylesheet",
 							},
-							LinkHref: "/_theme/style.css",
+							LinkHref: "/-/theme/style.css",
 						},
 					},
 					Backend: kdexv1alpha1.Backend{

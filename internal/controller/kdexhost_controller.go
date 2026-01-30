@@ -65,6 +65,7 @@ type KDexHostReconciler struct {
 	memoizedService       *corev1.ServiceSpec
 }
 
+// nolint:gocyclo
 func (r *KDexHostReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, err error) {
 	log := logf.FromContext(ctx)
 

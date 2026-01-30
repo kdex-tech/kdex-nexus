@@ -37,7 +37,7 @@ func (a *KDexThemeDefaulter[T]) Default(ctx context.Context, obj T) error {
 		}
 	}
 
-	spec.IngressPath = "/_theme"
+	spec.IngressPath = "/-/theme"
 
 	BackendDefaults(&spec.Backend)
 

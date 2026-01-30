@@ -42,7 +42,7 @@ var _ = Describe("KDexHost Defaulter", func() {
 
 			Expect(createdResource.Spec.DefaultLang).To(Equal("en"))
 			Expect(createdResource.Spec.ModulePolicy).To(Equal(kdexv1alpha1.StrictModulePolicy))
-			Expect(createdResource.Spec.IngressPath).To(Equal("/_host"))
+			Expect(createdResource.Spec.IngressPath).To(Equal("/-/host"))
 		})
 
 		It("should not overwrite fields if present except ingressPath", func() {
@@ -71,7 +71,7 @@ var _ = Describe("KDexHost Defaulter", func() {
 			Expect(k8sClient.Get(ctx, types.NamespacedName{Name: resourceName, Namespace: namespace}, createdResource)).To(Succeed())
 
 			Expect(createdResource.Spec.DefaultLang).To(Equal("fr"))
-			Expect(createdResource.Spec.IngressPath).To(Equal("/_host"))
+			Expect(createdResource.Spec.IngressPath).To(Equal("/-/host"))
 		})
 	})
 })

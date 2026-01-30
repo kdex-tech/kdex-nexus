@@ -32,7 +32,7 @@ spec:
              <div class="user-name" style="font-weight: 600;">{{ .Extra.Identity.Name | default (.Extra.Identity.Email | default .Extra.Identity.UID) }}</div>
              <div class="header-email">{{ .Extra.Identity.Email }}</div>
            </div>
-           <form action="/~/logout" method="POST" id="logout-form">
+           <form action="/-/logout" method="POST" id="logout-form">
               <button type="submit" class="logout-button">
                  Logout
               </button>
@@ -41,7 +41,7 @@ spec:
       </li>
     {{- else -}}
       <li class="navigation login-link">
-        <a href="/~/login" class="login-button">
+        <a href="/-/login" class="login-button">
           {{ l10n "login.signin" }}
         </a>
       </li>

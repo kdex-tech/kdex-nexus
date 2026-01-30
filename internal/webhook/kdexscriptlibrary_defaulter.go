@@ -30,7 +30,7 @@ func (a *KDexScriptLibraryDefaulter[T]) Default(ctx context.Context, obj T) erro
 		return fmt.Errorf("unsupported type: %T", t)
 	}
 
-	spec.IngressPath = "/_s/" + name
+	spec.IngressPath = "/-/s/" + name
 
 	BackendDefaults(&spec.Backend)
 

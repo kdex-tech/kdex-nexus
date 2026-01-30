@@ -116,7 +116,7 @@ metadata:
 data:
   config.yaml: |
     backendDefault:
-      modulePath: /~/modules
+      modulePath: /-/modules
       serverImage: k3d-registry:5000/kdex-tech/kdex-themeserver:latest
       serverImagePullPolicy: Always
 
