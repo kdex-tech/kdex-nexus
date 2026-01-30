@@ -123,8 +123,8 @@ var _ = BeforeSuite(func() {
 		},
 	}
 
-	crdModulePath := getCRDModulePath()
-	testEnv.CRDDirectoryPaths = append(testEnv.CRDDirectoryPaths, filepath.Join(crdModulePath, "config", "crd", "bases"))
+	crdPath := getCRDPath()
+	testEnv.CRDDirectoryPaths = append(testEnv.CRDDirectoryPaths, filepath.Join(crdPath, "config", "crd", "bases"))
 
 	// Retrieve the first found binary directory to allow running tests from IDEs
 	if getFirstFoundEnvTestBinaryDir() != "" {
@@ -313,7 +313,7 @@ var _ = AfterSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 })
 
-func getCRDModulePath() string {
+func getCRDPath() string {
 	cmd := exec.Command("go", "list", "-m", "-f", "{{.Dir}}", "kdex.dev/crds")
 	out, err := cmd.Output()
 	if err != nil {
