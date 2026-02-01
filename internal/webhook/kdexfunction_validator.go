@@ -91,32 +91,32 @@ func (v *KDexFunctionValidator[T]) validate(_ context.Context, obj T) (admission
 
 func (v *KDexFunctionValidator[T]) validateOpenAPI(spec *kdexv1alpha1.KDexFunctionSpec) error {
 	// Build a minimal OpenAPI 3.0 document from the spec.API
-	openAPIDoc := map[string]interface{}{
+	openAPIDoc := map[string]any{
 		"openapi": "3.0.3",
-		"info": map[string]interface{}{
+		"info": map[string]any{
 			"title":       "Function API",
 			"version":     "1.0.0",
 			"description": "Auto-generated OpenAPI specification for KDexFunction",
 		},
-		"paths": map[string]interface{}{},
-		"components": map[string]interface{}{
-			"responses": map[string]interface{}{
-				"BadRequest": map[string]interface{}{
+		"paths": map[string]any{},
+		"components": map[string]any{
+			"responses": map[string]any{
+				"BadRequest": map[string]any{
 					"description": "Bad Request",
 				},
-				"Found": map[string]interface{}{
+				"Found": map[string]any{
 					"description": "Found",
 				},
-				"InternalServerError": map[string]interface{}{
+				"InternalServerError": map[string]any{
 					"description": "Internal Server Error",
 				},
-				"NotFound": map[string]interface{}{
+				"NotFound": map[string]any{
 					"description": "Not Found",
 				},
-				"SeeOther": map[string]interface{}{
+				"SeeOther": map[string]any{
 					"description": "See Other",
 				},
-				"Unauthorized": map[string]interface{}{
+				"Unauthorized": map[string]any{
 					"description": "Unauthorized",
 				},
 			},
@@ -124,9 +124,9 @@ func (v *KDexFunctionValidator[T]) validateOpenAPI(spec *kdexv1alpha1.KDexFuncti
 	}
 
 	// Convert spec.API.Paths to standard OpenAPI paths
-	paths := make(map[string]interface{})
+	paths := make(map[string]any)
 	for pathKey, pathItem := range spec.API.Paths {
-		pathObj := make(map[string]interface{})
+		pathObj := make(map[string]any)
 
 		if pathItem.Description != "" {
 			pathObj["description"] = pathItem.Description
@@ -137,31 +137,31 @@ func (v *KDexFunctionValidator[T]) validateOpenAPI(spec *kdexv1alpha1.KDexFuncti
 
 		// Add operations
 		if pathItem.Get != nil {
-			var op map[string]interface{}
+			var op map[string]any
 			if err := json.Unmarshal(pathItem.Get.Raw, &op); err == nil {
 				pathObj["get"] = op
 			}
 		}
 		if pathItem.Post != nil {
-			var op map[string]interface{}
+			var op map[string]any
 			if err := json.Unmarshal(pathItem.Post.Raw, &op); err == nil {
 				pathObj["post"] = op
 			}
 		}
 		if pathItem.Put != nil {
-			var op map[string]interface{}
+			var op map[string]any
 			if err := json.Unmarshal(pathItem.Put.Raw, &op); err == nil {
 				pathObj["put"] = op
 			}
 		}
 		if pathItem.Delete != nil {
-			var op map[string]interface{}
+			var op map[string]any
 			if err := json.Unmarshal(pathItem.Delete.Raw, &op); err == nil {
 				pathObj["delete"] = op
 			}
 		}
 		if pathItem.Patch != nil {
-			var op map[string]interface{}
+			var op map[string]any
 			if err := json.Unmarshal(pathItem.Patch.Raw, &op); err == nil {
 				pathObj["patch"] = op
 			}
@@ -173,15 +173,15 @@ func (v *KDexFunctionValidator[T]) validateOpenAPI(spec *kdexv1alpha1.KDexFuncti
 
 	// Add schemas if present
 	if len(spec.API.Schemas) > 0 {
-		schemas := make(map[string]interface{})
+		schemas := make(map[string]any)
 		for schemaKey, schemaRaw := range spec.API.Schemas {
-			var schema map[string]interface{}
+			var schema map[string]any
 			if err := json.Unmarshal(schemaRaw.Raw, &schema); err == nil {
 				schemas[schemaKey] = schema
 			}
 		}
 		// Add schemas to existing components
-		if components, ok := openAPIDoc["components"].(map[string]interface{}); ok {
+		if components, ok := openAPIDoc["components"].(map[string]any); ok {
 			components["schemas"] = schemas
 		}
 	}
