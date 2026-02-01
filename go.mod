@@ -2,10 +2,10 @@ module kdex.dev/nexus
 
 go 1.25.0
 
-replace kdex.dev/crds => github.com/kdex-tech/kdex-crds v0.14.85
+replace kdex.dev/crds => github.com/kdex-tech/kdex-crds v0.14.86
 
 require (
-	github.com/daveshanley/vacuum v0.23.1
+	github.com/daveshanley/vacuum v0.23.5
 	github.com/go-logr/logr v1.4.3
 	github.com/onsi/ginkgo/v2 v2.27.5
 	github.com/onsi/gomega v1.38.2
@@ -87,8 +87,8 @@ require (
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/pb33f/doctor v0.0.41 // indirect
 	github.com/pb33f/jsonpath v0.7.0 // indirect
-	github.com/pb33f/libopenapi v0.31.1 // indirect
-	github.com/pb33f/libopenapi-validator v0.10.0 // indirect
+	github.com/pb33f/libopenapi v0.31.2 // indirect
+	github.com/pb33f/libopenapi-validator v0.10.2 // indirect
 	github.com/pb33f/ordered-map/v2 v2.3.0 // indirect
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
