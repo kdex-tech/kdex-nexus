@@ -6,11 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/daveshanley/vacuum/model"
-	"github.com/daveshanley/vacuum/motor"
-	"github.com/daveshanley/vacuum/rulesets"
 	"k8s.io/apimachinery/pkg/runtime"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
+	"kdex.dev/crds/linter"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
@@ -96,8 +94,9 @@ func (v *KDexFunctionValidator[T]) validateOpenAPI(spec *kdexv1alpha1.KDexFuncti
 	openAPIDoc := map[string]interface{}{
 		"openapi": "3.0.3",
 		"info": map[string]interface{}{
-			"title":   "Function API",
-			"version": "1.0.0",
+			"title":       "Function API",
+			"version":     "1.0.0",
+			"description": "Auto-generated OpenAPI specification for KDexFunction",
 		},
 		"paths": map[string]interface{}{},
 		"components": map[string]interface{}{
@@ -194,7 +193,7 @@ func (v *KDexFunctionValidator[T]) validateOpenAPI(spec *kdexv1alpha1.KDexFuncti
 	}
 
 	// Run vacuum linter
-	results, err := lintOpenAPISpec(specBytes)
+	results, err := linter.LintSpec(specBytes)
 	if err != nil {
 		return fmt.Errorf("linting error: %w", err)
 	}
@@ -213,36 +212,4 @@ func (v *KDexFunctionValidator[T]) validateOpenAPI(spec *kdexv1alpha1.KDexFuncti
 	}
 
 	return nil
-}
-
-func lintOpenAPISpec(spec []byte) ([]model.RuleFunctionResult, error) {
-	// Use default rulesets
-	defaultRuleSets := rulesets.BuildDefaultRuleSets()
-	selectedRuleSet := defaultRuleSets.GenerateOpenAPIRecommendedRuleSet()
-
-	// Filter to only OAS 3.0.x rules
-	for id, rule := range selectedRuleSet.Rules {
-		// Skip example rules as they can be too strict
-		if id == "oas3-missing-example" {
-			delete(selectedRuleSet.Rules, id)
-		}
-
-		isOAS3 := false
-		for _, f := range rule.Formats {
-			if f == "oas3" {
-				isOAS3 = true
-				break
-			}
-		}
-		if !isOAS3 {
-			delete(selectedRuleSet.Rules, id)
-		}
-	}
-
-	results := motor.ApplyRulesToRuleSet(&motor.RuleSetExecution{
-		RuleSet: selectedRuleSet,
-		Spec:    spec,
-	})
-
-	return results.Results, nil
 }
