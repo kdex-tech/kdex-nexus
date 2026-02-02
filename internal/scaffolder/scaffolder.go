@@ -287,8 +287,6 @@ func Scaffold(funcObj *kdexv1alpha1.KDexFunction, config configuration.NexusConf
 
 	fullImageName := fmt.Sprintf("%s:latest", imageName)
 	return &kdexv1alpha1.StubDetails{
-		FilePath:    "main.go",
-		Language:    "go",
 		SourceImage: fullImageName,
 	}, nil
 }
