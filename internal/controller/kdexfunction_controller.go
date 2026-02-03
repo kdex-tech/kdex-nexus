@@ -18,10 +18,13 @@ package controller
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"time"
 
+	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
@@ -124,6 +127,49 @@ func (r *KDexFunctionReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		// TODO: In this scenario we need to let our Build infrastructure compute the
 		// StubDetails which must be set in function.Status.StubDetails and
 		// function.Status.State = kdexv1alpha1.KDexFunctionStateStubGenerated
+
+		// TODO: create a Pod that will execute the code generator using the
+
+		// Implement code generation by creating a Job
+		generatorConfig := function.Spec.Function.GeneratorConfig
+		if len(generatorConfig) == 0 {
+			generatorConfig = function.Status.GeneratorConfig
+		}
+
+		if len(generatorConfig) > 0 {
+			// Create a Job for code generation
+			job, err := createCodeGenerationJob(r.Client, &function, generatorConfig)
+			if err != nil {
+				kdexv1alpha1.SetConditions(
+					&function.Status.Conditions,
+					kdexv1alpha1.ConditionStatuses{
+						Degraded:    metav1.ConditionTrue,
+						Progressing: metav1.ConditionFalse,
+						Ready:       metav1.ConditionFalse,
+					},
+					kdexv1alpha1.ConditionReasonReconcileError,
+					fmt.Sprintf("Failed to create code generation job: %v", err),
+				)
+				return ctrl.Result{}, err
+			}
+
+			// Update status to indicate job creation
+			function.Status.State = kdexv1alpha1.KDexFunctionStateBuildValid
+			kdexv1alpha1.SetConditions(
+				&function.Status.Conditions,
+				kdexv1alpha1.ConditionStatuses{
+					Degraded:    metav1.ConditionFalse,
+					Progressing: metav1.ConditionTrue,
+					Ready:       metav1.ConditionFalse,
+				},
+				kdexv1alpha1.ConditionReasonReconciling,
+				fmt.Sprintf("Created code generation job %s", job.Name),
+			)
+
+			log.V(1).Info("created code generation job", "job", job.Name)
+			return ctrl.Result{}, nil
+		}
+
 		kdexv1alpha1.SetConditions(
 			&function.Status.Conditions,
 			kdexv1alpha1.ConditionStatuses{
@@ -223,4 +269,82 @@ func (r *KDexFunctionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		}).
 		Named("kdexfunction").
 		Complete(r)
+}
+
+// createCodeGenerationJob creates a Kubernetes Job for code generation
+func createCodeGenerationJob(client client.Client, function *kdexv1alpha1.KDexFunction, generatorConfig map[string]string) (*batchv1.Job, error) {
+	// Determine the code generator to use based on generator config
+	generatorImage := generatorConfig["image"]
+	var args []string
+	for k, v := range generatorConfig {
+		if k != "image" {
+			args = append(args, k)
+			args = append(args, v)
+		}
+	}
+
+	// Create Job name
+	jobName := fmt.Sprintf("%s-codegen-%d", function.Name, time.Now().Unix())
+
+	// Create the Job
+	job := &batchv1.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      jobName,
+			Namespace: function.Namespace,
+			Labels: map[string]string{
+				"app":      "codegen",
+				"function": function.Name,
+			},
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					APIVersion: function.APIVersion,
+					Kind:       "KDexFunction",
+					Name:       function.Name,
+					UID:        function.UID,
+				},
+			},
+		},
+		Spec: batchv1.JobSpec{
+			Template: corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					RestartPolicy: corev1.RestartPolicyNever,
+					Containers: []corev1.Container{
+						{
+							Name:    "generator",
+							Image:   generatorImage,
+							Command: []string{"/bin/sh", "-c"},
+							Args:    append([]string{"echo \"Generating code for function: \"", function.Name}, args...),
+							Env: []corev1.EnvVar{
+								{
+									Name:  "FUNCTION_NAME",
+									Value: function.Name,
+								},
+								{
+									Name:  "NAMESPACE",
+									Value: function.Namespace,
+								},
+								{
+									Name:  "FUNCTION_SPEC",
+									Value: string(marshalFunctionSpec(function)),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// Create the job
+	err := client.Create(context.TODO(), job)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create code generation job: %w", err)
+	}
+
+	return job, nil
+}
+
+func marshalFunctionSpec(fn *kdexv1alpha1.KDexFunction) []byte {
+	bytes, _ := json.MarshalIndent(fn, "", "  ")
+	return bytes
 }
