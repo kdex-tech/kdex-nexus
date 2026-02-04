@@ -25,6 +25,7 @@ import (
 
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
@@ -328,6 +329,49 @@ func createCodeGenerationJob(client client.Client, function *kdexv1alpha1.KDexFu
 									Value: string(marshalFunctionSpec(function)),
 								},
 							},
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "shared-data",
+									MountPath: "/shared",
+								},
+							},
+						},
+						{
+							Name:  "completion",
+							Image: "busybox:latest",
+
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "shared-data",
+									MountPath: "/shared",
+								},
+							},
+
+							Command: []string{"/bin/sh", "-c"},
+							Args: []string{
+								`cat /shared/function_info.txt && 
+         curl -X PATCH -H "Content-Type: application/json-patch+json" --data '{"status":{"state":"StubGenerated"}}' http://api-server/v1/namespaces/${NAMESPACE}/kdexfunctions/${FUNCTION_NAME}`,
+							},
+
+							// Optional: Set resource limits
+							Resources: corev1.ResourceRequirements{
+								Requests: corev1.ResourceList{
+									"cpu":    resource.MustParse("50m"),
+									"memory": resource.MustParse("50Mi"),
+								},
+								Limits: corev1.ResourceList{
+									"cpu":    resource.MustParse("100m"),
+									"memory": resource.MustParse("100Mi"),
+								},
+							},
+						},
+					},
+					Volumes: []corev1.Volume{
+						{
+							Name: "shared-data",
+							VolumeSource: corev1.VolumeSource{
+								EmptyDir: &corev1.EmptyDirVolumeSource{},
+							},
 						},
 					},
 				},
@@ -335,6 +379,8 @@ func createCodeGenerationJob(client client.Client, function *kdexv1alpha1.KDexFu
 		},
 	}
 
+	// Add command or script to write data to /shared
+	job.Spec.Template.Spec.Containers[0].Args = append(job.Spec.Template.Spec.Containers[0].Args, " && echo 'Function Name: $(FUNCTION_NAME)' > /shared/function_info.txt")
 	// Create the job
 	err := client.Create(context.TODO(), job)
 	if err != nil {
