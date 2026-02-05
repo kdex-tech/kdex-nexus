@@ -18,18 +18,15 @@ package controller
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"time"
 
-	batchv1 "k8s.io/api/batch/v1"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	"kdex.dev/crds/configuration"
+	"kdex.dev/nexus/internal/generate"
 	nexuswebhook "kdex.dev/nexus/internal/webhook"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -96,7 +93,7 @@ func (r *KDexFunctionReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	}
 
 	// BuildValid can happen either manually by setting spec.function.generatorConfig
-	if len(function.Spec.Function.GeneratorConfig) > 0 || len(function.Status.GeneratorConfig) > 0 {
+	if function.Spec.Function.GeneratorConfig != nil || function.Status.GeneratorConfig != nil {
 		function.Status.State = kdexv1alpha1.KDexFunctionStateBuildValid
 	} else if function.Spec.Function.StubDetails == nil && function.Status.StubDetails == nil &&
 		function.Spec.Function.Executable == "" && function.Status.Executable == "" &&
@@ -129,46 +126,19 @@ func (r *KDexFunctionReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		// StubDetails which must be set in function.Status.StubDetails and
 		// function.Status.State = kdexv1alpha1.KDexFunctionStateStubGenerated
 
-		// TODO: create a Pod that will execute the code generator using the
-
-		// Implement code generation by creating a Job
-		generatorConfig := function.Spec.Function.GeneratorConfig
-		if len(generatorConfig) == 0 {
-			generatorConfig = function.Status.GeneratorConfig
-		}
-
-		if len(generatorConfig) > 0 {
-			// Create a Job for code generation
-			job, err := createCodeGenerationJob(r.Client, &function, generatorConfig)
-			if err != nil {
-				kdexv1alpha1.SetConditions(
-					&function.Status.Conditions,
-					kdexv1alpha1.ConditionStatuses{
-						Degraded:    metav1.ConditionTrue,
-						Progressing: metav1.ConditionFalse,
-						Ready:       metav1.ConditionFalse,
-					},
-					kdexv1alpha1.ConditionReasonReconcileError,
-					fmt.Sprintf("Failed to create code generation job: %v", err),
-				)
-				return ctrl.Result{}, err
-			}
-
-			// Update status to indicate job creation
-			function.Status.State = kdexv1alpha1.KDexFunctionStateBuildValid
+		_, err := generate.CheckOrCreateGenerateJob(ctx, r.Client, &function, host.Name)
+		if err != nil {
 			kdexv1alpha1.SetConditions(
 				&function.Status.Conditions,
 				kdexv1alpha1.ConditionStatuses{
-					Degraded:    metav1.ConditionFalse,
-					Progressing: metav1.ConditionTrue,
+					Degraded:    metav1.ConditionTrue,
+					Progressing: metav1.ConditionFalse,
 					Ready:       metav1.ConditionFalse,
 				},
-				kdexv1alpha1.ConditionReasonReconciling,
-				fmt.Sprintf("Created code generation job %s", job.Name),
+				kdexv1alpha1.ConditionReasonReconcileError,
+				fmt.Sprintf("Failed to create code generation job: %v", err),
 			)
-
-			log.V(1).Info("created code generation job", "job", job.Name)
-			return ctrl.Result{}, nil
+			return ctrl.Result{}, err
 		}
 
 		kdexv1alpha1.SetConditions(
@@ -184,6 +154,9 @@ func (r *KDexFunctionReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 		log.V(1).Info(string(kdexv1alpha1.KDexFunctionStateBuildValid))
 
+		function.Status.State = kdexv1alpha1.KDexFunctionStateBuildValid
+
+		// wait for status to be updated accordingly
 		return ctrl.Result{}, nil
 	}
 
@@ -270,127 +243,4 @@ func (r *KDexFunctionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		}).
 		Named("kdexfunction").
 		Complete(r)
-}
-
-// createCodeGenerationJob creates a Kubernetes Job for code generation
-func createCodeGenerationJob(client client.Client, function *kdexv1alpha1.KDexFunction, generatorConfig map[string]string) (*batchv1.Job, error) {
-	// Determine the code generator to use based on generator config
-	generatorImage := generatorConfig["image"]
-	var args []string
-	for k, v := range generatorConfig {
-		if k != "image" {
-			args = append(args, k)
-			args = append(args, v)
-		}
-	}
-
-	// Create Job name
-	jobName := fmt.Sprintf("%s-codegen-%d", function.Name, time.Now().Unix())
-
-	// Create the Job
-	job := &batchv1.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      jobName,
-			Namespace: function.Namespace,
-			Labels: map[string]string{
-				"app":      "codegen",
-				"function": function.Name,
-			},
-			OwnerReferences: []metav1.OwnerReference{
-				{
-					APIVersion: function.APIVersion,
-					Kind:       "KDexFunction",
-					Name:       function.Name,
-					UID:        function.UID,
-				},
-			},
-		},
-		Spec: batchv1.JobSpec{
-			Template: corev1.PodTemplateSpec{
-				Spec: corev1.PodSpec{
-					RestartPolicy: corev1.RestartPolicyNever,
-					Containers: []corev1.Container{
-						{
-							Name:    "generator",
-							Image:   generatorImage,
-							Command: []string{"/bin/sh", "-c"},
-							Args:    append([]string{"echo \"Generating code for function: \"", function.Name}, args...),
-							Env: []corev1.EnvVar{
-								{
-									Name:  "FUNCTION_NAME",
-									Value: function.Name,
-								},
-								{
-									Name:  "NAMESPACE",
-									Value: function.Namespace,
-								},
-								{
-									Name:  "FUNCTION_SPEC",
-									Value: string(marshalFunctionSpec(function)),
-								},
-							},
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "shared-data",
-									MountPath: "/shared",
-								},
-							},
-						},
-						{
-							Name:  "completion",
-							Image: "busybox:latest",
-
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "shared-data",
-									MountPath: "/shared",
-								},
-							},
-
-							Command: []string{"/bin/sh", "-c"},
-							Args: []string{
-								`cat /shared/function_info.txt && 
-         curl -X PATCH -H "Content-Type: application/json-patch+json" --data '{"status":{"state":"StubGenerated"}}' http://api-server/v1/namespaces/${NAMESPACE}/kdexfunctions/${FUNCTION_NAME}`,
-							},
-
-							// Optional: Set resource limits
-							Resources: corev1.ResourceRequirements{
-								Requests: corev1.ResourceList{
-									"cpu":    resource.MustParse("50m"),
-									"memory": resource.MustParse("50Mi"),
-								},
-								Limits: corev1.ResourceList{
-									"cpu":    resource.MustParse("100m"),
-									"memory": resource.MustParse("100Mi"),
-								},
-							},
-						},
-					},
-					Volumes: []corev1.Volume{
-						{
-							Name: "shared-data",
-							VolumeSource: corev1.VolumeSource{
-								EmptyDir: &corev1.EmptyDirVolumeSource{},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	// Add command or script to write data to /shared
-	job.Spec.Template.Spec.Containers[0].Args = append(job.Spec.Template.Spec.Containers[0].Args, " && echo 'Function Name: $(FUNCTION_NAME)' > /shared/function_info.txt")
-	// Create the job
-	err := client.Create(context.TODO(), job)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create code generation job: %w", err)
-	}
-
-	return job, nil
-}
-
-func marshalFunctionSpec(fn *kdexv1alpha1.KDexFunction) []byte {
-	bytes, _ := json.MarshalIndent(fn, "", "  ")
-	return bytes
 }

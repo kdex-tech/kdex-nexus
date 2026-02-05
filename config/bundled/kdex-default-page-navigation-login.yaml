@@ -16,20 +16,20 @@ spec:
                 {{- if .Extra.Identity.GivenName -}}
                   {{ .Extra.Identity.GivenName | trunc 1 | upper }}{{ if .Extra.Identity.FamilyName }}{{ .Extra.Identity.FamilyName | trunc 1 | upper }}{{ end }}
                 {{- else -}}
-                  {{ .Extra.Identity.Email | default (.Extra.Identity.UID | default "U") | trunc 2 | upper }}
+                  {{ .Extra.Identity.Email | default (.Extra.Identity.Subject | default "U") | trunc 2 | upper }}
                 {{- end -}}
               </div>
             {{- end -}}
           </div>
           <div class="user-info">
             <span class="user-name">
-              {{- .Extra.Identity.Nickname | default (.Extra.Identity.Name | default (.Extra.Identity.Email | default (.Extra.Identity.UID | default "User"))) -}}
+              {{- .Extra.Identity.Nickname | default (.Extra.Identity.Name | default (.Extra.Identity.Email | default (.Extra.Identity.Subject | default "User"))) -}}
             </span>
           </div>
         </div>
         <div class="dropdown-content">
            <div class="dropdown-header">
-             <div class="user-name" style="font-weight: 600;">{{ .Extra.Identity.Name | default (.Extra.Identity.Email | default .Extra.Identity.UID) }}</div>
+             <div class="user-name" style="font-weight: 600;">{{ .Extra.Identity.Name | default (.Extra.Identity.Email | default .Extra.Identity.Subject) }}</div>
              <div class="header-email">{{ .Extra.Identity.Email }}</div>
            </div>
            <form action="/-/logout" method="POST" id="logout-form">
