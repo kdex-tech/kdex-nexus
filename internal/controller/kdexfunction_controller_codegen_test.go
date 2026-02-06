@@ -22,8 +22,6 @@ var _ = Describe("KDexFunction Codegen", func() {
 		})
 
 		It("becomes BuildValid", func() {
-			Skip("not ready yet")
-
 			resource := &kdexv1alpha1.KDexFunction{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
@@ -44,9 +42,6 @@ var _ = Describe("KDexFunction Codegen", func() {
 						Environment: "go-env",
 						Language:    "go",
 						GeneratorConfig: &kdexv1alpha1.GeneratorConfig{
-							Command: []string{
-								"/bin/sh", "-c",
-							},
 							Args: []string{
 								`
 cd ${WORKING_DIRECTORY}
@@ -66,7 +61,18 @@ go vet ./...
 go fmt ./...
 `,
 							},
-							Image: "k3d-registry:5000/kdex-tech/kdex-fngogen",
+							Command: []string{
+								"/bin/sh", "-c",
+							},
+							Git: kdexv1alpha1.Git{
+								Image:          "alpine/git:latest",
+								CommitterEmail: "test@kdex.dev",
+								CommitterName:  "KDex Codegen Bot",
+								RepoSecretRef: corev1.LocalObjectReference{
+									Name: "git-secret",
+								},
+							},
+							Image: "k3d-registry:5000/kdex-tech/fngogen",
 						},
 					},
 				},

@@ -126,7 +126,7 @@ func (r *KDexFunctionReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		// StubDetails which must be set in function.Status.StubDetails and
 		// function.Status.State = kdexv1alpha1.KDexFunctionStateStubGenerated
 
-		_, err := generate.CheckOrCreateGenerateJob(ctx, r.Client, &function, host.Name)
+		_, err := generate.CheckOrCreateGenerateJob(ctx, r.Client, r.Scheme, &function, host.Name)
 		if err != nil {
 			kdexv1alpha1.SetConditions(
 				&function.Status.Conditions,

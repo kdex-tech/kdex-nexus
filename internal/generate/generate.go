@@ -8,14 +8,16 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	"k8s.io/apimachinery/pkg/api/resource"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	"kdex.dev/nexus/internal/utils"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func CheckOrCreateGenerateJob(ctx context.Context, c client.Client, function *kdexv1alpha1.KDexFunction, sa string) (*batchv1.Job, error) {
+func CheckOrCreateGenerateJob(ctx context.Context, c client.Client, scheme *runtime.Scheme, function *kdexv1alpha1.KDexFunction, sa string) (*batchv1.Job, error) {
 	generatorConfig := function.Spec.Function.GeneratorConfig
 	if generatorConfig == nil {
 		generatorConfig = function.Status.GeneratorConfig
@@ -40,6 +42,8 @@ func CheckOrCreateGenerateJob(ctx context.Context, c client.Client, function *kd
 		return &list.Items[0], nil
 	}
 
+	functionString := string(marshalFunctionSpec(function))
+
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      jobName,
@@ -48,14 +52,6 @@ func CheckOrCreateGenerateJob(ctx context.Context, c client.Client, function *kd
 				"app":        "codegen",
 				"function":   function.Name,
 				"generation": fmt.Sprintf("%d", function.Generation),
-			},
-			OwnerReferences: []metav1.OwnerReference{
-				{
-					APIVersion: function.APIVersion,
-					Kind:       "KDexFunction",
-					Name:       function.Name,
-					UID:        function.UID,
-				},
 			},
 		},
 		Spec: batchv1.JobSpec{
@@ -131,10 +127,6 @@ echo "TARGET_DIR=${TARGET_DIR}" > .env
 									Value: function.Namespace,
 								},
 								{
-									Name:  "FUNCTION_SPEC",
-									Value: string(marshalFunctionSpec(function)),
-								},
-								{
 									Name:  "FUNCTION_BASEPATH",
 									Value: function.Spec.API.BasePath,
 								},
@@ -198,7 +190,7 @@ echo "TARGET_DIR=${TARGET_DIR}" > .env
 									MountPath: "/shared",
 								},
 								{
-									Name:      "git-key",
+									Name:      "gpg-key",
 									MountPath: "/var/secrets/gpg",
 									ReadOnly:  true,
 								},
@@ -206,7 +198,7 @@ echo "TARGET_DIR=${TARGET_DIR}" > .env
 						},
 						{
 							Name:    "generate-code",
-							Image:   generatorConfig.Image, // golang:1.24-alpine
+							Image:   generatorConfig.Image,
 							Command: generatorConfig.Command,
 							Args:    generatorConfig.Args,
 							Env: []corev1.EnvVar{
@@ -220,7 +212,7 @@ echo "TARGET_DIR=${TARGET_DIR}" > .env
 								},
 								{
 									Name:  "FUNCTION_SPEC",
-									Value: string(marshalFunctionSpec(function)),
+									Value: functionString,
 								},
 								{
 									Name:  "WORKING_DIRECTORY",
@@ -236,7 +228,7 @@ echo "TARGET_DIR=${TARGET_DIR}" > .env
 						},
 						{
 							Name:    "git-push",
-							Image:   generatorConfig.Git.Image, // "alpine/git:latest"
+							Image:   generatorConfig.Git.Image,
 							Command: []string{"/bin/sh", "-c"},
 							Args: []string{`
 cd /shared
@@ -285,10 +277,6 @@ echo "REPOSITORY=$(git remote get-url --push origin)" >> .env
 									Value: function.Namespace,
 								},
 								{
-									Name:  "FUNCTION_SPEC",
-									Value: string(marshalFunctionSpec(function)),
-								},
-								{
 									Name:  "FUNCTION_BASEPATH",
 									Value: function.Spec.API.BasePath,
 								},
@@ -330,7 +318,8 @@ curl -X PATCH -H "Content-Type: application/json-patch+json" --data '{
 	"status":{
 		"state":"StubGenerated"
 	}
-}' http://api-server/v1/namespaces/${NAMESPACE}/kdexfunctions/${FUNCTION_NAME}`,
+}' http://api-server/v1/namespaces/${NAMESPACE}/kdexfunctions/${FUNCTION_NAME}
+`,
 							},
 
 							// Optional: Set resource limits
@@ -356,14 +345,14 @@ curl -X PATCH -H "Content-Type: application/json-patch+json" --data '{
 							},
 						},
 						{
-							Name: "git-key",
+							Name: "gpg-key",
 							VolumeSource: corev1.VolumeSource{
 								Secret: &corev1.SecretVolumeSource{
 									SecretName: generatorConfig.Git.RepoSecretRef.Name,
 									Items: []corev1.KeyToPath{
 										{
 											Key:  "gpg.key",
-											Path: "/var/secrets/gpg/gpg.key",
+											Path: "gpg.key",
 										},
 									},
 								},
@@ -376,8 +365,12 @@ curl -X PATCH -H "Content-Type: application/json-patch+json" --data '{
 		},
 	}
 
-	// Add command or script to write data to /shared
-	job.Spec.Template.Spec.Containers[0].Args = append(job.Spec.Template.Spec.Containers[0].Args, " && echo 'Function Name: $(FUNCTION_NAME)' > /shared/function_info.txt")
+	// Add owner reference
+	err = ctrl.SetControllerReference(function, job, scheme)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create code generation job: %w", err)
+	}
+
 	// Create the job
 	err = c.Create(context.TODO(), job)
 	if err != nil {
