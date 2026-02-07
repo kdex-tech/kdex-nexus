@@ -170,68 +170,29 @@ func (v *KDexFunctionValidator[T]) validateOpenAPI(spec *kdexv1alpha1.KDexFuncti
 		}
 
 		// Add operations
-		if pathItem.Connect != nil {
-			var op map[string]any
-			if err := json.Unmarshal(pathItem.Connect.Raw, &op); err == nil {
-				pathObj["connect"] = op
-			}
-			collector(op)
+		ops := []struct {
+			name string
+			raw  *runtime.RawExtension
+		}{
+			{"connect", pathItem.Connect},
+			{"delete", pathItem.Delete},
+			{"get", pathItem.Get},
+			{"head", pathItem.Head},
+			{"options", pathItem.Options},
+			{"patch", pathItem.Patch},
+			{"post", pathItem.Post},
+			{"put", pathItem.Put},
+			{"trace", pathItem.Trace},
 		}
-		if pathItem.Delete != nil {
-			var op map[string]any
-			if err := json.Unmarshal(pathItem.Delete.Raw, &op); err == nil {
-				pathObj["delete"] = op
+
+		for _, opInfo := range ops {
+			if opInfo.raw != nil {
+				var op map[string]any
+				if err := json.Unmarshal(opInfo.raw.Raw, &op); err == nil {
+					pathObj[opInfo.name] = op
+					collector(op)
+				}
 			}
-			collector(op)
-		}
-		if pathItem.Get != nil {
-			var op map[string]any
-			if err := json.Unmarshal(pathItem.Get.Raw, &op); err == nil {
-				pathObj["get"] = op
-			}
-			collector(op)
-		}
-		if pathItem.Head != nil {
-			var op map[string]any
-			if err := json.Unmarshal(pathItem.Head.Raw, &op); err == nil {
-				pathObj["head"] = op
-			}
-			collector(op)
-		}
-		if pathItem.Options != nil {
-			var op map[string]any
-			if err := json.Unmarshal(pathItem.Options.Raw, &op); err == nil {
-				pathObj["options"] = op
-			}
-			collector(op)
-		}
-		if pathItem.Patch != nil {
-			var op map[string]any
-			if err := json.Unmarshal(pathItem.Patch.Raw, &op); err == nil {
-				pathObj["patch"] = op
-			}
-			collector(op)
-		}
-		if pathItem.Post != nil {
-			var op map[string]any
-			if err := json.Unmarshal(pathItem.Post.Raw, &op); err == nil {
-				pathObj["post"] = op
-			}
-			collector(op)
-		}
-		if pathItem.Put != nil {
-			var op map[string]any
-			if err := json.Unmarshal(pathItem.Put.Raw, &op); err == nil {
-				pathObj["put"] = op
-			}
-			collector(op)
-		}
-		if pathItem.Trace != nil {
-			var op map[string]any
-			if err := json.Unmarshal(pathItem.Trace.Raw, &op); err == nil {
-				pathObj["trace"] = op
-			}
-			collector(op)
 		}
 
 		paths[pathKey] = pathObj
