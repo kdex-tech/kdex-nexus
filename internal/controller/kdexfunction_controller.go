@@ -90,7 +90,7 @@ func (r *KDexFunctionReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		if host.Spec.Routing.TLS != nil {
 			scheme = "https"
 		}
-		function.Status.OpenAPISchemaURL = fmt.Sprintf("%s://%s/-/openapi?tag=%s", scheme, host.Spec.Routing.Domains[0], function.Name)
+		function.Status.OpenAPISchemaURL = fmt.Sprintf("%s://%s/-/openapi?type=function&tag=%s", scheme, host.Spec.Routing.Domains[0], function.Name)
 		function.Status.State = kdexv1alpha1.KDexFunctionStateOpenAPIValid
 	}
 
