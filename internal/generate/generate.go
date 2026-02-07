@@ -17,16 +17,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func CheckOrCreateGenerateJob(ctx context.Context, c client.Client, scheme *runtime.Scheme, function *kdexv1alpha1.KDexFunction, sa string) (*batchv1.Job, error) {
-	generatorConfig := function.Spec.Function.GeneratorConfig
-	if generatorConfig == nil {
-		generatorConfig = function.Status.GeneratorConfig
-	}
-
-	if generatorConfig.Image == "" {
-		return nil, fmt.Errorf("incorrect generator config state! GeneratorConfig empty: %s/%s", function.Namespace, function.Name)
-	}
-
+func CheckOrCreateGenerateJob(ctx context.Context, c client.Client, scheme *runtime.Scheme, function *kdexv1alpha1.KDexFunction, generatorConfig *kdexv1alpha1.GeneratorConfig, sa string) (*batchv1.Job, error) {
 	// Create Job name
 	jobName := fmt.Sprintf("%s-codegen-%d", function.Name, function.Generation)
 
