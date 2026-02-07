@@ -22,6 +22,8 @@ import (
 	"os"
 	"time"
 
+	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
@@ -126,7 +128,7 @@ func (r *KDexFunctionReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		// StubDetails which must be set in function.Status.StubDetails and
 		// function.Status.State = kdexv1alpha1.KDexFunctionStateStubGenerated
 
-		_, err := generate.CheckOrCreateGenerateJob(ctx, r.Client, r.Scheme, &function, host.Name)
+		job, err := generate.CheckOrCreateGenerateJob(ctx, r.Client, r.Scheme, &function, host.Name)
 		if err != nil {
 			kdexv1alpha1.SetConditions(
 				&function.Status.Conditions,
@@ -139,6 +141,24 @@ func (r *KDexFunctionReconciler) Reconcile(ctx context.Context, req ctrl.Request
 				fmt.Sprintf("Failed to create code generation job: %v", err),
 			)
 			return ctrl.Result{}, err
+		}
+
+		if job != nil {
+			for _, cond := range job.Status.Conditions {
+				if cond.Type == batchv1.JobFailed && cond.Status == corev1.ConditionTrue {
+					kdexv1alpha1.SetConditions(
+						&function.Status.Conditions,
+						kdexv1alpha1.ConditionStatuses{
+							Degraded:    metav1.ConditionTrue,
+							Progressing: metav1.ConditionFalse,
+							Ready:       metav1.ConditionFalse,
+						},
+						kdexv1alpha1.ConditionReasonReconcileError,
+						fmt.Sprintf("Code generation job failed: %s", cond.Message),
+					)
+					return ctrl.Result{}, nil
+				}
+			}
 		}
 
 		kdexv1alpha1.SetConditions(

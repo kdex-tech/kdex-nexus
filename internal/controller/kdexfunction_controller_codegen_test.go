@@ -42,34 +42,12 @@ var _ = Describe("KDexFunction Codegen", func() {
 						Environment: "go-env",
 						Language:    "go",
 						GeneratorConfig: &kdexv1alpha1.GeneratorConfig{
-							Args: []string{
-								`
-cd ${WORKING_DIRECTORY}
-source .env
-cd ${TARGET_DIR}
-[ ! -f "go.mod" ] && go mod init function
-echo "${FUNCTION_SPEC}" > openapi-spec.json
-cat <<EOF > generate.go
-package project
-
-//go:generate go run github.com/ogen-go/ogen/cmd/ogen@latest --target api --clean openapi-spec.json
-EOF
-go generate ./...
-/fngogen
-go mod tidy
-go vet ./...
-go fmt ./...
-`,
-							},
-							Command: []string{
-								"/bin/sh", "-c",
-							},
 							Git: kdexv1alpha1.Git{
-								Image:          "alpine/git:latest",
+								Image:          "alpine:3.19",
 								CommitterEmail: "test@kdex.dev",
 								CommitterName:  "KDex Codegen Bot",
 								RepoSecretRef: corev1.LocalObjectReference{
-									Name: "git-secret",
+									Name: "gitea-job-config",
 								},
 							},
 							Image: "k3d-registry:5000/kdex-tech/fngogen",

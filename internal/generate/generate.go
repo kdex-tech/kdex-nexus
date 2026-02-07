@@ -66,26 +66,23 @@ func CheckOrCreateGenerateJob(ctx context.Context, c client.Client, scheme *runt
 							Image:   generatorConfig.Git.Image,
 							Command: []string{"/bin/sh", "-c"},
 							Args: []string{
-								`
+								`set -e
+
+apk add --no-cache git
+
 cd /shared
 
-# 1. Setup identity and SSH Signing
-mkdir -p ~/.ssh
-
-gpg --import /var/secrets/gpg/gpg.key &2>/dev/null
-(echo "4"; echo "y"; echo "save") | gpg --command-fd 0 --edit-key $GPG_KEY_ID trust
-export GPG_TTY=$(tty)
-
+# 1. Basic Git Identity (No Signing)
 git config --global user.email "${COMMITTER_EMAIL}"
 git config --global user.name "${COMMITTER_NAME}"
-git config --global user.signingkey $GPG_KEY_ID
-git config --global commit.gpgsign true
+# Explicitly disable signing to avoid errors if the runner has global defaults
+git config --global commit.gpgsign false
 
-# 2. Clone the repo (using a token for auth)
-git clone https://x-access-token:${GIT_TOKEN}@${GIT_HOST}/${GIT_ORG}/${GIT_REPO} .
+# 2. Clone the repo
+# We use the 'admin' username and the token we generated earlier
+git clone http://${GIT_USER}:${GIT_TOKEN}@${GIT_HOST}/${GIT_ORG}/${GIT_REPO} .
 
 # 3. Sanitize variables to create a safe branch name
-# Example: Name="my-app", BasePath="/api/v1" -> my-app-api-v1
 SAFE_PATH=$(echo "${FUNCTION_BASEPATH}" | sed 's/\//-/g' | sed 's/^-//')
 BRANCH_NAME="gen/${NAMESPACE}/${FUNCTION_NAME}-${SAFE_PATH}"
 
@@ -100,13 +97,10 @@ fi
 # 5. Create the subdirectory if it doesn't exist
 # We target the specific subdirectory for this function
 TARGET_DIR="./functions/${NAMESPACE}/${FUNCTION_NAME}-${SAFE_PATH}"
-mkdir -p $TARGET_DIR
+mkdir -p "${TARGET_DIR}"
 
 # 6. Ignore the .env files
-if ! grep -q ".env" .gitignore; then
-  echo ".env" >> .gitignore
-  echo "Added .env to .gitignore"
-fi
+grep -q ".env" .gitignore || echo ".env" >> .gitignore
 echo "TARGET_DIR=${TARGET_DIR}" > .env
 								`,
 							},
@@ -175,10 +169,10 @@ echo "TARGET_DIR=${TARGET_DIR}" > .env
 									},
 								},
 								{
-									Name: "GPG_KEY_ID",
+									Name: "GIT_USER",
 									ValueFrom: &corev1.EnvVarSource{
 										SecretKeyRef: &corev1.SecretKeySelector{
-											Key:                  "gpg.key.id",
+											Key:                  "user",
 											LocalObjectReference: generatorConfig.Git.RepoSecretRef,
 										},
 									},
@@ -311,9 +305,11 @@ echo "REPOSITORY=$(git remote get-url --push origin)" >> .env
 
 							Command: []string{"/bin/sh", "-c"},
 							Args: []string{
-								`
+								`set -e
+
 cd /shared
 source .env
+
 curl -X PATCH -H "Content-Type: application/json-patch+json" --data '{
 	"status":{
 		"state":"StubGenerated"
