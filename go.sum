@@ -139,8 +139,8 @@ github.com/joshdk/go-junit v1.0.0 h1:S86cUKIdwBHWwA6xCmFlf3RTLfVXYQfvanM5Uh+K6GE
 github.com/joshdk/go-junit v1.0.0/go.mod h1:TiiV0PqkaNfFXjEiyjWM3XXrhVyCa1K4Zfga6W52ung=
 github.com/json-iterator/go v1.1.12 h1:PV8peI4a0ysnczrg+LtxykD8LfKY9ML6u2jnxaEnrnM=
 github.com/json-iterator/go v1.1.12/go.mod h1:e30LSqwooZae/UwlEbR2852Gd8hjQvJoHmT4TnhNGBo=
-github.com/kdex-tech/kdex-crds v0.14.96 h1:0nyHLAFqW2B8m8jI9vTsTF6+ekq2zmxHkvTLHrO7Emc=
-github.com/kdex-tech/kdex-crds v0.14.96/go.mod h1:bx+UsCLsc4N8brQnm9s3bB8JQA9Vwxg8J3QVrqzBWdQ=
+github.com/kdex-tech/kdex-crds v0.14.97 h1:YLVDAHXufpqXfFKcx1bJ1GsvVNrF4KPoI9qWA6HGo4Q=
+github.com/kdex-tech/kdex-crds v0.14.97/go.mod h1:bx+UsCLsc4N8brQnm9s3bB8JQA9Vwxg8J3QVrqzBWdQ=
 github.com/klauspost/compress v1.18.1 h1:bcSGx7UbpBqMChDtsF28Lw6v/G94LPrrbMbdC3JH2co=
 github.com/klauspost/compress v1.18.1/go.mod h1:ZQFFVG+MdnR0P+l6wpXgIL4NTtwiKIdBnrBd8Nrxr+0=
 github.com/kr/pretty v0.3.1 h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=
