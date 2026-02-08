@@ -1,0 +1,15 @@
+apiVersion: kdex.dev/v1alpha1
+kind: KDexClusterFaaSAdaptor
+metadata:
+  name: kdex-default-faas-adaptor-knative
+spec:
+  generators:
+    "go/go-env":
+      image: k3d-registry:5000/kdex-tech/fngogen
+      git:
+        image: k3d-registry:5000/kdex-tech/kdex-cli-tools
+        committerEmail: test@kdex.dev
+        committerName: KDex Codegen Bot
+        repoSecretRef:
+          name: gitea-job-config
+  provider: knative

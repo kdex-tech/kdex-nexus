@@ -259,11 +259,11 @@ func ResolveKDexObjectReference(
 	conditions, ok := conditionsField.Interface().([]metav1.Condition)
 
 	if !ok {
-		return nil, true, reconcile.Result{}, fmt.Errorf("no condition field on status %v", obj)
+		return obj.(client.Object), true, reconcile.Result{}, fmt.Errorf("no condition field on status %v", obj)
 	}
 
 	if isReady, r1, err := isReady(obj.(client.Object), &conditions, requeueDelay); !isReady {
-		return nil, true, r1, err
+		return obj.(client.Object), true, r1, err
 	}
 
 	return obj.(client.Object), false, reconcile.Result{}, nil

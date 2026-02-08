@@ -68,6 +68,7 @@ rules:
   resources:
   - kdexapps
   - kdexclusterapps
+  - kdexclusterfaasadaptors
   - kdexclusterpagearchetypes
   - kdexclusterpagefooters
   - kdexclusterpageheaders
@@ -76,6 +77,7 @@ rules:
   - kdexclusterthemes
   - kdexclustertranslations
   - kdexclusterutilitypages
+  - kdexfaasadaptors
   - kdexfunctions
   - kdexhosts
   - kdexinternalhosts
@@ -104,6 +106,7 @@ rules:
   resources:
   - kdexapps/finalizers
   - kdexclusterapps/finalizers
+  - kdexclusterfaasadaptors/finalizers
   - kdexclusterpagearchetypes/finalizers
   - kdexclusterpagefooters/finalizers
   - kdexclusterpageheaders/finalizers
@@ -112,6 +115,7 @@ rules:
   - kdexclusterthemes/finalizers
   - kdexclustertranslations/finalizers
   - kdexclusterutilitypages/finalizers
+  - kdexfaasadaptors/finalizers
   - kdexfunctions/finalizers
   - kdexhosts/finalizers
   - kdexinternalhosts/finalizers
@@ -134,6 +138,7 @@ rules:
   resources:
   - kdexapps/status
   - kdexclusterapps/status
+  - kdexclusterfaasadaptors/status
   - kdexclusterpagearchetypes/status
   - kdexclusterpagefooters/status
   - kdexclusterpageheaders/status
@@ -142,6 +147,7 @@ rules:
   - kdexclusterthemes/status
   - kdexclustertranslations/status
   - kdexclusterutilitypages/status
+  - kdexfaasadaptors/status
   - kdexfunctions/status
   - kdexhosts/status
   - kdexinternalhosts/status

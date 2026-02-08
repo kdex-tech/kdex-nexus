@@ -29,7 +29,6 @@ import (
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	"kdex.dev/crds/configuration"
 	"kdex.dev/nexus/internal/generate"
-	"kdex.dev/nexus/internal/utils"
 	nexuswebhook "kdex.dev/nexus/internal/webhook"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -85,6 +84,32 @@ func (r *KDexFunctionReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		return r1, err
 	}
 
+	faasAdaptorRef := host.Spec.FaaSAdaptorRef
+	if faasAdaptorRef == nil {
+		faasAdaptorRef = &kdexv1alpha1.KDexObjectReference{
+			Kind: "KDexClusterFaaSAdaptor",
+			Name: "kdex-default-faas-adaptor-knative",
+		}
+	}
+	faasAdaptorObj, _, _, err := ResolveKDexObjectReference(ctx, r.Client, &function, &function.Status.Conditions, faasAdaptorRef, r.RequeueDelay)
+	if err != nil {
+		kdexv1alpha1.SetConditions(
+			&function.Status.Conditions,
+			kdexv1alpha1.ConditionStatuses{
+				Degraded:    metav1.ConditionTrue,
+				Progressing: metav1.ConditionFalse,
+				Ready:       metav1.ConditionFalse,
+			},
+			kdexv1alpha1.ConditionReasonReconcileSuccess,
+			err.Error(),
+		)
+		return ctrl.Result{}, err
+	}
+
+	if faasAdaptorObj != nil {
+		function.Status.Attributes["faasAdaptor.generation"] = fmt.Sprintf("%d", faasAdaptorObj.GetGeneration())
+	}
+
 	// OpenAPIValid should result purely through validation webhook
 	if function.Status.OpenAPISchemaURL == "" {
 		scheme := "http"
@@ -92,26 +117,21 @@ func (r *KDexFunctionReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			scheme = "https"
 		}
 		function.Status.OpenAPISchemaURL = fmt.Sprintf("%s://%s/-/openapi?type=function&tag=%s", scheme, host.Spec.Routing.Domains[0], function.Name)
+		if function.Status.Attributes == nil {
+			function.Status.Attributes = make(map[string]string)
+		}
+
+		port := ""
+		for _, p := range r.Configuration.HostDefault.Service.Ports {
+			if p.Name == "server" {
+				port = fmt.Sprintf(":%d", p.Port)
+				break
+			}
+		}
+		function.Status.Attributes["openapi.schema.url.internal"] = fmt.Sprintf("%s://%s/-/openapi?type=function&tag=%s", "http", host.Name+"."+host.Namespace+".svc.cluster.local"+port, function.Name)
 		function.Status.State = kdexv1alpha1.KDexFunctionStateOpenAPIValid
 		function.Status.Detail = "OpenAPISchemaURL:" + function.Status.OpenAPISchemaURL
-	}
 
-	// BuildValid can happen either manually by setting spec.function.generatorConfig
-	if function.Spec.Function.GeneratorConfig != nil || function.Status.GeneratorConfig != nil {
-		function.Status.State = kdexv1alpha1.KDexFunctionStateBuildValid
-		if function.Spec.Function.GeneratorConfig != nil {
-			function.Status.Detail = "GeneratorImage:" + function.Spec.Function.GeneratorConfig.Image
-		}
-		if function.Status.GeneratorConfig != nil {
-			function.Status.Detail = "GeneratorImage:" + function.Status.GeneratorConfig.Image
-		}
-	} else if function.Spec.Function.StubDetails == nil && function.Status.StubDetails == nil &&
-		function.Spec.Function.Executable == "" && function.Status.Executable == "" &&
-		function.Status.URL == "" {
-
-		// TODO: In this scenario we need to let our Build infrastructure compute the
-		// GeneratorConfig which must be set in function.Status.GeneratorConfig
-		// and function.Status.State = kdexv1alpha1.KDexFunctionStateBuildValid
 		kdexv1alpha1.SetConditions(
 			&function.Status.Conditions,
 			kdexv1alpha1.ConditionStatuses{
@@ -128,26 +148,61 @@ func (r *KDexFunctionReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		return ctrl.Result{}, nil
 	}
 
-	if function.Spec.Function.StubDetails != nil || function.Status.StubDetails != nil {
-		function.Status.State = kdexv1alpha1.KDexFunctionStateStubGenerated
-		if function.Spec.Function.StubDetails != nil {
-			function.Status.Detail = "StubSource:" + utils.IfElse(
-				function.Spec.Function.StubDetails.SourceImage != "",
-				function.Spec.Function.StubDetails.SourceImage,
-				function.Spec.Function.StubDetails.SourcePath,
-			)
+	// BuildValid can happen either manually by setting spec.function.generatorConfig
+	if (function.Spec.Function.GeneratorConfig == nil && function.Status.GeneratorConfig == nil) &&
+		(function.Spec.Function.StubDetails == nil && function.Status.StubDetails == nil) &&
+		(function.Spec.Function.Executable == "" && function.Status.Executable == "") &&
+		(function.Status.URL == "") {
+
+		var faasAdaptorSpec kdexv1alpha1.KDexFaaSAdaptorSpec
+		switch v := faasAdaptorObj.(type) {
+		case *kdexv1alpha1.KDexClusterFaaSAdaptor:
+			faasAdaptorSpec = v.Spec
+		case *kdexv1alpha1.KDexFaaSAdaptor:
+			faasAdaptorSpec = v.Spec
 		}
-		if function.Status.StubDetails != nil {
-			function.Status.Detail = "StubSource:" + utils.IfElse(
-				function.Status.StubDetails.SourceImage != "",
-				function.Status.StubDetails.SourceImage,
-				function.Status.StubDetails.SourcePath,
+
+		function.Status.GeneratorConfig = r.calculateGeneratorConfig(&function, faasAdaptorSpec)
+
+		if function.Status.GeneratorConfig == nil {
+			err := fmt.Errorf("GeneratorConfig %s/%s not found for function %s/%s", function.Spec.Function.Language, function.Spec.Function.Environment, function.Namespace, function.Name)
+			kdexv1alpha1.SetConditions(
+				&function.Status.Conditions,
+				kdexv1alpha1.ConditionStatuses{
+					Degraded:    metav1.ConditionTrue,
+					Progressing: metav1.ConditionFalse,
+					Ready:       metav1.ConditionFalse,
+				},
+				kdexv1alpha1.ConditionReasonReconcileError,
+				err.Error(),
 			)
+			return ctrl.Result{}, err
 		}
-	} else if function.Spec.Function.Executable == "" && function.Status.Executable == "" &&
-		function.Status.URL == "" {
-		// TODO: In this scenario we need to let our Build infrastructure compute the
-		// StubDetails which must be set in function.Status.StubDetails and
+
+		function.Status.State = kdexv1alpha1.KDexFunctionStateBuildValid
+		function.Status.Detail = "GeneratorImage:" + function.Status.GeneratorConfig.Image
+
+		kdexv1alpha1.SetConditions(
+			&function.Status.Conditions,
+			kdexv1alpha1.ConditionStatuses{
+				Degraded:    metav1.ConditionFalse,
+				Progressing: metav1.ConditionTrue,
+				Ready:       metav1.ConditionFalse,
+			},
+			kdexv1alpha1.ConditionReasonReconciling,
+			string(kdexv1alpha1.KDexFunctionStateBuildValid),
+		)
+
+		log.V(1).Info(string(kdexv1alpha1.KDexFunctionStateBuildValid))
+
+		return ctrl.Result{}, nil
+	}
+
+	if (function.Spec.Function.StubDetails == nil && function.Status.StubDetails == nil) &&
+		(function.Spec.Function.Executable == "" && function.Status.Executable == "") &&
+		(function.Status.URL == "") {
+
+		// The Builder will compute the StubDetails which must be set in function.Status.StubDetails and
 		// function.Status.State = kdexv1alpha1.KDexFunctionStateStubGenerated
 
 		generatorConfig := function.Spec.Function.GeneratorConfig
@@ -212,27 +267,16 @@ func (r *KDexFunctionReconciler) Reconcile(ctx context.Context, req ctrl.Request
 				Ready:       metav1.ConditionFalse,
 			},
 			kdexv1alpha1.ConditionReasonReconciling,
-			string(kdexv1alpha1.KDexFunctionStateBuildValid),
+			fmt.Sprintf("Waiting on code generation job %s/%s to complete", job.Namespace, job.Name),
 		)
-
-		log.V(1).Info(string(kdexv1alpha1.KDexFunctionStateBuildValid))
-
-		function.Status.State = kdexv1alpha1.KDexFunctionStateBuildValid
-		function.Status.Detail = "GeneratorImage:" + generatorConfig.Image
 
 		return ctrl.Result{}, nil
 	}
 
-	if function.Spec.Function.Executable != "" || function.Status.Executable != "" {
-		function.Status.State = kdexv1alpha1.KDexFunctionStateExecutableAvailable
-		function.Status.Detail = "Executable:" + utils.IfElse(
-			function.Spec.Function.Executable != "",
-			function.Spec.Function.Executable,
-			function.Status.Executable,
-		)
-	} else if function.Status.URL == "" {
-		// TODO: In this scenario we need to let our Build infrastructure create the
-		// Executable which must be set in function.Status.Executable and
+	if (function.Spec.Function.Executable == "" && function.Status.Executable == "") &&
+		(function.Status.URL == "") {
+
+		// The Builder will compute the Executable which must be set in function.Status.Executable and
 		// function.Status.State = kdexv1alpha1.KDexFunctionStateExecutableAvailable
 		kdexv1alpha1.SetConditions(
 			&function.Status.Conditions,
@@ -312,4 +356,17 @@ func (r *KDexFunctionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		}).
 		Named("kdexfunction").
 		Complete(r)
+}
+
+func (r *KDexFunctionReconciler) calculateGeneratorConfig(function *kdexv1alpha1.KDexFunction, faasAdaptorSpec kdexv1alpha1.KDexFaaSAdaptorSpec) *kdexv1alpha1.GeneratorConfig {
+	language := function.Spec.Function.Language
+	environment := function.Spec.Function.Environment
+
+	generatorConfig, ok := faasAdaptorSpec.Generators[language+"/"+environment]
+
+	if !ok {
+		return nil
+	}
+
+	return &generatorConfig
 }

@@ -455,6 +455,12 @@ func (r *KDexHostReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			&kdexv1alpha1.KDexClusterScriptLibrary{},
 			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexHost{}, &kdexv1alpha1.KDexHostList{}, "{.Spec.ScriptLibraryRef}")).
 		Watches(
+			&kdexv1alpha1.KDexFaaSAdaptor{},
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexHost{}, &kdexv1alpha1.KDexHostList{}, "{.Spec.FaaSAdaptorRef}")).
+		Watches(
+			&kdexv1alpha1.KDexClusterFaaSAdaptor{},
+			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexHost{}, &kdexv1alpha1.KDexHostList{}, "{.Spec.FaaSAdaptorRef}")).
+		Watches(
 			&kdexv1alpha1.KDexTheme{},
 			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexHost{}, &kdexv1alpha1.KDexHostList{}, "{.Spec.ThemeRef}")).
 		Watches(

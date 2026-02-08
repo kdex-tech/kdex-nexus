@@ -2,15 +2,15 @@ package generate
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	"k8s.io/apimachinery/pkg/api/resource"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	"kdex.dev/nexus/internal/utils"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -22,8 +22,10 @@ func CheckOrCreateGenerateJob(ctx context.Context, c client.Client, scheme *runt
 	jobName := fmt.Sprintf("%s-codegen-%d", function.Name, function.Generation)
 
 	list := batchv1.JobList{}
-	err := c.List(ctx, &list, client.InNamespace(function.Namespace), client.MatchingFields{
-		"metadata.name": jobName,
+	err := c.List(ctx, &list, client.InNamespace(function.Namespace), client.MatchingLabels{
+		"app":        "codegen",
+		"function":   function.Name,
+		"generation": fmt.Sprintf("%d", function.Generation),
 	})
 	if err != nil {
 		return nil, err
@@ -33,7 +35,18 @@ func CheckOrCreateGenerateJob(ctx context.Context, c client.Client, scheme *runt
 		return &list.Items[0], nil
 	}
 
-	functionString := string(marshalFunctionSpec(function))
+	url := function.Status.Attributes["openapi.schema.url.internal"]
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	functionString, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
 
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
@@ -59,19 +72,17 @@ func CheckOrCreateGenerateJob(ctx context.Context, c client.Client, scheme *runt
 							Args: []string{
 								`set -e
 
-apk add --no-cache git
-
 cd /shared
 
-# 1. Basic Git Identity (No Signing)
-git config --global user.email "${COMMITTER_EMAIL}"
-git config --global user.name "${COMMITTER_NAME}"
-# Explicitly disable signing to avoid errors if the runner has global defaults
-git config --global commit.gpgsign false
-
-# 2. Clone the repo
+# 1. Clone the repo
 # We use the 'admin' username and the token we generated earlier
 git clone http://${GIT_USER}:${GIT_TOKEN}@${GIT_HOST}/${GIT_ORG}/${GIT_REPO} .
+
+# 2. Basic Git Identity (No Signing)
+git config user.email "${COMMITTER_EMAIL}"
+git config user.name "${COMMITTER_NAME}"
+# Explicitly disable signing to avoid errors if the runner has global defaults
+git config commit.gpgsign false
 
 # 3. Sanitize variables to create a safe branch name
 SAFE_PATH=$(echo "${FUNCTION_BASEPATH}" | sed 's/\//-/g' | sed 's/^-//')
@@ -91,8 +102,9 @@ TARGET_DIR="./functions/${NAMESPACE}/${FUNCTION_NAME}-${SAFE_PATH}"
 mkdir -p "${TARGET_DIR}"
 
 # 6. Ignore the .env files
-grep -q ".env" .gitignore || echo ".env" >> .gitignore
+grep -q ".env" .gitignore 2>/dev/null || echo ".env" >> .gitignore
 echo "TARGET_DIR=${TARGET_DIR}" > .env
+echo "BRANCH_NAME=${BRANCH_NAME}" >> .env
 								`,
 							},
 							EnvFrom: []corev1.EnvFromSource{
@@ -174,11 +186,6 @@ echo "TARGET_DIR=${TARGET_DIR}" > .env
 									Name:      "shared-data",
 									MountPath: "/shared",
 								},
-								{
-									Name:      "gpg-key",
-									MountPath: "/var/secrets/gpg",
-									ReadOnly:  true,
-								},
 							},
 						},
 						{
@@ -197,7 +204,7 @@ echo "TARGET_DIR=${TARGET_DIR}" > .env
 								},
 								{
 									Name:  "FUNCTION_SPEC",
-									Value: functionString,
+									Value: string(functionString),
 								},
 								{
 									Name:  "WORKING_DIRECTORY",
@@ -215,42 +222,25 @@ echo "TARGET_DIR=${TARGET_DIR}" > .env
 							Name:    "git-push",
 							Image:   generatorConfig.Git.Image,
 							Command: []string{"/bin/sh", "-c"},
-							Args: []string{`
+							Args: []string{`set -e
+
 cd /shared
 source .env
 
-# 5. Commit and Push
+# 1. Commit and Push
 git add $TARGET_DIR
 if git diff-index --quiet HEAD; then
   echo "No changes detected for this iteration."
 else
-  git commit -S -m "Update function: ${FUNC_NAME} at ${BASE_PATH}"
+  git commit -m "Update function: ${FUNCTION_NAME} at ${FUNCTION_BASEPATH}"
   git push origin $BRANCH_NAME
 fi
 
 # Write details to .env
 echo "FUNCTION_NAME=${FUNCTION_NAME}" >> .env
-echo "BASE_PATH=${BASE_PATH}" >> .env
+echo "BASE_PATH=${FUNCTION_BASEPATH}" >> .env
 echo "BRANCH_NAME=${BRANCH_NAME}" >> .env
 echo "REPOSITORY=$(git remote get-url --push origin)" >> .env
-
-# Payload containing the metadata needed by the Dispatcher
-#PAYLOAD=$(cat <<EOF
-#{
-#  "function_name": "${FUNC_NAME}",
-#  "base_path": "${BASE_PATH}",
-#  "branch_name": "${BRANCH_NAME}",
-#  "repository": "org/my-repo",
-#  "provider": "github"
-#}
-#EOF
-#)
-
-# Call the Dispatcher Service (internal cluster DNS)
-#curl -X POST http://git-dispatcher.tools.svc.cluster.local/create-pr \
-#     -H "Content-Type: application/json" \
-#     -H "X-Dispatcher-Token: ${INTERNAL_AUTH_TOKEN}" \
-#     -d "$PAYLOAD"
 `},
 							Env: []corev1.EnvVar{
 								{
@@ -284,16 +274,8 @@ echo "REPOSITORY=$(git remote get-url --push origin)" >> .env
 					},
 					Containers: []corev1.Container{
 						{
-							Name:  "update-status",
-							Image: "busybox:latest",
-
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "shared-data",
-									MountPath: "/shared",
-								},
-							},
-
+							Name:    "update-status",
+							Image:   generatorConfig.Git.Image,
 							Command: []string{"/bin/sh", "-c"},
 							Args: []string{
 								`set -e
@@ -301,23 +283,63 @@ echo "REPOSITORY=$(git remote get-url --push origin)" >> .env
 cd /shared
 source .env
 
-curl -X PATCH -H "Content-Type: application/json-patch+json" --data '{
-	"status":{
-		"state":"StubGenerated"
+APISERVER="https://${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT}"
+TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+CACERT="/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+
+# Remove any authority from the REPOSITORY URL
+REPOSITORY=$(gurl +%S%H%p ${REPOSITORY})
+
+DATA=$(cat <<EOF
+{
+	"status": {
+		"state": "StubGenerated",
+		"stubDetails": {
+			"sourcePath": "${REPOSITORY}/src/branch/${BRANCH_NAME}"
+		},
+		"detail": "Source: ${REPOSITORY}/src/branch/${BRANCH_NAME}"
 	}
-}' http://api-server/v1/namespaces/${NAMESPACE}/kdexfunctions/${FUNCTION_NAME}
+}
+EOF
+)
+
+RESPONSE=$(\
+	curl ${APISERVER}/apis/kdex.dev/v1alpha1/namespaces/${NAMESPACE}/kdexfunctions/${FUNCTION_NAME}/status \
+		-s -w "%{http_code}" \
+		--cacert $CACERT \
+		-X PATCH \
+		-H "Content-Type: application/merge-patch+json" \
+		-H "Authorization: Bearer ${TOKEN}" \
+		--data "${DATA}")
+
+HTTP_CODE="${RESPONSE:${#RESPONSE}-3}"
+CONTENT="${RESPONSE:0:${#RESPONSE}-3}"
+
+echo "Status Code: $HTTP_CODE"
+echo "Response Body: $CONTENT"
+
+if [ "$HTTP_CODE" -eq 200 ]; then
+	echo "Success!"
+else
+	echo "Patch failed with error."
+	exit 1
+fi
 `,
 							},
-
-							// Optional: Set resource limits
-							Resources: corev1.ResourceRequirements{
-								Requests: corev1.ResourceList{
-									"cpu":    resource.MustParse("50m"),
-									"memory": resource.MustParse("50Mi"),
+							Env: []corev1.EnvVar{
+								{
+									Name:  "FUNCTION_NAME",
+									Value: function.Name,
 								},
-								Limits: corev1.ResourceList{
-									"cpu":    resource.MustParse("100m"),
-									"memory": resource.MustParse("100Mi"),
+								{
+									Name:  "NAMESPACE",
+									Value: function.Namespace,
+								},
+							},
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "shared-data",
+									MountPath: "/shared",
 								},
 							},
 						},
@@ -329,20 +351,6 @@ curl -X PATCH -H "Content-Type: application/json-patch+json" --data '{
 							Name: "shared-data",
 							VolumeSource: corev1.VolumeSource{
 								EmptyDir: &corev1.EmptyDirVolumeSource{},
-							},
-						},
-						{
-							Name: "gpg-key",
-							VolumeSource: corev1.VolumeSource{
-								Secret: &corev1.SecretVolumeSource{
-									SecretName: generatorConfig.Git.RepoSecretRef.Name,
-									Items: []corev1.KeyToPath{
-										{
-											Key:  "gpg.key",
-											Path: "gpg.key",
-										},
-									},
-								},
 							},
 						},
 					},
@@ -365,9 +373,4 @@ curl -X PATCH -H "Content-Type: application/json-patch+json" --data '{
 	}
 
 	return job, nil
-}
-
-func marshalFunctionSpec(fn *kdexv1alpha1.KDexFunction) []byte {
-	bytes, _ := json.MarshalIndent(fn, "", "  ")
-	return bytes
 }

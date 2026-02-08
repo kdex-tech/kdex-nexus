@@ -63,7 +63,8 @@ spec:
         args:
         - --leader-elect
         - --health-probe-bind-address=:8081
-        - --named-log-level=kdexhost=2
+        #- --named-log-level=kdexhost=2
+        - --named-log-level=kdexfunction=2
         - --zap-encoder=console
         - --zap-log-level=debug
         - --zap-stacktrace-level=error

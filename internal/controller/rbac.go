@@ -14,6 +14,9 @@ package controller
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterapps,                         verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterapps/finalizers,              verbs=update
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterapps/status,                  verbs=get;update;patch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterfaasadaptors,                 verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterfaasadaptors/finalizers,      verbs=update
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterfaasadaptors/status,          verbs=get;update;patch
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterpagearchetypes,               verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterpagearchetypes/finalizers,    verbs=update
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterpagearchetypes/status,        verbs=get;update;patch
@@ -38,6 +41,9 @@ package controller
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterutilitypages,                 verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterutilitypages/finalizers,      verbs=update
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexclusterutilitypages/status,          verbs=get;update;patch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexfaasadaptors,                        verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexfaasadaptors/status,                 verbs=get;update;patch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexfaasadaptors/finalizers,             verbs=update
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexfunctions,                           verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexfunctions/status,                    verbs=get;update;patch
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexfunctions/finalizers,                verbs=update
