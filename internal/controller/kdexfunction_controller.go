@@ -110,6 +110,18 @@ func (r *KDexFunctionReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		function.Status.Attributes["faasAdaptor.generation"] = fmt.Sprintf("%d", faasAdaptorObj.GetGeneration())
 	}
 
+	// Add generational awareness
+	if function.Status.ObservedGeneration != function.Generation {
+		function.Status.ObservedGeneration = function.Generation
+		function.Status.GeneratorConfig = nil
+		function.Status.StubDetails = nil
+		function.Status.Executable = ""
+		function.Status.URL = ""
+		function.Status.State = kdexv1alpha1.KDexFunctionStatePending
+		function.Status.Detail = ""
+		function.Status.Conditions = nil
+	}
+
 	// OpenAPIValid should result purely through validation webhook
 	if function.Status.OpenAPISchemaURL == "" {
 		scheme := "http"
