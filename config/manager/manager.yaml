@@ -118,11 +118,11 @@ data:
   config.yaml: |
     backendDefault:
       modulePath: /-/modules
-      serverImage: k3d-registry:5000/kdex-tech/kdex-themeserver:latest
+      serverImage: registry.kube-system.svc.cluster.local:5000/kdex-tech/kdex-themeserver:latest
       serverImagePullPolicy: Always
 
     defaultImageRegistry:
-      host: k3d-registry:5000
+      host: registry.kube-system.svc.cluster.local:5000
       insecure: true
 
     defaultNpmRegistry:
@@ -141,7 +141,7 @@ data:
               - --zap-encoder=console
               - --zap-log-level=info
               - --zap-stacktrace-level=error
-              image: k3d-registry:5000/kdex-tech/kdex-web:latest
+              image: registry.kube-system.svc.cluster.local:5000/kdex-tech/kdex-web:latest
               imagePullPolicy: Always
       roleRef:
         apiGroup: rbac.authorization.k8s.io

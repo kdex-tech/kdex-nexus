@@ -295,10 +295,8 @@ var _ = BeforeSuite(func() {
 
 	// Function
 	functionReconciler := &KDexFunctionReconciler{
-		Client:        k8sClient,
-		Configuration: configuration,
-		RequeueDelay:  0,
-		Scheme:        k8sClient.Scheme(),
+		Client: k8sClient,
+		Scheme: k8sClient.Scheme(),
 	}
 	err = functionReconciler.SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())

@@ -2,7 +2,6 @@ package webhook
 
 import (
 	"context"
-	"fmt"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
@@ -17,18 +16,18 @@ type KDexFunctionDefaulter[T runtime.Object] struct {
 var _ admission.Defaulter[*kdexv1alpha1.KDexFunction] = &KDexFunctionDefaulter[*kdexv1alpha1.KDexFunction]{}
 
 func (a *KDexFunctionDefaulter[T]) Default(ctx context.Context, obj T) error {
-	var function *kdexv1alpha1.KDexFunction
+	// var function *kdexv1alpha1.KDexFunction
 
-	switch t := any(obj).(type) {
-	case *kdexv1alpha1.KDexFunction:
-		function = t
-	default:
-		return fmt.Errorf("unsupported type: %T", t)
-	}
+	// switch t := any(obj).(type) {
+	// case *kdexv1alpha1.KDexFunction:
+	// 	function = t
+	// default:
+	// 	return fmt.Errorf("unsupported type: %T", t)
+	// }
 
-	if function.Status.State == "" {
-		function.Status.State = kdexv1alpha1.KDexFunctionStatePending
-	}
+	// if function.Status.State == "" {
+	// 	function.Status.State = kdexv1alpha1.KDexFunctionStatePending
+	// }
 
 	return nil
 }
