@@ -25,14 +25,18 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	"kdex.dev/crds/configuration"
+	"kdex.dev/nexus/internal/build"
+	"kdex.dev/nexus/internal/deploy"
 	"kdex.dev/nexus/internal/generate"
 	nexuswebhook "kdex.dev/nexus/internal/webhook"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -114,7 +118,7 @@ func (r *KDexFunctionReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	if function.Status.ObservedGeneration != function.Generation {
 		function.Status.ObservedGeneration = function.Generation
 		function.Status.GeneratorConfig = nil
-		function.Status.StubDetails = nil
+		function.Status.Source = nil
 		function.Status.Executable = ""
 		function.Status.URL = ""
 		function.Status.State = kdexv1alpha1.KDexFunctionStatePending
@@ -155,14 +159,18 @@ func (r *KDexFunctionReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			string(kdexv1alpha1.KDexFunctionStateOpenAPIValid),
 		)
 
-		log.V(1).Info(string(kdexv1alpha1.KDexFunctionStateOpenAPIValid))
+		log.V(2).Info(string(kdexv1alpha1.KDexFunctionStateOpenAPIValid))
 
 		return ctrl.Result{}, nil
 	}
 
+	// TODO: the Function.Language, Function.Environment and Function.Entrypoint should not need to be set by the developer.
+	// If they are not set, they should be inferred from the FaaSAdaptorSpec.DefaultLanguage, FaaSAdaptorSpec.DefaultEnvironment and FaaSAdaptorSpec.DefaultEntrypoint.
+	// If they are set, they should be validated here because we need the FaaSAdaptor to do that.
+
 	// BuildValid can happen either manually by setting spec.function.generatorConfig
 	if (function.Spec.Function.GeneratorConfig == nil && function.Status.GeneratorConfig == nil) &&
-		(function.Spec.Function.StubDetails == nil && function.Status.StubDetails == nil) &&
+		(function.Spec.Function.Source == nil && function.Status.Source == nil) &&
 		(function.Spec.Function.Executable == "" && function.Status.Executable == "") &&
 		(function.Status.URL == "") {
 
@@ -205,39 +213,31 @@ func (r *KDexFunctionReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			string(kdexv1alpha1.KDexFunctionStateBuildValid),
 		)
 
-		log.V(1).Info(string(kdexv1alpha1.KDexFunctionStateBuildValid))
+		log.V(2).Info(string(kdexv1alpha1.KDexFunctionStateBuildValid))
 
 		return ctrl.Result{}, nil
 	}
 
-	if (function.Spec.Function.StubDetails == nil && function.Status.StubDetails == nil) &&
+	if (function.Spec.Function.Source == nil && function.Status.Source == nil) &&
 		(function.Spec.Function.Executable == "" && function.Status.Executable == "") &&
 		(function.Status.URL == "") {
 
-		// The Builder will compute the StubDetails which must be set in function.Status.StubDetails and
-		// function.Status.State = kdexv1alpha1.KDexFunctionStateStubGenerated
+		// The Builder will compute the Source which must be set in function.Status.Source and
+		// function.Status.State = kdexv1alpha1.KDexFunctionStateSourceGenerated
 
 		generatorConfig := function.Spec.Function.GeneratorConfig
 		if generatorConfig == nil {
 			generatorConfig = function.Status.GeneratorConfig
 		}
 
-		if generatorConfig.Image == "" {
-			err := fmt.Errorf("GeneratorConfig image empty: %s/%s", function.Namespace, function.Name)
-			kdexv1alpha1.SetConditions(
-				&function.Status.Conditions,
-				kdexv1alpha1.ConditionStatuses{
-					Degraded:    metav1.ConditionTrue,
-					Progressing: metav1.ConditionFalse,
-					Ready:       metav1.ConditionFalse,
-				},
-				kdexv1alpha1.ConditionReasonReconcileError,
-				err.Error(),
-			)
-			return ctrl.Result{}, err
+		generator := generate.Generator{
+			Client:          r.Client,
+			Scheme:          r.Scheme,
+			GeneratorConfig: *generatorConfig,
+			ServiceAccount:  host.Name,
 		}
 
-		job, err := generate.CheckOrCreateGenerateJob(ctx, r.Client, r.Scheme, &function, generatorConfig, host.Name)
+		job, err := generator.GetOrCreateGenerateJob(ctx, &function)
 		if err != nil {
 			kdexv1alpha1.SetConditions(
 				&function.Status.Conditions,
@@ -255,7 +255,7 @@ func (r *KDexFunctionReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		if job != nil {
 			for _, cond := range job.Status.Conditions {
 				if cond.Type == batchv1.JobFailed && cond.Status == corev1.ConditionTrue {
-					err := fmt.Errorf("Code generation job failed: %s", cond.Message)
+					err := fmt.Errorf("Code generation job %s/%s failed: %s", job.Namespace, job.Name, cond.Message)
 					kdexv1alpha1.SetConditions(
 						&function.Status.Conditions,
 						kdexv1alpha1.ConditionStatuses{
@@ -282,37 +282,68 @@ func (r *KDexFunctionReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			fmt.Sprintf("Waiting on code generation job %s/%s to complete", job.Namespace, job.Name),
 		)
 
+		log.V(2).Info(fmt.Sprintf("Waiting on code generation job %s/%s to complete", job.Namespace, job.Name))
+
 		return ctrl.Result{}, nil
 	}
 
 	if (function.Spec.Function.Executable == "" && function.Status.Executable == "") &&
 		(function.Status.URL == "") {
 
-		// The Builder will compute the Executable which must be set in function.Status.Executable and
+		// TODO: In this scenario we need to trigger creation of the function image.
+		// The Builder will compute the image name and tag which must be set in function.Status.Executable and
 		// function.Status.State = kdexv1alpha1.KDexFunctionStateExecutableAvailable
-		kdexv1alpha1.SetConditions(
-			&function.Status.Conditions,
-			kdexv1alpha1.ConditionStatuses{
-				Degraded:    metav1.ConditionFalse,
-				Progressing: metav1.ConditionTrue,
-				Ready:       metav1.ConditionFalse,
-			},
-			kdexv1alpha1.ConditionReasonReconciling,
-			string(kdexv1alpha1.KDexFunctionStateStubGenerated),
-		)
 
-		log.V(1).Info(string(kdexv1alpha1.KDexFunctionStateStubGenerated))
+		generatorConfig := function.Spec.Function.GeneratorConfig
+		if generatorConfig == nil {
+			generatorConfig = function.Status.GeneratorConfig
+		}
 
-		return ctrl.Result{}, nil
-	}
+		builder := build.Builder{
+			Client:        r.Client,
+			Scheme:        r.Scheme,
+			Configuration: r.Configuration,
+		}
 
-	if function.Status.URL != "" {
-		function.Status.State = kdexv1alpha1.KDexFunctionStateFunctionDeployed
-		function.Status.Detail = "FunctionURL:" + function.Status.URL
-	} else {
-		// TODO: In this scenario we need to trigger the function deployment and
-		// wait for it to reconcile, then set the URL on function.Status.URL and
-		// function.Status.State = kdexv1alpha1.KDexFunctionStateFunctionDeployed
+		imgObj, err := builder.GetOrCreateKPackImage(ctx, &function)
+		if err != nil {
+			kdexv1alpha1.SetConditions(
+				&function.Status.Conditions,
+				kdexv1alpha1.ConditionStatuses{
+					Degraded:    metav1.ConditionTrue,
+					Progressing: metav1.ConditionFalse,
+					Ready:       metav1.ConditionFalse,
+				},
+				kdexv1alpha1.ConditionReasonReconcileError,
+				err.Error(),
+			)
+			return ctrl.Result{}, err
+		}
+
+		if imgObj != nil {
+			status := imgObj.Object["status"].(map[string]any)
+			conditions := status["conditions"].([]any)
+			for _, cond := range conditions {
+				if cond.(map[string]any)["type"] == "Failed" && cond.(map[string]any)["status"] == "True" {
+					err := fmt.Errorf("Image builder job %s/%s failed: %s", imgObj.GetNamespace(), imgObj.GetName(), cond.(map[string]any)["message"])
+					kdexv1alpha1.SetConditions(
+						&function.Status.Conditions,
+						kdexv1alpha1.ConditionStatuses{
+							Degraded:    metav1.ConditionTrue,
+							Progressing: metav1.ConditionFalse,
+							Ready:       metav1.ConditionFalse,
+						},
+						kdexv1alpha1.ConditionReasonReconcileError,
+						err.Error(),
+					)
+					return ctrl.Result{}, err
+				} else if cond.(map[string]any)["type"] == "Ready" && cond.(map[string]any)["status"] == "True" {
+					function.Status.State = kdexv1alpha1.KDexFunctionStateExecutableAvailable
+					function.Status.Executable = imgObj.Object["status"].(map[string]any)["latestImage"].(string)
+				}
+			}
+		}
+
 		kdexv1alpha1.SetConditions(
 			&function.Status.Conditions,
 			kdexv1alpha1.ConditionStatuses{
@@ -324,7 +355,70 @@ func (r *KDexFunctionReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			string(kdexv1alpha1.KDexFunctionStateExecutableAvailable),
 		)
 
-		log.V(1).Info(string(kdexv1alpha1.KDexFunctionStateExecutableAvailable))
+		log.V(2).Info(string(kdexv1alpha1.KDexFunctionStateExecutableAvailable))
+
+		return ctrl.Result{}, nil
+	}
+
+	if function.Status.URL == "" {
+
+		// TODO: In this scenario we need to trigger the function deployment and
+		// wait for it to reconcile, then set the URL on function.Status.URL and
+		// function.Status.State = kdexv1alpha1.KDexFunctionStateFunctionDeployed
+
+		deployer := deploy.Deployer{
+			Client:         r.Client,
+			Scheme:         r.Scheme,
+			Configuration:  r.Configuration,
+			ServiceAccount: host.Name,
+		}
+
+		job, err := deployer.GetOrCreateDeployJob(ctx, &function)
+		if err != nil {
+			kdexv1alpha1.SetConditions(
+				&function.Status.Conditions,
+				kdexv1alpha1.ConditionStatuses{
+					Degraded:    metav1.ConditionTrue,
+					Progressing: metav1.ConditionFalse,
+					Ready:       metav1.ConditionFalse,
+				},
+				kdexv1alpha1.ConditionReasonReconcileError,
+				err.Error(),
+			)
+			return ctrl.Result{}, err
+		}
+
+		if job != nil {
+			for _, cond := range job.Status.Conditions {
+				if cond.Type == batchv1.JobFailed && cond.Status == corev1.ConditionTrue {
+					err := fmt.Errorf("Function deployer job %s/%s failed: %s", job.Namespace, job.Name, cond.Message)
+					kdexv1alpha1.SetConditions(
+						&function.Status.Conditions,
+						kdexv1alpha1.ConditionStatuses{
+							Degraded:    metav1.ConditionTrue,
+							Progressing: metav1.ConditionFalse,
+							Ready:       metav1.ConditionFalse,
+						},
+						kdexv1alpha1.ConditionReasonReconcileError,
+						err.Error(),
+					)
+					return ctrl.Result{}, err
+				}
+			}
+		}
+
+		kdexv1alpha1.SetConditions(
+			&function.Status.Conditions,
+			kdexv1alpha1.ConditionStatuses{
+				Degraded:    metav1.ConditionFalse,
+				Progressing: metav1.ConditionTrue,
+				Ready:       metav1.ConditionFalse,
+			},
+			kdexv1alpha1.ConditionReasonReconciling,
+			fmt.Sprintf("Waiting on function deployer job %s/%s to complete", job.Namespace, job.Name),
+		)
+
+		log.V(2).Info(fmt.Sprintf("Waiting on function deployer job %s/%s to complete", job.Namespace, job.Name))
 
 		return ctrl.Result{}, nil
 	}
@@ -363,6 +457,27 @@ func (r *KDexFunctionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Watches(
 			&kdexv1alpha1.KDexHost{},
 			MakeHandlerByReferencePath(r.Client, r.Scheme, &kdexv1alpha1.KDexFunction{}, &kdexv1alpha1.KDexFunctionList{}, "{.Spec.HostRef}")).
+		Watches(
+			&unstructured.Unstructured{
+				Object: map[string]any{
+					"apiVersion": "kpack.io/v1alpha2",
+					"kind":       "Image",
+				},
+			},
+			handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, o client.Object) []reconcile.Request {
+				functionName := o.GetLabels()["kdex.dev/function"]
+				if functionName == "" {
+					return nil
+				}
+				return []reconcile.Request{
+					{
+						NamespacedName: client.ObjectKey{
+							Namespace: o.GetNamespace(),
+							Name:      functionName,
+						},
+					},
+				}
+			})).
 		WithOptions(controller.TypedOptions[reconcile.Request]{
 			LogConstructor: LogConstructor("kdexfunction", mgr),
 		}).

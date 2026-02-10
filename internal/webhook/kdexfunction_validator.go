@@ -82,10 +82,20 @@ func (v *KDexFunctionValidator[T]) validate(_ context.Context, obj T) (admission
 			return nil, fmt.Errorf("function cannot be in BuildValid state without a GeneratorConfig")
 		}
 	}
+	if function.Spec.Function.GeneratorConfig != nil {
+		if function.Spec.Function.GeneratorConfig.Image == "" {
+			return nil, fmt.Errorf("spec.function.generatorConfig.image is required when spec.function.generatorConfig is set")
+		}
+	}
+	if function.Status.GeneratorConfig != nil {
+		if function.Status.GeneratorConfig.Image == "" {
+			return nil, fmt.Errorf("status.generatorConfig.image is required when status.generatorConfig is set")
+		}
+	}
 
-	if function.Status.State == kdexv1alpha1.KDexFunctionStateStubGenerated {
-		if function.Status.StubDetails == nil && function.Spec.Function.StubDetails == nil {
-			return nil, fmt.Errorf("function cannot be in StubGenerated state without a StubDetails")
+	if function.Status.State == kdexv1alpha1.KDexFunctionStateSourceAvailable {
+		if function.Status.Source == nil && function.Spec.Function.Source == nil {
+			return nil, fmt.Errorf("function cannot be in SourceAvailable state without a Source")
 		}
 	}
 

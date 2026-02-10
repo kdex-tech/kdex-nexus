@@ -2,20 +2,19 @@ module kdex.dev/nexus
 
 go 1.25.0
 
-replace kdex.dev/crds => github.com/kdex-tech/kdex-crds v0.14.102
+replace kdex.dev/crds => github.com/kdex-tech/kdex-crds v0.14.103
 
 require (
 	github.com/go-logr/logr v1.4.3
+	github.com/oasdiff/yaml v0.0.0-20250309154309-f31be36b4037
 	github.com/onsi/ginkgo/v2 v2.28.1
 	github.com/onsi/gomega v1.39.0
-	github.com/opencontainers/image-spec v1.1.1
 	github.com/stretchr/testify v1.11.1
 	k8s.io/api v0.35.0
 	k8s.io/apiextensions-apiserver v0.35.0
 	k8s.io/apimachinery v0.35.0
 	k8s.io/client-go v0.35.0
 	kdex.dev/crds v0.0.0-00010101000000-000000000000
-	oras.land/oras-go/v2 v2.6.0
 	sigs.k8s.io/controller-runtime v0.23.1
 )
 
@@ -82,9 +81,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
-	github.com/oasdiff/yaml v0.0.0-20250309154309-f31be36b4037 // indirect
 	github.com/oasdiff/yaml3 v0.0.0-20250309153720-d2182401db90 // indirect
-	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/pb33f/doctor v0.0.41 // indirect
 	github.com/pb33f/jsonpath v0.7.1 // indirect
 	github.com/pb33f/libopenapi v0.33.0 // indirect

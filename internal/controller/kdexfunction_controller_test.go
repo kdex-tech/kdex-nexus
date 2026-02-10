@@ -355,7 +355,7 @@ var _ = Describe("KDexFunction Controller", func() {
 			}, "10s", "1s").Should(Succeed())
 		})
 
-		It("becomes StubGenerated", func() {
+		It("becomes SourceAvailable", func() {
 			resource := &kdexv1alpha1.KDexFunction{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
@@ -375,8 +375,10 @@ var _ = Describe("KDexFunction Controller", func() {
 					Function: kdexv1alpha1.KDexFunctionExec{
 						Environment: "go-env",
 						Language:    "go",
-						StubDetails: &kdexv1alpha1.StubDetails{
-							SourceImage: "foo",
+						Source: &kdexv1alpha1.Source{
+							Repository: "foo",
+							Revision:   "bar",
+							Path:       "baz",
 						},
 					},
 				},
@@ -411,7 +413,7 @@ var _ = Describe("KDexFunction Controller", func() {
 				fetched := &kdexv1alpha1.KDexFunction{}
 				err := k8sClient.Get(ctx, client.ObjectKey{Name: resource.Name, Namespace: namespace}, fetched)
 				g.Expect(err).NotTo(HaveOccurred())
-				g.Expect(fetched.Status.State).To(Equal(kdexv1alpha1.KDexFunctionStateStubGenerated))
+				g.Expect(fetched.Status.State).To(Equal(kdexv1alpha1.KDexFunctionStateSourceAvailable))
 				g.Expect(
 					meta.IsStatusConditionFalse(
 						fetched.Status.Conditions,
@@ -434,7 +436,7 @@ var _ = Describe("KDexFunction Controller", func() {
 					fetched.Status.Conditions,
 					string(kdexv1alpha1.ConditionTypeProgressing),
 				)
-				g.Expect(cond.Message).To(Equal(string(kdexv1alpha1.KDexFunctionStateStubGenerated)))
+				g.Expect(cond.Message).To(Equal(string(kdexv1alpha1.KDexFunctionStateSourceAvailable)))
 			}, "10s", "1s").Should(Succeed())
 		})
 
