@@ -3,13 +3,23 @@ kind: KDexClusterFaaSAdaptor
 metadata:
   name: kdex-default-faas-adaptor-knative
 spec:
+  deployerImage: k3d-registry:5000/kdex-tech/kdex-knative-deployer
+  defaultBuilderGenerator: tiny/go
+  builders:
+  - builderRef:
+      kind: ClusterBuilder
+      name: tiny-microservice-builder
+    languages:
+    - go
+    name: tiny
   generators:
-    "go/go-env":
-      image: k3d-registry:5000/kdex-tech/fngogen
-      git:
-        image: k3d-registry:5000/kdex-tech/kdex-cli-tools
-        committerEmail: test@kdex.dev
-        committerName: KDex Codegen Bot
-        repoSecretRef:
-          name: gitea-job-config
+  - entrypoint: "./cmd/main.go"
+    git:
+      image: k3d-registry:5000/kdex-tech/kdex-cli-tools
+      committerEmail: test@kdex.dev
+      committerName: KDex Codegen Bot
+      repoSecretRef:
+        name: gitea-job-config
+    image: k3d-registry:5000/kdex-tech/fngogen
+    language: go
   provider: knative
