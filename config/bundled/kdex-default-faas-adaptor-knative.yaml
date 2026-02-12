@@ -4,7 +4,12 @@ metadata:
   name: kdex-default-faas-adaptor-knative
 spec:
   deployer:
-    image: k3d-registry:5000/kdex-tech/kdex-knative-deployer
+    image: k3d-registry:5000/kdex-tech/knative-deployer
+    command: ["/deployer", "deploy"]
+  observer:
+    image: k3d-registry:5000/kdex-tech/knative-deployer
+    command: ["/deployer", "observe"]
+    schedule: "*/1 * * * *"
   defaultBuilderGenerator: tiny/go
   builders:
   - builderRef:
