@@ -3,7 +3,8 @@ kind: KDexClusterFaaSAdaptor
 metadata:
   name: kdex-default-faas-adaptor-knative
 spec:
-  deployerImage: k3d-registry:5000/kdex-tech/kdex-knative-deployer
+  deployer:
+    image: k3d-registry:5000/kdex-tech/kdex-knative-deployer
   defaultBuilderGenerator: tiny/go
   builders:
   - builderRef:
