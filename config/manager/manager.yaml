@@ -135,6 +135,7 @@ data:
           spec:
             containers:
             - args:
+              - --pprof-bind-address=:6060
               - --named-log-level=kdexfunction=2
               - --zap-encoder=console
               - --zap-log-level=info
