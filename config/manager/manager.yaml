@@ -64,9 +64,9 @@ spec:
         - --leader-elect
         - --health-probe-bind-address=:8081
         #- --named-log-level=kdexhost=2
-        - --named-log-level=kdexfunction=2
+        # - --named-log-level=kdexfunction=2
         - --zap-encoder=console
-        - --zap-log-level=debug
+        - --zap-log-level=info
         - --zap-stacktrace-level=error
         image: controller:latest
         name: manager
@@ -135,9 +135,7 @@ data:
           spec:
             containers:
             - args:
-              - --named-log-level=host.pages=error
-              - --named-log-level=host=2
-              - --named-log-level=server=2
+              - --named-log-level=kdexfunction=2
               - --zap-encoder=console
               - --zap-log-level=info
               - --zap-stacktrace-level=error
