@@ -1,8 +1,8 @@
 module kdex.dev/nexus
 
-go 1.25.0
+go 1.25.6
 
-replace kdex.dev/crds => github.com/kdex-tech/kdex-crds v0.14.119
+replace kdex.dev/crds => github.com/kdex-tech/kdex-crds v0.14.120
 
 require (
 	github.com/go-logr/logr v1.4.3
@@ -71,6 +71,7 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
+	github.com/kdex-tech/dmapper v0.1.0 // indirect
 	github.com/klauspost/compress v1.18.1 // indirect
 	github.com/mailru/easyjson v0.9.1 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
