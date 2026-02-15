@@ -136,7 +136,9 @@ data:
             containers:
             - args:
               - --pprof-bind-address=:6060
-              - --named-log-level=kdexfunction=2
+              - --named-log-level=host=2
+              - --named-log-level=server=2
+              # - --named-log-level=kdexfunction=2
               - --zap-encoder=console
               - --zap-log-level=info
               - --zap-stacktrace-level=error
