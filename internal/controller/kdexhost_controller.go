@@ -47,7 +47,7 @@ import (
 )
 
 const (
-	kdexWeb           = "kdex-web"
+	kdexWeb           = "kdex-host"
 	hostFinalizerName = "kdex.dev/kdex-nexus-host-finalizer"
 	hostIndexKey      = "spec.hostRef.name"
 )
