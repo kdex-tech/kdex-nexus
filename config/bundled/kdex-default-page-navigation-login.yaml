@@ -9,28 +9,28 @@ spec:
       <li class="navigation user-profile dropdown">
         <div class="user-trigger dropdown-trigger">
           <div class="user-avatar">
-            {{- if .Extra.Identity.Picture -}}
-              <img src="{{ .Extra.Identity.Picture }}" alt="{{ .Extra.Identity.Email }}" class="avatar-image">
+            {{- if .Extra.Identity.picture -}}
+              <img src="{{ .Extra.Identity.picture }}" alt="{{ .Extra.Identity.email }}" class="avatar-image">
             {{- else -}}
               <div class="avatar-initials">
-                {{- if .Extra.Identity.GivenName -}}
-                  {{ .Extra.Identity.GivenName | trunc 1 | upper }}{{ if .Extra.Identity.FamilyName }}{{ .Extra.Identity.FamilyName | trunc 1 | upper }}{{ end }}
+                {{- if .Extra.Identity.given_name -}}
+                  {{ .Extra.Identity.given_name | trunc 1 | upper }}{{ if .Extra.Identity.family_name }}{{ .Extra.Identity.family_name | trunc 1 | upper }}{{ end }}
                 {{- else -}}
-                  {{ .Extra.Identity.Email | default (.Extra.Identity.Subject | default "U") | trunc 2 | upper }}
+                  {{ .Extra.Identity.email | default (.Extra.Identity.sub | default "U") | trunc 2 | upper }}
                 {{- end -}}
               </div>
             {{- end -}}
           </div>
           <div class="user-info">
             <span class="user-name">
-              {{- .Extra.Identity.Nickname | default (.Extra.Identity.Name | default (.Extra.Identity.Email | default (.Extra.Identity.Subject | default "User"))) -}}
+              {{- .Extra.Identity.nickname | default (.Extra.Identity.name | default (.Extra.Identity.email | default (.Extra.Identity.sub | default "User"))) -}}
             </span>
           </div>
         </div>
         <div class="dropdown-content">
            <div class="dropdown-header">
-             <div class="user-name" style="font-weight: 600;">{{ .Extra.Identity.Name | default (.Extra.Identity.Email | default .Extra.Identity.Subject) }}</div>
-             <div class="header-email">{{ .Extra.Identity.Email }}</div>
+             <div class="user-name" style="font-weight: 600;">{{ .Extra.Identity.name | default (.Extra.Identity.email | default .Extra.Identity.sub) }}</div>
+             <div class="header-email">{{ .Extra.Identity.email }}</div>
            </div>
            <form action="/-/logout" method="POST" id="logout-form">
               <button type="submit" class="logout-button">
