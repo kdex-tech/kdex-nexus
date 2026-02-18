@@ -27,8 +27,6 @@ spec:
       image: k3d-registry:5000/kdex-tech/kdex-cli-tools
       committerEmail: test@kdex.dev
       committerName: KDex Codegen Bot
-      repoSecretRef:
-        name: gitea-job-config
     image: k3d-registry:5000/kdex-tech/fngogen
     language: go
   provider: knative
