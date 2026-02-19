@@ -244,6 +244,9 @@ func (r *KDexHostReconciler) Reconcile(ctx context.Context, req ctrl.Request) (r
 
 	translationRefs, shouldReturn, err := r.resolveTranslations(ctx, &host)
 	if shouldReturn {
+		if err == nil {
+			err = fmt.Errorf("failed to resolve translations")
+		}
 		kdexv1alpha1.SetConditions(
 			&host.Status.Conditions,
 			kdexv1alpha1.ConditionStatuses{
