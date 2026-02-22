@@ -9,6 +9,7 @@ spec:
         <strong>{{ l10n "login.title" .BrandName }}</strong>
 
         <form action="/-/login" method="POST" class="login-form">
+          <input id="return" type="hidden" name="return" value="">
           <p id="error-message" class="error-message" style="display: none;"></p>
 
           <div class="form-group">
@@ -30,6 +31,10 @@ spec:
       <script>
         const urlParams = new URLSearchParams(window.location.search);
         const error = urlParams.get('error');
+        const returnUrl = urlParams.get('return');
+        if (returnUrl) {
+          document.getElementById('return').value = returnUrl;
+        }
         if (error) {
           const display = document.getElementById('error-message');
           display.textContent = error;
