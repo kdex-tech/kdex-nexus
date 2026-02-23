@@ -803,6 +803,18 @@ func (r *KDexHostReconciler) createOrUpdateDeployment(
 				}
 			}
 
+			if len(host.Spec.Env) > 0 {
+				deployment.Spec.Template.Spec.Containers[0].Env = MergeEnvVars(deployment.Spec.Template.Spec.Containers[0].Env, host.Spec.Env)
+			}
+
+			if host.Spec.Resources.Size() > 0 {
+				deployment.Spec.Template.Spec.Containers[0].Resources = host.Spec.Resources
+			}
+
+			if host.Spec.Replicas != nil {
+				deployment.Spec.Replicas = host.Spec.Replicas
+			}
+
 			return ctrl.SetControllerReference(host, deployment, r.Scheme)
 		},
 	)

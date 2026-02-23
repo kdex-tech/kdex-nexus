@@ -163,6 +163,27 @@ func MakeHandlerByReferencePath(
 	})
 }
 
+func MergeEnvVars(existing []corev1.EnvVar, overrides []corev1.EnvVar) []corev1.EnvVar {
+	// Create a map to track the index of existing environment variables
+	indexMap := make(map[string]int)
+	for i, env := range existing {
+		indexMap[env.Name] = i
+	}
+
+	for _, override := range overrides {
+		if idx, found := indexMap[override.Name]; found {
+			// Found a match: Update the existing entry
+			existing[idx] = override
+		} else {
+			// No match: Append the new entry and update the map
+			existing = append(existing, override)
+			indexMap[override.Name] = len(existing) - 1
+		}
+	}
+
+	return existing
+}
+
 func LogConstructor(name string, mgr ctrl.Manager) func(request *reconcile.Request) logr.Logger {
 	return func(request *reconcile.Request) logr.Logger {
 		l := mgr.GetControllerOptions().Logger.WithName(name)

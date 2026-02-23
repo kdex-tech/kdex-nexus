@@ -134,16 +134,7 @@ data:
         template:
           spec:
             containers:
-            - args:
-              - --cache-address=gitea-valkey-cluster.gitea.svc.cluster.local:6379
-              - --pprof-bind-address=:6060
-              - --named-log-level=host=2
-              - --named-log-level=server=2
-              - --named-log-level=kdexfunction=2
-              - --zap-encoder=console
-              - --zap-log-level=info
-              - --zap-stacktrace-level=error
-              image: registry.kube-system.svc.cluster.local:5000/kdex-tech/kdex-host:latest
+            - image: registry.kube-system.svc.cluster.local:5000/kdex-tech/kdex-host:latest
               imagePullPolicy: Always
       roleRef:
         apiGroup: rbac.authorization.k8s.io
