@@ -135,6 +135,7 @@ data:
           spec:
             containers:
             - args:
+              - --cache-address=gitea-valkey-cluster.gitea.svc.cluster.local:6379
               - --pprof-bind-address=:6060
               - --named-log-level=host=2
               - --named-log-level=server=2
