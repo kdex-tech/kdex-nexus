@@ -6,4 +6,4 @@
 namePrefix: kdex-nexus-
 
 resources:
-- allow-metrics-traffic.yaml
+- metrics_service.yaml

@@ -12,7 +12,7 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: serving-cert  # this name should match the one in kustomizeconfig.yaml
+  name: serving-cert # this name should match the one in kustomizeconfig.yaml
   namespace: system
 spec:
   # $(SERVICE_NAME) and $(SERVICE_NAMESPACE) will be substituted by kustomize
@@ -22,4 +22,27 @@ spec:
   issuerRef:
     kind: Issuer
     name: selfsigned-issuer
+  privateKey:
+    rotationPolicy: Always
+    algorithm: ECDSA
+    size: 256
   secretName: webhook-server-cert # this secret will not be prefixed, since it's not managed by kustomize
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: metrics-server-cert # this name should match the one in kustomizeconfig.yaml
+  namespace: system
+spec:
+  # $(SERVICE_NAME) and $(SERVICE_NAMESPACE) will be substituted by kustomize
+  dnsNames:
+  - $(SERVICE_NAME).$(SERVICE_NAMESPACE).svc
+  - $(SERVICE_NAME).$(SERVICE_NAMESPACE).svc.cluster.local
+  issuerRef:
+    kind: Issuer
+    name: selfsigned-issuer
+  privateKey:
+    rotationPolicy: Always
+    algorithm: ECDSA
+    size: 256
+  secretName: metrics-server-cert # this secret will not be prefixed, since it's not managed by kustomize
