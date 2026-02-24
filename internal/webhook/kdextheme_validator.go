@@ -10,8 +10,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
-// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdextheme,mutating=false,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexthemes,verbs=create;update,versions=v1alpha1,name=validate.kdextheme.kdex.dev,admissionReviewVersions=v1
-// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexclustertheme,mutating=false,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexclusterthemes,verbs=create;update,versions=v1alpha1,name=validate.kdexclustertheme.kdex.dev,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdextheme,mutating=false,failurePolicy=Ignore,sideEffects=None,groups=kdex.dev,resources=kdexthemes,verbs=create;update,versions=v1alpha1,name=validate.kdextheme.kdex.dev,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexclustertheme,mutating=false,failurePolicy=Ignore,sideEffects=None,groups=kdex.dev,resources=kdexclusterthemes,verbs=create;update,versions=v1alpha1,name=validate.kdexclustertheme.kdex.dev,admissionReviewVersions=v1
 
 type KDexThemeValidator[T runtime.Object] struct {
 }

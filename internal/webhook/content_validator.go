@@ -10,15 +10,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
-// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexpagearchetype,mutating=false,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexpagearchetypes,verbs=create;update,versions=v1alpha1,name=validation.kdexpagearchetype.kdex.dev,admissionReviewVersions=v1
-// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexpagefooter,mutating=false,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexpagefooters,verbs=create;update,versions=v1alpha1,name=validation.kdexpagefooter.kdex.dev,admissionReviewVersions=v1
-// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexpageheader,mutating=false,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexpageheaders,verbs=create;update,versions=v1alpha1,name=validation.kdexpageheader.kdex.dev,admissionReviewVersions=v1
-// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexpagenavigation,mutating=false,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexpagenavigations,verbs=create;update,versions=v1alpha1,name=validation.kdexpagenavigation.kdex.dev,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexpagearchetype,mutating=false,failurePolicy=Ignore,sideEffects=None,groups=kdex.dev,resources=kdexpagearchetypes,verbs=create;update,versions=v1alpha1,name=validation.kdexpagearchetype.kdex.dev,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexpagefooter,mutating=false,failurePolicy=Ignore,sideEffects=None,groups=kdex.dev,resources=kdexpagefooters,verbs=create;update,versions=v1alpha1,name=validation.kdexpagefooter.kdex.dev,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexpageheader,mutating=false,failurePolicy=Ignore,sideEffects=None,groups=kdex.dev,resources=kdexpageheaders,verbs=create;update,versions=v1alpha1,name=validation.kdexpageheader.kdex.dev,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexpagenavigation,mutating=false,failurePolicy=Ignore,sideEffects=None,groups=kdex.dev,resources=kdexpagenavigations,verbs=create;update,versions=v1alpha1,name=validation.kdexpagenavigation.kdex.dev,admissionReviewVersions=v1
 
-// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexclusterpagearchetype,mutating=false,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexclusterpagearchetypes,verbs=create;update,versions=v1alpha1,name=validation.kdexclusterpagearchetype.kdex.dev,admissionReviewVersions=v1
-// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexclusterpagefooter,mutating=false,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexclusterpagefooters,verbs=create;update,versions=v1alpha1,name=validation.kdexclusterpagefooter.kdex.dev,admissionReviewVersions=v1
-// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexclusterpageheader,mutating=false,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexclusterpageheaders,verbs=create;update,versions=v1alpha1,name=validation.kdexclusterpageheader.kdex.dev,admissionReviewVersions=v1
-// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexclusterpagenavigation,mutating=false,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexclusterpagenavigations,verbs=create;update,versions=v1alpha1,name=validation.kdexclusterpagenavigation.kdex.dev,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexclusterpagearchetype,mutating=false,failurePolicy=Ignore,sideEffects=None,groups=kdex.dev,resources=kdexclusterpagearchetypes,verbs=create;update,versions=v1alpha1,name=validation.kdexclusterpagearchetype.kdex.dev,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexclusterpagefooter,mutating=false,failurePolicy=Ignore,sideEffects=None,groups=kdex.dev,resources=kdexclusterpagefooters,verbs=create;update,versions=v1alpha1,name=validation.kdexclusterpagefooter.kdex.dev,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexclusterpageheader,mutating=false,failurePolicy=Ignore,sideEffects=None,groups=kdex.dev,resources=kdexclusterpageheaders,verbs=create;update,versions=v1alpha1,name=validation.kdexclusterpageheader.kdex.dev,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexclusterpagenavigation,mutating=false,failurePolicy=Ignore,sideEffects=None,groups=kdex.dev,resources=kdexclusterpagenavigations,verbs=create;update,versions=v1alpha1,name=validation.kdexclusterpagenavigation.kdex.dev,admissionReviewVersions=v1
 
 type PageContentValidator[T runtime.Object] struct{}
 

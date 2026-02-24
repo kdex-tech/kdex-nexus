@@ -10,8 +10,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
-// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexscriptlibrary,mutating=false,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexscriptlibraries,verbs=create;update,versions=v1alpha1,name=validate.kdexscriptlibrary.kdex.dev,admissionReviewVersions=v1
-// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexclusterscriptlibrary,mutating=false,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexclusterscriptlibraries,verbs=create;update,versions=v1alpha1,name=validate.kdexclusterscriptlibrary.kdex.dev,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexscriptlibrary,mutating=false,failurePolicy=Ignore,sideEffects=None,groups=kdex.dev,resources=kdexscriptlibraries,verbs=create;update,versions=v1alpha1,name=validate.kdexscriptlibrary.kdex.dev,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexclusterscriptlibrary,mutating=false,failurePolicy=Ignore,sideEffects=None,groups=kdex.dev,resources=kdexclusterscriptlibraries,verbs=create;update,versions=v1alpha1,name=validate.kdexclusterscriptlibrary.kdex.dev,admissionReviewVersions=v1
 
 type KDexScriptLibraryValidator[T runtime.Object] struct {
 }

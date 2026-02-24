@@ -12,7 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
-// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexfunction,mutating=false,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexfunctions;kdexfunctions/status,verbs=create;update,versions=v1alpha1,name=validate.kdexfunction.kdex.dev,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexfunction,mutating=false,failurePolicy=Ignore,sideEffects=None,groups=kdex.dev,resources=kdexfunctions;kdexfunctions/status,verbs=create;update,versions=v1alpha1,name=validate.kdexfunction.kdex.dev,admissionReviewVersions=v1
 
 type KDexFunctionValidator[T runtime.Object] struct {
 }

@@ -9,8 +9,8 @@ import (
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 )
 
-// +kubebuilder:webhook:path=/mutate-kdex-dev-v1alpha1-kdexutilitypage,mutating=true,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexutilitypages,verbs=create;update,versions=v1alpha1,name=mutate.kdexutilitypage.kdex.dev,admissionReviewVersions=v1
-// +kubebuilder:webhook:path=/mutate-kdex-dev-v1alpha1-kdexclusterutilitypage,mutating=true,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexclusterutilitypages,verbs=create;update,versions=v1alpha1,name=mutate.kdexclusterutilitypage.kdex.dev,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/mutate-kdex-dev-v1alpha1-kdexutilitypage,mutating=true,failurePolicy=Ignore,sideEffects=None,groups=kdex.dev,resources=kdexutilitypages,verbs=create;update,versions=v1alpha1,name=mutate.kdexutilitypage.kdex.dev,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/mutate-kdex-dev-v1alpha1-kdexclusterutilitypage,mutating=true,failurePolicy=Ignore,sideEffects=None,groups=kdex.dev,resources=kdexclusterutilitypages,verbs=create;update,versions=v1alpha1,name=mutate.kdexclusterutilitypage.kdex.dev,admissionReviewVersions=v1
 
 type KDexUtilityPageDefaulter[T runtime.Object] struct {
 }

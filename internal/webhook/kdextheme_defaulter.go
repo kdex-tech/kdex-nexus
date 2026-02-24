@@ -9,8 +9,8 @@ import (
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 )
 
-// +kubebuilder:webhook:path=/mutate-kdex-dev-v1alpha1-kdextheme,mutating=true,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexthemes,verbs=create;update,versions=v1alpha1,name=mutate.kdextheme.kdex.dev,admissionReviewVersions=v1
-// +kubebuilder:webhook:path=/mutate-kdex-dev-v1alpha1-kdexclustertheme,mutating=true,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexclusterthemes,verbs=create;update,versions=v1alpha1,name=mutate.kdexclustertheme.kdex.dev,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/mutate-kdex-dev-v1alpha1-kdextheme,mutating=true,failurePolicy=Ignore,sideEffects=None,groups=kdex.dev,resources=kdexthemes,verbs=create;update,versions=v1alpha1,name=mutate.kdextheme.kdex.dev,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/mutate-kdex-dev-v1alpha1-kdexclustertheme,mutating=true,failurePolicy=Ignore,sideEffects=None,groups=kdex.dev,resources=kdexclusterthemes,verbs=create;update,versions=v1alpha1,name=mutate.kdexclustertheme.kdex.dev,admissionReviewVersions=v1
 
 type KDexThemeDefaulter[T runtime.Object] struct {
 }

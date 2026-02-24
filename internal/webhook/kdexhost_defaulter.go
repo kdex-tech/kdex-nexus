@@ -9,7 +9,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
-// +kubebuilder:webhook:path=/mutate-kdex-dev-v1alpha1-kdexhost,mutating=true,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexhosts,verbs=create;update,versions=v1alpha1,name=mutate.kdexhost.kdex.dev,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/mutate-kdex-dev-v1alpha1-kdexhost,mutating=true,failurePolicy=Ignore,sideEffects=None,groups=kdex.dev,resources=kdexhosts,verbs=create;update,versions=v1alpha1,name=mutate.kdexhost.kdex.dev,admissionReviewVersions=v1
 
 type KDexHostDefaulter[T runtime.Object] struct {
 }

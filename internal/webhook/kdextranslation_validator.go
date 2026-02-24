@@ -10,8 +10,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
-// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdextranslation,mutating=false,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdextranslations,verbs=create;update,versions=v1alpha1,name=validate.kdextranslation.kdex.dev,admissionReviewVersions=v1
-// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexclustertranslation,mutating=false,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexclustertranslations,verbs=create;update,versions=v1alpha1,name=validate.kdexclustertranslation.kdex.dev,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdextranslation,mutating=false,failurePolicy=Ignore,sideEffects=None,groups=kdex.dev,resources=kdextranslations,verbs=create;update,versions=v1alpha1,name=validate.kdextranslation.kdex.dev,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexclustertranslation,mutating=false,failurePolicy=Ignore,sideEffects=None,groups=kdex.dev,resources=kdexclustertranslations,verbs=create;update,versions=v1alpha1,name=validate.kdexclustertranslation.kdex.dev,admissionReviewVersions=v1
 
 type KDexTranslationValidator[T runtime.Object] struct {
 }

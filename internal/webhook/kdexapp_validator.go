@@ -10,8 +10,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
-// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexapp,mutating=false,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexapps,verbs=create;update,versions=v1alpha1,name=validate.kdexapp.kdex.dev,admissionReviewVersions=v1
-// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexclusterapp,mutating=false,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexclusterapps,verbs=create;update,versions=v1alpha1,name=validate.kdexclusterapp.kdex.dev,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexapp,mutating=false,failurePolicy=Ignore,sideEffects=None,groups=kdex.dev,resources=kdexapps,verbs=create;update,versions=v1alpha1,name=validate.kdexapp.kdex.dev,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexclusterapp,mutating=false,failurePolicy=Ignore,sideEffects=None,groups=kdex.dev,resources=kdexclusterapps,verbs=create;update,versions=v1alpha1,name=validate.kdexclusterapp.kdex.dev,admissionReviewVersions=v1
 
 type KDexAppValidator[T runtime.Object] struct {
 }

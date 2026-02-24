@@ -9,8 +9,8 @@ import (
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 )
 
-// +kubebuilder:webhook:path=/mutate-kdex-dev-v1alpha1-kdexpagenavigation,mutating=true,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexpagenavigations,verbs=create;update,versions=v1alpha1,name=mutate.kdexpagenavigation.kdex.dev,admissionReviewVersions=v1
-// +kubebuilder:webhook:path=/mutate-kdex-dev-v1alpha1-kdexclusterpagenavigation,mutating=true,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexclusterpagenavigations,verbs=create;update,versions=v1alpha1,name=mutate.kdexclusterpagenavigation.kdex.dev,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/mutate-kdex-dev-v1alpha1-kdexpagenavigation,mutating=true,failurePolicy=Ignore,sideEffects=None,groups=kdex.dev,resources=kdexpagenavigations,verbs=create;update,versions=v1alpha1,name=mutate.kdexpagenavigation.kdex.dev,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/mutate-kdex-dev-v1alpha1-kdexclusterpagenavigation,mutating=true,failurePolicy=Ignore,sideEffects=None,groups=kdex.dev,resources=kdexclusterpagenavigations,verbs=create;update,versions=v1alpha1,name=mutate.kdexclusterpagenavigation.kdex.dev,admissionReviewVersions=v1
 
 type KDexPageNavigationDefaulter[T runtime.Object] struct {
 }

@@ -10,8 +10,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
-// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexutilitypage,mutating=false,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexutilitypages,verbs=create;update,versions=v1alpha1,name=validate.kdexutilitypage.kdex.dev,admissionReviewVersions=v1
-// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexclusterutilitypage,mutating=false,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexclusterutilitypages,verbs=create;update,versions=v1alpha1,name=validate.kdexclusterutilitypage.kdex.dev,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexutilitypage,mutating=false,failurePolicy=Ignore,sideEffects=None,groups=kdex.dev,resources=kdexutilitypages,verbs=create;update,versions=v1alpha1,name=validate.kdexutilitypage.kdex.dev,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/validate-kdex-dev-v1alpha1-kdexclusterutilitypage,mutating=false,failurePolicy=Ignore,sideEffects=None,groups=kdex.dev,resources=kdexclusterutilitypages,verbs=create;update,versions=v1alpha1,name=validate.kdexclusterutilitypage.kdex.dev,admissionReviewVersions=v1
 
 type KDexUtilityPageValidator[T runtime.Object] struct {
 }

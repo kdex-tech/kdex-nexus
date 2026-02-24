@@ -9,8 +9,8 @@ import (
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 )
 
-// +kubebuilder:webhook:path=/mutate-kdex-dev-v1alpha1-kdexscriptlibrary,mutating=true,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexscriptlibraries,verbs=create;update,versions=v1alpha1,name=mutate.kdexscriptlibrary.kdex.dev,admissionReviewVersions=v1
-// +kubebuilder:webhook:path=/mutate-kdex-dev-v1alpha1-kdexclusterscriptlibrary,mutating=true,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexclusterscriptlibraries,verbs=create;update,versions=v1alpha1,name=mutate.kdexclusterscriptlibrary.kdex.dev,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/mutate-kdex-dev-v1alpha1-kdexscriptlibrary,mutating=true,failurePolicy=Ignore,sideEffects=None,groups=kdex.dev,resources=kdexscriptlibraries,verbs=create;update,versions=v1alpha1,name=mutate.kdexscriptlibrary.kdex.dev,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/mutate-kdex-dev-v1alpha1-kdexclusterscriptlibrary,mutating=true,failurePolicy=Ignore,sideEffects=None,groups=kdex.dev,resources=kdexclusterscriptlibraries,verbs=create;update,versions=v1alpha1,name=mutate.kdexclusterscriptlibrary.kdex.dev,admissionReviewVersions=v1
 
 type KDexScriptLibraryDefaulter[T runtime.Object] struct {
 }

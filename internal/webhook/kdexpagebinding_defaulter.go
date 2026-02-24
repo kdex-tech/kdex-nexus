@@ -9,7 +9,7 @@ import (
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 )
 
-// +kubebuilder:webhook:path=/mutate-kdex-dev-v1alpha1-kdexpagebinding,mutating=true,failurePolicy=fail,sideEffects=None,groups=kdex.dev,resources=kdexpagebindings,verbs=create;update,versions=v1alpha1,name=mutate.kdexpagebinding.kdex.dev,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/mutate-kdex-dev-v1alpha1-kdexpagebinding,mutating=true,failurePolicy=Ignore,sideEffects=None,groups=kdex.dev,resources=kdexpagebindings,verbs=create;update,versions=v1alpha1,name=mutate.kdexpagebinding.kdex.dev,admissionReviewVersions=v1
 
 type KDexPageBindingDefaulter[T runtime.Object] struct {
 }
