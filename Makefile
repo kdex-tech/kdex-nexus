@@ -199,7 +199,11 @@ CRDS_DIR = $(shell go list -m -f '{{.Dir}}' kdex.dev/crds)
 
 .PHONY: copy-crds-for-chart
 copy-crds-for-chart: ## Install CRDs from the kdex-crds module.
-	mkdir -p dist/chart/crds && cp $(CRDS_DIR)/config/crd/bases/* dist/chart/crds
+	rm -rf dist/chart/crds && mkdir -p dist/chart/crds && cp $(CRDS_DIR)/config/crd/bases/* dist/chart/crds
+
+.PHONY: copy-bundled-for-chart
+copy-bundled-for-chart: ## Install Bundled CRs.
+	rm -rf dist/chart/templates/bundled && mkdir -p dist/chart/templates/bundled && cp config/bundled/kdex*.yaml dist/chart/templates/bundled
 
 .PHONY: install
 install: kustomize ## Install CRDs from the kdex-crds module.

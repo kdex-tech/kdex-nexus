@@ -33,6 +33,8 @@ jobs:
     - name: Prepare kdex-nexus
       run: |
         go mod tidy
+        make copy-crds-for-chart
+        make copy-bundled-for-chart
         make docker-build IMG=kdex-nexus:ci
         kind load docker-image kdex-nexus:ci
 
@@ -88,7 +90,28 @@ jobs:
     - name: Check Helm release status
       run: |
         helm status my-release --namespace kdex-nexus-system
+
     # TODO: Uncomment if prometheus.enabled is set to true to confirm that the ServiceMonitor gets created
     #      - name: Check Presence of ServiceMonitor
     #        run: |
     #          kubectl wait --namespace kdex-nexus-system --for=jsonpath='{.kind}'=ServiceMonitor servicemonitor/kdex-nexus-controller-manager-metrics-monitor
+
+    - name: Verify controller manager is READY
+      run: |
+        kubectl -n kdex-nexus-system rollout status deployment kdex-nexus-controller-manager
+
+    - name: Verify bundled CRs are READY
+      run: |
+        kubectl get kdex-c-pa kdex-default-page-archetype-standard -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}'
+        kubectl get kdex-c-pa kdex-default-page-archetype-utility -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}'
+        kubectl get kdex-c-pf kdex-default-page-footer -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}'
+        kubectl get kdex-c-ph kdex-default-page-header -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}'
+        kubectl get kdex-c-pn kdex-default-page-navigation-language -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}'
+        kubectl get kdex-c-pn kdex-default-page-navigation-login -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}'
+        kubectl get kdex-c-pn kdex-default-page-navigation-main -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}'
+        kubectl get kdex-c-sl kdex-default-script-library -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}'
+        kubectl get kdex-c-th kdex-default-theme -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}'
+        kubectl get kdex-c-tr kdex-default-translation -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}'
+        kubectl get kdex-c-up kdex-default-utility-page-announcement -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}'
+        kubectl get kdex-c-up kdex-default-utility-page-error -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}'
+        kubectl get kdex-c-up kdex-default-utility-page-login -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}'

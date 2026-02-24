@@ -28,3 +28,4 @@ go.work
 *~
 buildkitd.toml
 dist/chart/crds
+dist/chart/templates/bundled
