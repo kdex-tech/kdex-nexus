@@ -27,3 +27,4 @@ go.work
 *.swo
 *~
 buildkitd.toml
+dist/chart/crds
