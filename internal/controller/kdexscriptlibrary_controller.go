@@ -40,7 +40,7 @@ import (
 // KDexScriptLibraryReconciler reconciles a KDexScriptLibrary object
 type KDexScriptLibraryReconciler struct {
 	client.Client
-	RegistryFactory func(secret *corev1.Secret, error func(err error, msg string, keysAndValues ...any)) (npm.Registry, error)
+	RegistryFactory func(secret *corev1.Secret) (npm.Registry, error)
 	RequeueDelay    time.Duration
 	Scheme          *runtime.Scheme
 }
@@ -109,7 +109,7 @@ func (r *KDexScriptLibraryReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			status.Attributes["secret.generation"] = fmt.Sprintf("%d", secret.Generation)
 		}
 
-		if err := validation.ValidatePackageReference(ctx, spec.PackageReference, secret, r.RegistryFactory); err != nil {
+		if err := validation.ValidatePackageReference(spec.PackageReference, secret, r.RegistryFactory); err != nil {
 			kdexv1alpha1.SetConditions(
 				&status.Conditions,
 				kdexv1alpha1.ConditionStatuses{

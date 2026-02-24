@@ -2,7 +2,6 @@ package validation
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"strings"
 
@@ -11,18 +10,14 @@ import (
 	"kdex.dev/crds/npm"
 	"kdex.dev/crds/render"
 	kdexresource "kdex.dev/crds/resource"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 func ValidatePackageReference(
-	ctx context.Context,
 	packageReference *kdexv1alpha1.PackageReference,
 	secret *corev1.Secret,
-	registryFactory func(secret *corev1.Secret, error func(err error, msg string, keysAndValues ...any)) (npm.Registry, error),
+	registryFactory func(secret *corev1.Secret) (npm.Registry, error),
 ) error {
-	log := logf.FromContext(ctx)
-
-	registry, err := registryFactory(secret, log.Error)
+	registry, err := registryFactory(secret)
 	if err != nil {
 		return err
 	}
