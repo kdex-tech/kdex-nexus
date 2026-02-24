@@ -43,7 +43,6 @@ controllerManager:
 
 config:
   backendDefault:
-    modulePath: /-/modules
     serverImage: ghcr.io/kdex-tech/backend-static:0.1.2
   defaultImageRegistry:
     host: docker.io
