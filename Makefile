@@ -132,7 +132,7 @@ modernizer-fix: ## Run modernizer and perform fixes
 ##@ Build
 
 .PHONY: build
-build: manifests generate fmt vet copy-crds-for-chart ## Build manager binary.
+build: manifests generate fmt vet ## Build manager binary.
 	go build -o bin/manager cmd/main.go
 
 .PHONY: run
@@ -222,6 +222,32 @@ deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in
 undeploy: kustomize ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/default | $(KUBECTL) delete --ignore-not-found=$(ignore-not-found) -f -
 
+##@ Helm
+
+.PHONY: update-chart
+update-chart: copy-bundled-for-chart ## Update chart with bundled CRs.
+	kubebuilder edit --plugins=helm/v1-alpha
+
+.PHONY: lint-chart
+lint-chart: copy-bundled-for-chart ## Lint chart.
+	$(HELM) lint ./dist/chart
+
+.PHONY: deploy-chart
+deploy-chart: copy-bundled-for-chart ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+	$(HELM) upgrade kdex-nexus ./dist/chart \
+		--create-namespace \
+		--install \
+		--namespace kdex-nexus-system \
+		--set "controllerManager.container.image.repository=${REPOSITORY}${IMG}" \
+		--set "controllerManager.container.image.tag=latest" \
+		--set "config.defaultNpmRegistry.host=npm.test" \
+		--set "config.defaultNpmRegistry.insecure=true"
+
+.PHONY: undeploy-chart
+undeploy-chart: ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+	$(HELM) uninstall kdex-nexus \
+		--namespace kdex-nexus-system
+
 ##@ Dependencies
 
 ## Location to install dependencies to
@@ -236,6 +262,7 @@ KUSTOMIZE ?= $(LOCALBIN)/kustomize
 CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 ENVTEST ?= $(LOCALBIN)/setup-envtest
 GOLANGCI_LINT = $(LOCALBIN)/golangci-lint
+HELM ?= helm
 
 ## Tool Versions
 #https://github.com/kubernetes-sigs/kustomize/releases/latest
