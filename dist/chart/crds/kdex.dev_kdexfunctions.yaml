@@ -1,0 +1,1228 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.20.1
+  name: kdexfunctions.kdex.dev
+spec:
+  group: kdex.dev
+  names:
+    categories:
+    - all
+    - kdex
+    kind: KDexFunction
+    listKind: KDexFunctionList
+    plural: kdexfunctions
+    shortNames:
+    - kdex-fn
+    singular: kdexfunction
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - description: The state of the function
+      jsonPath: .status.state
+      name: State
+      type: string
+    - jsonPath: .metadata.generation
+      name: Gen
+      priority: 1
+      type: string
+    - jsonPath: .status.detail
+      name: Detail
+      priority: 1
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: |-
+          KDexFunction is the Schema for the kdexfunctions API.
+
+          KDexFunction is a facility to express a particularly concise unit of logic that scales in isolation.
+          Ideally these are utilized via a FaaS layer, but for simplicity, some scenarios are modeled by the
+          Backend type using containers (native Kubernetes workloads).
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: spec defines the desired state of KDexFunction
+            properties:
+              api:
+                description: |-
+                  api defines the OpenAPI contract for the function.
+                  See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#path-item-object
+                  See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#schema-object
+                  The supported fields from 'path item object' are: summary, description, get, put, post, delete, options, head, patch, trace, parameters, and responses.
+                  The field 'schemas' of type map[string]schema whose values are defined by 'schema object' is supported and can be referenced throughout operation definitions. References must be in the form "#/components/schemas/<name>".
+                properties:
+                  basePath:
+                    description: basePath is the base URL path for the function. It
+                      must match the regex ^/\w+/\w+ (e.g., /v1/users).
+                    pattern: ^/\w+/\w+
+                    type: string
+                  paths:
+                    additionalProperties:
+                      properties:
+                        connect:
+                          type: object
+                          x-kubernetes-preserve-unknown-fields: true
+                        delete:
+                          type: object
+                          x-kubernetes-preserve-unknown-fields: true
+                        description:
+                          type: string
+                        get:
+                          type: object
+                          x-kubernetes-preserve-unknown-fields: true
+                        head:
+                          type: object
+                          x-kubernetes-preserve-unknown-fields: true
+                        options:
+                          type: object
+                          x-kubernetes-preserve-unknown-fields: true
+                        parameters:
+                          items:
+                            type: object
+                            x-kubernetes-preserve-unknown-fields: true
+                          type: array
+                          x-kubernetes-preserve-unknown-fields: true
+                        patch:
+                          type: object
+                          x-kubernetes-preserve-unknown-fields: true
+                        post:
+                          type: object
+                          x-kubernetes-preserve-unknown-fields: true
+                        put:
+                          type: object
+                          x-kubernetes-preserve-unknown-fields: true
+                        summary:
+                          type: string
+                        trace:
+                          type: object
+                          x-kubernetes-preserve-unknown-fields: true
+                      type: object
+                    description: paths is a map of paths that exist below the basePath.
+                      All keys of the map must be paths prefixed by .spec.api.basePath.
+                    maxProperties: 16
+                    minProperties: 1
+                    type: object
+                  schemas:
+                    additionalProperties:
+                      type: object
+                      x-kubernetes-preserve-unknown-fields: true
+                    maxProperties: 6
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
+                required:
+                - basePath
+                - paths
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
+                x-kubernetes-validations:
+                - message: all keys of .spec.api.paths must be prefixed by .spec.api.basePath
+                  rule: self.paths.all(k, k.startsWith(self.basePath))
+              claimMappings:
+                description: |-
+                  claimMappings is an array of CEL expressions for extracting custom claims
+                  from the current authorization context onto the Function Access Token (FAT).
+                  This can be used to map Function specific claims like tenant, department_id,
+                  strip_customer_id, etc. to the FAT.
+                items:
+                  description: |-
+                    MappingRule defines a transformation rule for mapping arbitrary data from an
+                    input to an output.
+                  properties:
+                    required:
+                      default: false
+                      description: |-
+                        required indicates that if the rule fails to produce a value the rule
+                        will be skipped. Otherwise the execution should fail.
+                      type: boolean
+                    sourceExpression:
+                      description: |-
+                        sourceExpression is CEL program to compute a transformation of input into
+                        a new form.
+                      example: self.oidc.groups.filter(g, g.startsWith('app_')).join(',')
+                      minLength: 5
+                      type: string
+                    targetPropPath:
+                      description: |-
+                        targetPropPath is a dot-separated property path for where the result
+                        should be attached in the output.
+                      example: auth.internal_groups
+                      minLength: 5
+                      type: string
+                  required:
+                  - sourceExpression
+                  - targetPropPath
+                  type: object
+                maxItems: 16
+                type: array
+              hostRef:
+                description: hostRef is a reference to the KDexHost that this translation
+                  belongs to.
+                properties:
+                  name:
+                    default: ""
+                    description: |-
+                      Name of the referent.
+                      This field is effectively required, but due to backwards compatibility is
+                      allowed to be empty. Instances of this type with an empty value here are
+                      almost certainly wrong.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                    type: string
+                type: object
+                x-kubernetes-map-type: atomic
+                x-kubernetes-validations:
+                - message: hostRef.name must not be empty
+                  rule: self.name.size() > 0
+              metadata:
+                description: metadata defines the metadata for the function for cataloging
+                  and discovery purposes.
+                properties:
+                  autoGenerated:
+                    description: AutoGenerated indicates if this CR was created by
+                      the "Sniffer" server.
+                    type: boolean
+                  contact:
+                    description: Contact provides contact information for the function's
+                      owner.
+                    properties:
+                      email:
+                        description: Email of the contact.
+                        type: string
+                      name:
+                        description: Name of the contact.
+                        type: string
+                    type: object
+                  tags:
+                    description: Tags are used for grouping and searching functions.
+                    items:
+                      properties:
+                        description:
+                          type: string
+                        name:
+                          type: string
+                        url:
+                          type: string
+                      required:
+                      - name
+                      type: object
+                    maxItems: 16
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - name
+                    x-kubernetes-list-type: map
+                type: object
+              origin:
+                description: origin defines the origin of the function implementation.
+                properties:
+                  executable:
+                    description: executable is a reference to a pre-built container
+                      image or VM image.
+                    properties:
+                      image:
+                        description: |-
+                          image is a reference to executable artifact. In most cases this will be a Docker image. In some other cases
+                          it may be an artifact native to FaaS Adaptor's target runtime.
+                        type: string
+                      scaling:
+                        description: Scaling allows configuration for min/max replicas
+                          and autoscaler type.
+                        properties:
+                          activationScale:
+                            default: 1
+                            description: |-
+                              activationScale controls the minimum number of replicas that will be created
+                              when the Function scales up from zero. After the Function has reached this
+                              scale one time, this value is ignored. This means that the Function will
+                              scale down after the activation scale is reached if the actual traffic
+                              received needs a smaller scale.
+
+                              When the Function is created, the larger of activation scale and lower
+                              bound is automatically chosen as the initial target scale.
+                            format: int32
+                            type: integer
+                          initialScale:
+                            default: 1
+                            description: |-
+                              initialScale controls the initial target scale a Function must reach
+                              immediately after it is created before it is marked as Ready. After the
+                              Function has reached this scale one time, this value is ignored. This
+                              means that the Function will scale down after the initial target scale
+                              is reached if the actual traffic received only needs a smaller scale.
+
+                              When the Function is created, the larger of initialScale and
+                              minScale is automatically chosen as the initial target scale.
+                            format: int32
+                            type: integer
+                          maxScale:
+                            default: 0
+                            description: |-
+                              maxScale controls the maximum number of replicas that each Function
+                              should have. The autoscaler will attempt to never have more than this
+                              number of replicas running, or in the process of being created, at any
+                              one point in time.
+                            format: int32
+                            type: integer
+                          metric:
+                            default: concurrency
+                            description: metric defines which metric type is watched
+                              by the Autoscaler.
+                            enum:
+                            - concurrency
+                            - rps
+                            type: string
+                          minScale:
+                            default: 0
+                            description: |-
+                              minScale controls the minimum number of replicas that each Function
+                              should have. The autoscaler will attempt to never have less than this
+                              number of replicas at any one point in time.
+                            format: int32
+                            type: integer
+                          panicThresholdPercentage:
+                            default: 200
+                            description: |-
+                              panicThresholdPercentage defines when the Autoscaler will move from stable
+                              mode into panic mode.
+                            format: int32
+                            maximum: 1000
+                            minimum: 110
+                            type: integer
+                          panicWindowPercentage:
+                            default: 10
+                            description: |-
+                              The panic window is defined as a percentage of the stable window to
+                              assure that both are relative to each other in a working way.
+
+                              panicWindowPercentage indicates how the window over which historical
+                              data is evaluated will shrink upon entering panic mode. For example,
+                              a value of 10.0 means that in panic mode the window will be 10% of the
+                              stable window size.
+                            format: int32
+                            maximum: 100
+                            minimum: 1
+                            type: integer
+                          scaleDownDelay:
+                            default: 0s
+                            description: |-
+                              scaleDownDelay specifies a time window which must pass at reduced
+                              concurrency before a scale-down decision is applied. This can be useful,
+                              for example, to keep containers around for a configurable duration to
+                              avoid a cold start penalty if new requests come in. Unlike setting a lower
+                              bound, the revision will eventually be scaled down if reduced concurrency
+                              is maintained for the delay period.
+                            type: string
+                          scaleToZeroPodRetentionPeriod:
+                            default: 0s
+                            description: |-
+                              scaleToZeroPodRetentionPeriod determines the minimum amount of time that
+                              the last pod will remain active after the Autoscaler decides to scale pods
+                              to zero. This can be useful to avoid a cold start penalty if new requests
+                              come in. Unlike setting a lower bound, the revision will eventually be
+                              scaled down if reduced concurrency is maintained for the delay period.
+                            type: string
+                          stableWindow:
+                            default: 60s
+                            description: |-
+                              stableWindow defines the sliding time window over which metrics are
+                              averaged to provide the input for scaling decisions when the autoscaler
+                              is not in Panic mode.
+                            type: string
+                          target:
+                            description: |-
+                              target provides the Autoscaler with a target value that it tries to
+                              maintain for the configured metric. This value is metric agnostic. This
+                              means the target is simply an integer value, which can be applied for any
+                              metric type.
+                            format: int32
+                            type: integer
+                          targetUtilizationPercentage:
+                            default: 70
+                            description: |-
+                              targetUtilizationPercentage specifies what percentage of the previously
+                              specified target should actually be targeted by the Autoscaler. This is
+                              also known as specifying the hotness at which a replica runs, which causes
+                              the Autoscaler to scale up before the defined hard limit is reached.
+                            format: int32
+                            type: integer
+                        type: object
+                    type: object
+                  generator:
+                    description: generator holds the values to configure and execute
+                      the code generator.
+                    properties:
+                      args:
+                        description: args is an optional array of arguments that will
+                          be passed to the generator command.
+                        items:
+                          type: string
+                        type: array
+                      command:
+                        description: command is an optional array that contains the
+                          code generator command and any flags necessary.
+                        items:
+                          type: string
+                        type: array
+                      entrypoint:
+                        description: Entrypoint is the specific function handler/method
+                          to execute.
+                        type: string
+                      git:
+                        description: git is the configuration for the Git repository
+                          where generated code will be committed to a branch.
+                        properties:
+                          committerEmail:
+                            description: committerEmail is the email address that
+                              will be used for git commits.
+                            type: string
+                          committerName:
+                            description: committerName is the name that will be used
+                              for git commits.
+                            type: string
+                          functionSubDirectory:
+                            default: .
+                            description: functionSubDirectory is the optional path
+                              to a subdirectory in the repository in which generated
+                              code will be placed.
+                            type: string
+                          image:
+                            description: image is the name of the container image
+                              to run for git.
+                            type: string
+                        required:
+                        - committerEmail
+                        - committerName
+                        - image
+                        type: object
+                      image:
+                        description: image is the image containing the generator implementation;
+                          cli or scripts.
+                        type: string
+                      language:
+                        description: Language is the programming language of the function
+                          (e.g., go, python, nodejs).
+                        type: string
+                      serviceAccountName:
+                        description: serviceAccountName is the name of the service
+                          account to use for the generator job.
+                        type: string
+                    required:
+                    - git
+                    - image
+                    - language
+                    type: object
+                  source:
+                    description: source contains source code location information.
+                    properties:
+                      builder:
+                        description: builder is used to build the source code into
+                          an image.
+                        properties:
+                          builderRef:
+                            description: builderRef is a reference to the kpack.io/v1alpha2/Builder
+                              or kpack.io/v1alpha2/ClusterBuilder to use for building
+                              the image.
+                            properties:
+                              kind:
+                                description: Kind is the type of resource being referenced
+                                type: string
+                              name:
+                                description: Name of the referent.
+                                type: string
+                              namespace:
+                                description: |-
+                                  Namespace, if set, causes the lookup for the namespace scoped Kind of the referent to use the specified
+                                  namespace. If not set, the namespace of the resource will be used to lookup the namespace scoped Kind of the
+                                  referent.
+                                  If the referring resource is cluster scoped, this field is ignored.
+                                  Defaulted to nil.
+                                type: string
+                            required:
+                            - kind
+                            - name
+                            type: object
+                            x-kubernetes-map-type: atomic
+                            x-kubernetes-validations:
+                            - message: '''kind'' must be either kpack.io/v1alpha2/Builder
+                                or kpack.io/v1alpha2/ClusterBuilder'
+                              rule: self.kind == "Builder" || self.kind == "ClusterBuilder"
+                          env:
+                            description: env is the environment variables to set in
+                              the builder.
+                            items:
+                              description: EnvVar represents an environment variable
+                                present in a Container.
+                              properties:
+                                name:
+                                  description: |-
+                                    Name of the environment variable.
+                                    May consist of any printable ASCII characters except '='.
+                                  type: string
+                                value:
+                                  description: |-
+                                    Variable references $(VAR_NAME) are expanded
+                                    using the previously defined environment variables in the container and
+                                    any service environment variables. If a variable cannot be resolved,
+                                    the reference in the input string will be unchanged. Double $$ are reduced
+                                    to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e.
+                                    "$$(VAR_NAME)" will produce the string literal "$(VAR_NAME)".
+                                    Escaped references will never be expanded, regardless of whether the variable
+                                    exists or not.
+                                    Defaults to "".
+                                  type: string
+                                valueFrom:
+                                  description: Source for the environment variable's
+                                    value. Cannot be used if value is not empty.
+                                  properties:
+                                    configMapKeyRef:
+                                      description: Selects a key of a ConfigMap.
+                                      properties:
+                                        key:
+                                          description: The key to select.
+                                          type: string
+                                        name:
+                                          default: ""
+                                          description: |-
+                                            Name of the referent.
+                                            This field is effectively required, but due to backwards compatibility is
+                                            allowed to be empty. Instances of this type with an empty value here are
+                                            almost certainly wrong.
+                                            More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                          type: string
+                                        optional:
+                                          description: Specify whether the ConfigMap
+                                            or its key must be defined
+                                          type: boolean
+                                      required:
+                                      - key
+                                      type: object
+                                      x-kubernetes-map-type: atomic
+                                    fieldRef:
+                                      description: |-
+                                        Selects a field of the pod: supports metadata.name, metadata.namespace, `metadata.labels['<KEY>']`, `metadata.annotations['<KEY>']`,
+                                        spec.nodeName, spec.serviceAccountName, status.hostIP, status.podIP, status.podIPs.
+                                      properties:
+                                        apiVersion:
+                                          description: Version of the schema the FieldPath
+                                            is written in terms of, defaults to "v1".
+                                          type: string
+                                        fieldPath:
+                                          description: Path of the field to select
+                                            in the specified API version.
+                                          type: string
+                                      required:
+                                      - fieldPath
+                                      type: object
+                                      x-kubernetes-map-type: atomic
+                                    fileKeyRef:
+                                      description: |-
+                                        FileKeyRef selects a key of the env file.
+                                        Requires the EnvFiles feature gate to be enabled.
+                                      properties:
+                                        key:
+                                          description: |-
+                                            The key within the env file. An invalid key will prevent the pod from starting.
+                                            The keys defined within a source may consist of any printable ASCII characters except '='.
+                                            During Alpha stage of the EnvFiles feature gate, the key size is limited to 128 characters.
+                                          type: string
+                                        optional:
+                                          default: false
+                                          description: |-
+                                            Specify whether the file or its key must be defined. If the file or key
+                                            does not exist, then the env var is not published.
+                                            If optional is set to true and the specified key does not exist,
+                                            the environment variable will not be set in the Pod's containers.
+
+                                            If optional is set to false and the specified key does not exist,
+                                            an error will be returned during Pod creation.
+                                          type: boolean
+                                        path:
+                                          description: |-
+                                            The path within the volume from which to select the file.
+                                            Must be relative and may not contain the '..' path or start with '..'.
+                                          type: string
+                                        volumeName:
+                                          description: The name of the volume mount
+                                            containing the env file.
+                                          type: string
+                                      required:
+                                      - key
+                                      - path
+                                      - volumeName
+                                      type: object
+                                      x-kubernetes-map-type: atomic
+                                    resourceFieldRef:
+                                      description: |-
+                                        Selects a resource of the container: only resources limits and requests
+                                        (limits.cpu, limits.memory, limits.ephemeral-storage, requests.cpu, requests.memory and requests.ephemeral-storage) are currently supported.
+                                      properties:
+                                        containerName:
+                                          description: 'Container name: required for
+                                            volumes, optional for env vars'
+                                          type: string
+                                        divisor:
+                                          anyOf:
+                                          - type: integer
+                                          - type: string
+                                          description: Specifies the output format
+                                            of the exposed resources, defaults to
+                                            "1"
+                                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                          x-kubernetes-int-or-string: true
+                                        resource:
+                                          description: 'Required: resource to select'
+                                          type: string
+                                      required:
+                                      - resource
+                                      type: object
+                                      x-kubernetes-map-type: atomic
+                                    secretKeyRef:
+                                      description: Selects a key of a secret in the
+                                        pod's namespace
+                                      properties:
+                                        key:
+                                          description: The key of the secret to select
+                                            from.  Must be a valid secret key.
+                                          type: string
+                                        name:
+                                          default: ""
+                                          description: |-
+                                            Name of the referent.
+                                            This field is effectively required, but due to backwards compatibility is
+                                            allowed to be empty. Instances of this type with an empty value here are
+                                            almost certainly wrong.
+                                            More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                          type: string
+                                        optional:
+                                          description: Specify whether the Secret
+                                            or its key must be defined
+                                          type: boolean
+                                      required:
+                                      - key
+                                      type: object
+                                      x-kubernetes-map-type: atomic
+                                  type: object
+                              required:
+                              - name
+                              type: object
+                            type: array
+                          languages:
+                            description: Languages is a list of languages that this
+                              builder supports.
+                            items:
+                              type: string
+                            minItems: 1
+                            type: array
+                          name:
+                            description: Name is the builder name (e.g., tiny, base,
+                              full).
+                            type: string
+                          serviceAccountName:
+                            description: serviceAccountName is the name of the service
+                              account to use for building the image.
+                            type: string
+                        required:
+                        - builderRef
+                        - languages
+                        - name
+                        type: object
+                      path:
+                        description: path is the path to the source code in the repository.
+                        type: string
+                      repository:
+                        description: repository is the git repository address to the
+                          source code.
+                        type: string
+                      revision:
+                        description: revision is the git revision (tag, branch or
+                          commit hash) to the source code.
+                        type: string
+                    required:
+                    - repository
+                    - revision
+                    type: object
+                type: object
+                x-kubernetes-validations:
+                - message: at most one of the fields in [executable generator source]
+                    may be set
+                  rule: '[has(self.executable),has(self.generator),has(self.source)].filter(x,x==true).size()
+                    <= 1'
+            required:
+            - api
+            - hostRef
+            type: object
+          status:
+            description: status defines the observed state of KDexFunction
+            properties:
+              attributes:
+                additionalProperties:
+                  type: string
+                description: attributes hold state of the resource as key/value pairs.
+                maxProperties: 10
+                type: object
+              conditions:
+                description: |-
+                  conditions represent the current state of the resource.
+                  Each condition has a unique type and reflects the status of a specific aspect of the resource.
+
+                  Standard condition types include:
+                  - "Progressing": the resource is being created or updated
+                  - "Ready": the resource is fully functional
+                  - "Degraded": the resource failed to reach or maintain its desired state
+
+                  The status of each condition is one of True, False, or Unknown.
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+              detail:
+                description: Detail is a human-readable description of the current
+                  state.
+                type: string
+              executable:
+                description: |-
+                  executable is a reference to executable artifact. In most cases this will be a Docker image. In some other cases
+                  it may be an artifact native to FaaS Adaptor's target runtime.
+                  STATUS=ExecutableAvailable
+                properties:
+                  image:
+                    description: |-
+                      image is a reference to executable artifact. In most cases this will be a Docker image. In some other cases
+                      it may be an artifact native to FaaS Adaptor's target runtime.
+                    type: string
+                  scaling:
+                    description: Scaling allows configuration for min/max replicas
+                      and autoscaler type.
+                    properties:
+                      activationScale:
+                        default: 1
+                        description: |-
+                          activationScale controls the minimum number of replicas that will be created
+                          when the Function scales up from zero. After the Function has reached this
+                          scale one time, this value is ignored. This means that the Function will
+                          scale down after the activation scale is reached if the actual traffic
+                          received needs a smaller scale.
+
+                          When the Function is created, the larger of activation scale and lower
+                          bound is automatically chosen as the initial target scale.
+                        format: int32
+                        type: integer
+                      initialScale:
+                        default: 1
+                        description: |-
+                          initialScale controls the initial target scale a Function must reach
+                          immediately after it is created before it is marked as Ready. After the
+                          Function has reached this scale one time, this value is ignored. This
+                          means that the Function will scale down after the initial target scale
+                          is reached if the actual traffic received only needs a smaller scale.
+
+                          When the Function is created, the larger of initialScale and
+                          minScale is automatically chosen as the initial target scale.
+                        format: int32
+                        type: integer
+                      maxScale:
+                        default: 0
+                        description: |-
+                          maxScale controls the maximum number of replicas that each Function
+                          should have. The autoscaler will attempt to never have more than this
+                          number of replicas running, or in the process of being created, at any
+                          one point in time.
+                        format: int32
+                        type: integer
+                      metric:
+                        default: concurrency
+                        description: metric defines which metric type is watched by
+                          the Autoscaler.
+                        enum:
+                        - concurrency
+                        - rps
+                        type: string
+                      minScale:
+                        default: 0
+                        description: |-
+                          minScale controls the minimum number of replicas that each Function
+                          should have. The autoscaler will attempt to never have less than this
+                          number of replicas at any one point in time.
+                        format: int32
+                        type: integer
+                      panicThresholdPercentage:
+                        default: 200
+                        description: |-
+                          panicThresholdPercentage defines when the Autoscaler will move from stable
+                          mode into panic mode.
+                        format: int32
+                        maximum: 1000
+                        minimum: 110
+                        type: integer
+                      panicWindowPercentage:
+                        default: 10
+                        description: |-
+                          The panic window is defined as a percentage of the stable window to
+                          assure that both are relative to each other in a working way.
+
+                          panicWindowPercentage indicates how the window over which historical
+                          data is evaluated will shrink upon entering panic mode. For example,
+                          a value of 10.0 means that in panic mode the window will be 10% of the
+                          stable window size.
+                        format: int32
+                        maximum: 100
+                        minimum: 1
+                        type: integer
+                      scaleDownDelay:
+                        default: 0s
+                        description: |-
+                          scaleDownDelay specifies a time window which must pass at reduced
+                          concurrency before a scale-down decision is applied. This can be useful,
+                          for example, to keep containers around for a configurable duration to
+                          avoid a cold start penalty if new requests come in. Unlike setting a lower
+                          bound, the revision will eventually be scaled down if reduced concurrency
+                          is maintained for the delay period.
+                        type: string
+                      scaleToZeroPodRetentionPeriod:
+                        default: 0s
+                        description: |-
+                          scaleToZeroPodRetentionPeriod determines the minimum amount of time that
+                          the last pod will remain active after the Autoscaler decides to scale pods
+                          to zero. This can be useful to avoid a cold start penalty if new requests
+                          come in. Unlike setting a lower bound, the revision will eventually be
+                          scaled down if reduced concurrency is maintained for the delay period.
+                        type: string
+                      stableWindow:
+                        default: 60s
+                        description: |-
+                          stableWindow defines the sliding time window over which metrics are
+                          averaged to provide the input for scaling decisions when the autoscaler
+                          is not in Panic mode.
+                        type: string
+                      target:
+                        description: |-
+                          target provides the Autoscaler with a target value that it tries to
+                          maintain for the configured metric. This value is metric agnostic. This
+                          means the target is simply an integer value, which can be applied for any
+                          metric type.
+                        format: int32
+                        type: integer
+                      targetUtilizationPercentage:
+                        default: 70
+                        description: |-
+                          targetUtilizationPercentage specifies what percentage of the previously
+                          specified target should actually be targeted by the Autoscaler. This is
+                          also known as specifying the hotness at which a replica runs, which causes
+                          the Autoscaler to scale up before the defined hard limit is reached.
+                        format: int32
+                        type: integer
+                    type: object
+                type: object
+              generator:
+                description: |-
+                  generator holds the values to configure and execute the code generator.
+                  STATUS=BuildValid
+                properties:
+                  args:
+                    description: args is an optional array of arguments that will
+                      be passed to the generator command.
+                    items:
+                      type: string
+                    type: array
+                  command:
+                    description: command is an optional array that contains the code
+                      generator command and any flags necessary.
+                    items:
+                      type: string
+                    type: array
+                  entrypoint:
+                    description: Entrypoint is the specific function handler/method
+                      to execute.
+                    type: string
+                  git:
+                    description: git is the configuration for the Git repository where
+                      generated code will be committed to a branch.
+                    properties:
+                      committerEmail:
+                        description: committerEmail is the email address that will
+                          be used for git commits.
+                        type: string
+                      committerName:
+                        description: committerName is the name that will be used for
+                          git commits.
+                        type: string
+                      functionSubDirectory:
+                        default: .
+                        description: functionSubDirectory is the optional path to
+                          a subdirectory in the repository in which generated code
+                          will be placed.
+                        type: string
+                      image:
+                        description: image is the name of the container image to run
+                          for git.
+                        type: string
+                    required:
+                    - committerEmail
+                    - committerName
+                    - image
+                    type: object
+                  image:
+                    description: image is the image containing the generator implementation;
+                      cli or scripts.
+                    type: string
+                  language:
+                    description: Language is the programming language of the function
+                      (e.g., go, python, nodejs).
+                    type: string
+                  serviceAccountName:
+                    description: serviceAccountName is the name of the service account
+                      to use for the generator job.
+                    type: string
+                required:
+                - git
+                - image
+                - language
+                type: object
+              observedGeneration:
+                description: |-
+                  observedGeneration is the most recent generation observed for this resource. It corresponds to the
+                  resource's generation, which is updated on mutation by the API Server.
+                format: int64
+                type: integer
+              openAPISchemaURL:
+                description: |-
+                  OpenAPISchemaURL is the URL to the aggregated, full OpenAPI document.
+                  STATUS=OpenAPIValid
+                type: string
+              source:
+                description: |-
+                  Source contains source information.
+                  STATUS=SourceAvailable
+                properties:
+                  builder:
+                    description: builder is used to build the source code into an
+                      image.
+                    properties:
+                      builderRef:
+                        description: builderRef is a reference to the kpack.io/v1alpha2/Builder
+                          or kpack.io/v1alpha2/ClusterBuilder to use for building
+                          the image.
+                        properties:
+                          kind:
+                            description: Kind is the type of resource being referenced
+                            type: string
+                          name:
+                            description: Name of the referent.
+                            type: string
+                          namespace:
+                            description: |-
+                              Namespace, if set, causes the lookup for the namespace scoped Kind of the referent to use the specified
+                              namespace. If not set, the namespace of the resource will be used to lookup the namespace scoped Kind of the
+                              referent.
+                              If the referring resource is cluster scoped, this field is ignored.
+                              Defaulted to nil.
+                            type: string
+                        required:
+                        - kind
+                        - name
+                        type: object
+                        x-kubernetes-map-type: atomic
+                        x-kubernetes-validations:
+                        - message: '''kind'' must be either kpack.io/v1alpha2/Builder
+                            or kpack.io/v1alpha2/ClusterBuilder'
+                          rule: self.kind == "Builder" || self.kind == "ClusterBuilder"
+                      env:
+                        description: env is the environment variables to set in the
+                          builder.
+                        items:
+                          description: EnvVar represents an environment variable present
+                            in a Container.
+                          properties:
+                            name:
+                              description: |-
+                                Name of the environment variable.
+                                May consist of any printable ASCII characters except '='.
+                              type: string
+                            value:
+                              description: |-
+                                Variable references $(VAR_NAME) are expanded
+                                using the previously defined environment variables in the container and
+                                any service environment variables. If a variable cannot be resolved,
+                                the reference in the input string will be unchanged. Double $$ are reduced
+                                to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e.
+                                "$$(VAR_NAME)" will produce the string literal "$(VAR_NAME)".
+                                Escaped references will never be expanded, regardless of whether the variable
+                                exists or not.
+                                Defaults to "".
+                              type: string
+                            valueFrom:
+                              description: Source for the environment variable's value.
+                                Cannot be used if value is not empty.
+                              properties:
+                                configMapKeyRef:
+                                  description: Selects a key of a ConfigMap.
+                                  properties:
+                                    key:
+                                      description: The key to select.
+                                      type: string
+                                    name:
+                                      default: ""
+                                      description: |-
+                                        Name of the referent.
+                                        This field is effectively required, but due to backwards compatibility is
+                                        allowed to be empty. Instances of this type with an empty value here are
+                                        almost certainly wrong.
+                                        More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                      type: string
+                                    optional:
+                                      description: Specify whether the ConfigMap or
+                                        its key must be defined
+                                      type: boolean
+                                  required:
+                                  - key
+                                  type: object
+                                  x-kubernetes-map-type: atomic
+                                fieldRef:
+                                  description: |-
+                                    Selects a field of the pod: supports metadata.name, metadata.namespace, `metadata.labels['<KEY>']`, `metadata.annotations['<KEY>']`,
+                                    spec.nodeName, spec.serviceAccountName, status.hostIP, status.podIP, status.podIPs.
+                                  properties:
+                                    apiVersion:
+                                      description: Version of the schema the FieldPath
+                                        is written in terms of, defaults to "v1".
+                                      type: string
+                                    fieldPath:
+                                      description: Path of the field to select in
+                                        the specified API version.
+                                      type: string
+                                  required:
+                                  - fieldPath
+                                  type: object
+                                  x-kubernetes-map-type: atomic
+                                fileKeyRef:
+                                  description: |-
+                                    FileKeyRef selects a key of the env file.
+                                    Requires the EnvFiles feature gate to be enabled.
+                                  properties:
+                                    key:
+                                      description: |-
+                                        The key within the env file. An invalid key will prevent the pod from starting.
+                                        The keys defined within a source may consist of any printable ASCII characters except '='.
+                                        During Alpha stage of the EnvFiles feature gate, the key size is limited to 128 characters.
+                                      type: string
+                                    optional:
+                                      default: false
+                                      description: |-
+                                        Specify whether the file or its key must be defined. If the file or key
+                                        does not exist, then the env var is not published.
+                                        If optional is set to true and the specified key does not exist,
+                                        the environment variable will not be set in the Pod's containers.
+
+                                        If optional is set to false and the specified key does not exist,
+                                        an error will be returned during Pod creation.
+                                      type: boolean
+                                    path:
+                                      description: |-
+                                        The path within the volume from which to select the file.
+                                        Must be relative and may not contain the '..' path or start with '..'.
+                                      type: string
+                                    volumeName:
+                                      description: The name of the volume mount containing
+                                        the env file.
+                                      type: string
+                                  required:
+                                  - key
+                                  - path
+                                  - volumeName
+                                  type: object
+                                  x-kubernetes-map-type: atomic
+                                resourceFieldRef:
+                                  description: |-
+                                    Selects a resource of the container: only resources limits and requests
+                                    (limits.cpu, limits.memory, limits.ephemeral-storage, requests.cpu, requests.memory and requests.ephemeral-storage) are currently supported.
+                                  properties:
+                                    containerName:
+                                      description: 'Container name: required for volumes,
+                                        optional for env vars'
+                                      type: string
+                                    divisor:
+                                      anyOf:
+                                      - type: integer
+                                      - type: string
+                                      description: Specifies the output format of
+                                        the exposed resources, defaults to "1"
+                                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                      x-kubernetes-int-or-string: true
+                                    resource:
+                                      description: 'Required: resource to select'
+                                      type: string
+                                  required:
+                                  - resource
+                                  type: object
+                                  x-kubernetes-map-type: atomic
+                                secretKeyRef:
+                                  description: Selects a key of a secret in the pod's
+                                    namespace
+                                  properties:
+                                    key:
+                                      description: The key of the secret to select
+                                        from.  Must be a valid secret key.
+                                      type: string
+                                    name:
+                                      default: ""
+                                      description: |-
+                                        Name of the referent.
+                                        This field is effectively required, but due to backwards compatibility is
+                                        allowed to be empty. Instances of this type with an empty value here are
+                                        almost certainly wrong.
+                                        More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                      type: string
+                                    optional:
+                                      description: Specify whether the Secret or its
+                                        key must be defined
+                                      type: boolean
+                                  required:
+                                  - key
+                                  type: object
+                                  x-kubernetes-map-type: atomic
+                              type: object
+                          required:
+                          - name
+                          type: object
+                        type: array
+                      languages:
+                        description: Languages is a list of languages that this builder
+                          supports.
+                        items:
+                          type: string
+                        minItems: 1
+                        type: array
+                      name:
+                        description: Name is the builder name (e.g., tiny, base, full).
+                        type: string
+                      serviceAccountName:
+                        description: serviceAccountName is the name of the service
+                          account to use for building the image.
+                        type: string
+                    required:
+                    - builderRef
+                    - languages
+                    - name
+                    type: object
+                  path:
+                    description: path is the path to the source code in the repository.
+                    type: string
+                  repository:
+                    description: repository is the git repository address to the source
+                      code.
+                    type: string
+                  revision:
+                    description: revision is the git revision (tag, branch or commit
+                      hash) to the source code.
+                    type: string
+                required:
+                - repository
+                - revision
+                type: object
+              state:
+                allOf:
+                - enum:
+                  - Pending
+                  - OpenAPIValid
+                  - BuildValid
+                  - SourceAvailable
+                  - ExecutableAvailable
+                  - FunctionDeployed
+                  - Ready
+                - enum:
+                  - Pending
+                  - OpenAPIValid
+                  - BuildValid
+                  - SourceAvailable
+                  - ExecutableAvailable
+                  - FunctionDeployed
+                  - Ready
+                default: Pending
+                description: State reflects the current state (e.g., Pending, OpenAPIValid,
+                  BuildValid, SourceAvailable, ExecutableAvailable, FunctionDeployed,
+                  Ready).
+                type: string
+              url:
+                description: |-
+                  URL is the full, routable URL for the function. This URL may only be routable from within the network.
+                  STATUS=FunctionDeployed
+                type: string
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

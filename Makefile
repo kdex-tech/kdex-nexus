@@ -1,5 +1,5 @@
 # Image URL to use all building/pushing image targets
-IMG ?= kdex-tech/kdex-nexus:latest
+IMG ?= kdex-tech/nexus-manager:latest
 
 REPOSITORY ?= 
 # if REPOSITORY is set make sure it ends with a /
@@ -132,7 +132,7 @@ modernizer-fix: ## Run modernizer and perform fixes
 ##@ Build
 
 .PHONY: build
-build: manifests generate fmt vet ## Build manager binary.
+build: manifests generate fmt vet copy-crds-for-chart ## Build manager binary.
 	go build -o bin/manager cmd/main.go
 
 .PHONY: run
@@ -196,6 +196,10 @@ ifndef ignore-not-found
 endif
 
 CRDS_DIR = $(shell go list -m -f '{{.Dir}}' kdex.dev/crds)
+
+.PHONY: copy-crds-for-chart
+copy-crds-for-chart: ## Install CRDs from the kdex-crds module.
+	mkdir -p dist/chart/crds && cp $(CRDS_DIR)/config/crd/bases/* dist/chart/crds
 
 .PHONY: install
 install: kustomize ## Install CRDs from the kdex-crds module.

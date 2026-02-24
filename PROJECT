@@ -6,6 +6,8 @@ cliVersion: 4.8.0
 domain: kdex.dev
 layout:
 - go.kubebuilder.io/v4
+plugins:
+  helm.kubebuilder.io/v1-alpha: {}
 projectName: kdex-nexus
 repo: kdex.dev/nexus
 resources:

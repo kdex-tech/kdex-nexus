@@ -1,0 +1,231 @@
+{{- if .Values.rbac.enable }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    {{- include "chart.labels" . | nindent 4 }}
+  name: kdex-nexus-manager-role
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  - secrets
+  - serviceaccounts
+  - services
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - batch
+  resources:
+  - jobs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - gateway.networking.k8s.io
+  resources:
+  - httproutes
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - kdex.dev
+  resources:
+  - kdexapps
+  - kdexclusterapps
+  - kdexclusterfaasadaptors
+  - kdexclusterpagearchetypes
+  - kdexclusterpagefooters
+  - kdexclusterpageheaders
+  - kdexclusterpagenavigations
+  - kdexclusterscriptlibraries
+  - kdexclusterthemes
+  - kdexclustertranslations
+  - kdexclusterutilitypages
+  - kdexfaasadaptors
+  - kdexfunctions
+  - kdexhosts
+  - kdexinternalhosts
+  - kdexinternalpackagereferences
+  - kdexinternaltranslations
+  - kdexinternalutilitypages
+  - kdexpagearchetypes
+  - kdexpagebindings
+  - kdexpagefooters
+  - kdexpageheaders
+  - kdexpagenavigations
+  - kdexscriptlibraries
+  - kdexthemes
+  - kdextranslations
+  - kdexutilitypages
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - kdex.dev
+  resources:
+  - kdexapps/finalizers
+  - kdexclusterapps/finalizers
+  - kdexclusterfaasadaptors/finalizers
+  - kdexclusterpagearchetypes/finalizers
+  - kdexclusterpagefooters/finalizers
+  - kdexclusterpageheaders/finalizers
+  - kdexclusterpagenavigations/finalizers
+  - kdexclusterscriptlibraries/finalizers
+  - kdexclusterthemes/finalizers
+  - kdexclustertranslations/finalizers
+  - kdexclusterutilitypages/finalizers
+  - kdexfaasadaptors/finalizers
+  - kdexfunctions/finalizers
+  - kdexhosts/finalizers
+  - kdexinternalhosts/finalizers
+  - kdexinternalpackagereferences/finalizers
+  - kdexinternaltranslations/finalizers
+  - kdexinternalutilitypages/finalizers
+  - kdexpagearchetypes/finalizers
+  - kdexpagebindings/finalizers
+  - kdexpagefooters/finalizers
+  - kdexpageheaders/finalizers
+  - kdexpagenavigations/finalizers
+  - kdexscriptlibraries/finalizers
+  - kdexthemes/finalizers
+  - kdextranslations/finalizers
+  - kdexutilitypages/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - kdex.dev
+  resources:
+  - kdexapps/status
+  - kdexclusterapps/status
+  - kdexclusterfaasadaptors/status
+  - kdexclusterpagearchetypes/status
+  - kdexclusterpagefooters/status
+  - kdexclusterpageheaders/status
+  - kdexclusterpagenavigations/status
+  - kdexclusterscriptlibraries/status
+  - kdexclusterthemes/status
+  - kdexclustertranslations/status
+  - kdexclusterutilitypages/status
+  - kdexfaasadaptors/status
+  - kdexfunctions/status
+  - kdexhosts/status
+  - kdexinternalhosts/status
+  - kdexinternalpackagereferences/status
+  - kdexinternaltranslations/status
+  - kdexinternalutilitypages/status
+  - kdexpagearchetypes/status
+  - kdexpagebindings/status
+  - kdexpagefooters/status
+  - kdexpageheaders/status
+  - kdexpagenavigations/status
+  - kdexscriptlibraries/status
+  - kdexthemes/status
+  - kdextranslations/status
+  - kdexutilitypages/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - kpack.io
+  resources:
+  - images
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - kpack.io
+  resources:
+  - images/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - kpack.io
+  resources:
+  - images/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - ingresses
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - clusterrolebindings
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - clusterroles
+  verbs:
+  - get
+  - list
+  - watch
+{{- end -}}

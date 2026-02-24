@@ -1,0 +1,829 @@
+{{- if .Values.webhook.enable }}
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: kdex-nexus-mutating-webhook-configuration
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    {{- if .Values.certmanager.enable }}
+    cert-manager.io/inject-ca-from: "{{ $.Release.Namespace }}/serving-cert"
+    {{- end }}
+  labels:
+    {{- include "chart.labels" . | nindent 4 }}
+webhooks:
+  - name: mutate.kdexapp.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /mutate-kdex-dev-v1alpha1-kdexapp
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexapps
+  - name: mutate.kdexclusterapp.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /mutate-kdex-dev-v1alpha1-kdexclusterapp
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexclusterapps
+  - name: mutate.kdexclusterpagearchetype.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /mutate-kdex-dev-v1alpha1-kdexclusterpagearchetype
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexclusterpagearchetypes
+  - name: mutate.kdexclusterpagefooter.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /mutate-kdex-dev-v1alpha1-kdexclusterpagefooter
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexclusterpagefooters
+  - name: mutate.kdexclusterpageheader.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /mutate-kdex-dev-v1alpha1-kdexclusterpageheader
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexclusterpageheaders
+  - name: mutate.kdexclusterpagenavigation.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /mutate-kdex-dev-v1alpha1-kdexclusterpagenavigation
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexclusterpagenavigations
+  - name: mutate.kdexclusterscriptlibrary.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /mutate-kdex-dev-v1alpha1-kdexclusterscriptlibrary
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexclusterscriptlibraries
+  - name: mutate.kdexclustertheme.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /mutate-kdex-dev-v1alpha1-kdexclustertheme
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexclusterthemes
+  - name: mutate.kdexclusterutilitypage.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /mutate-kdex-dev-v1alpha1-kdexclusterutilitypage
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexclusterutilitypages
+  - name: mutate.kdexfunction.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /mutate-kdex-dev-v1alpha1-kdexfunction
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexfunctions
+          - kdexfunctions/status
+  - name: mutate.kdexhost.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /mutate-kdex-dev-v1alpha1-kdexhost
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexhosts
+  - name: mutate.kdexpagearchetype.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /mutate-kdex-dev-v1alpha1-kdexpagearchetype
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexpagearchetypes
+  - name: mutate.kdexpagebinding.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /mutate-kdex-dev-v1alpha1-kdexpagebinding
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexpagebindings
+  - name: mutate.kdexpagefooter.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /mutate-kdex-dev-v1alpha1-kdexpagefooter
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexpagefooters
+  - name: mutate.kdexpageheader.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /mutate-kdex-dev-v1alpha1-kdexpageheader
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexpageheaders
+  - name: mutate.kdexpagenavigation.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /mutate-kdex-dev-v1alpha1-kdexpagenavigation
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexpagenavigations
+  - name: mutate.kdexscriptlibrary.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /mutate-kdex-dev-v1alpha1-kdexscriptlibrary
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexscriptlibraries
+  - name: mutate.kdextheme.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /mutate-kdex-dev-v1alpha1-kdextheme
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexthemes
+  - name: mutate.kdexutilitypage.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /mutate-kdex-dev-v1alpha1-kdexutilitypage
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexutilitypages
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: kdex-nexus-validating-webhook-configuration
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    {{- if .Values.certmanager.enable }}
+    cert-manager.io/inject-ca-from: "{{ $.Release.Namespace }}/serving-cert"
+    {{- end }}
+  labels:
+    {{- include "chart.labels" . | nindent 4 }}
+webhooks:
+  - name: validate.kdexapp.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /validate-kdex-dev-v1alpha1-kdexapp
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexapps
+  - name: validate.kdexclusterapp.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /validate-kdex-dev-v1alpha1-kdexclusterapp
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexclusterapps
+  - name: validate.kdexclusterscriptlibrary.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /validate-kdex-dev-v1alpha1-kdexclusterscriptlibrary
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexclusterscriptlibraries
+  - name: validate.kdexclustertheme.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /validate-kdex-dev-v1alpha1-kdexclustertheme
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexclusterthemes
+  - name: validate.kdexclustertranslation.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /validate-kdex-dev-v1alpha1-kdexclustertranslation
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexclustertranslations
+  - name: validate.kdexclusterutilitypage.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /validate-kdex-dev-v1alpha1-kdexclusterutilitypage
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexclusterutilitypages
+  - name: validate.kdexfunction.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /validate-kdex-dev-v1alpha1-kdexfunction
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexfunctions
+          - kdexfunctions/status
+  - name: validate.kdexhost.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /validate-kdex-dev-v1alpha1-kdexhost
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexhosts
+  - name: validate.kdexpagebinding.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /validate-kdex-dev-v1alpha1-kdexpagebinding
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexpagebindings
+  - name: validate.kdexscriptlibrary.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /validate-kdex-dev-v1alpha1-kdexscriptlibrary
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexscriptlibraries
+  - name: validate.kdextheme.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /validate-kdex-dev-v1alpha1-kdextheme
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexthemes
+  - name: validate.kdextranslation.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /validate-kdex-dev-v1alpha1-kdextranslation
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdextranslations
+  - name: validate.kdexutilitypage.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /validate-kdex-dev-v1alpha1-kdexutilitypage
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexutilitypages
+  - name: validation.kdexclusterpagearchetype.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /validate-kdex-dev-v1alpha1-kdexclusterpagearchetype
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexclusterpagearchetypes
+  - name: validation.kdexclusterpagefooter.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /validate-kdex-dev-v1alpha1-kdexclusterpagefooter
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexclusterpagefooters
+  - name: validation.kdexclusterpageheader.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /validate-kdex-dev-v1alpha1-kdexclusterpageheader
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexclusterpageheaders
+  - name: validation.kdexclusterpagenavigation.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /validate-kdex-dev-v1alpha1-kdexclusterpagenavigation
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexclusterpagenavigations
+  - name: validation.kdexpagearchetype.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /validate-kdex-dev-v1alpha1-kdexpagearchetype
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexpagearchetypes
+  - name: validation.kdexpagefooter.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /validate-kdex-dev-v1alpha1-kdexpagefooter
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexpagefooters
+  - name: validation.kdexpageheader.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /validate-kdex-dev-v1alpha1-kdexpageheader
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexpageheaders
+  - name: validation.kdexpagenavigation.kdex.dev
+    clientConfig:
+      service:
+        name: kdex-nexus-webhook-service
+        namespace: {{ .Release.Namespace }}
+        path: /validate-kdex-dev-v1alpha1-kdexpagenavigation
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+      - v1
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - kdex.dev
+        apiVersions:
+          - v1alpha1
+        resources:
+          - kdexpagenavigations
+{{- end }}
