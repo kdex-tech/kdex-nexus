@@ -6,15 +6,15 @@ spec:
   contentEntries:
   - rawHTML: |
       <div class="error-container">
-        <strong>{{ l10n "error.title" .BrandName }}</strong>
+        <strong>[[ l10n "error.title" .BrandName ]]</strong>
 
-        <h2>{{ .Extra.ErrorCode }}: {{ l10n .Extra.ErrorCodeString }}</h2>
+        <h2>[[ .Extra.ErrorCode ]]: [[ l10n .Extra.ErrorCodeString ]]</h2>
 
-        <p class="error-label">{{l10n "error.label"}}</p>
-        <code class="error-message">{{ .Extra.ErrorMessage }}</code>
+        <p class="error-label">[[l10n "error.label"]]</p>
+        <code class="error-message">[[ .Extra.ErrorMessage ]]</code>
 
         <div class="footer-organization">
-            <p>{{l10n "announcement.organization" .Organization}}</p>
+            <p>[[l10n "announcement.organization" .Organization]]</p>
         </div>
       </div>
     slot: main

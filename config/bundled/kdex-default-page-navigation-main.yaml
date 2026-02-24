@@ -4,26 +4,26 @@ metadata:
   name: kdex-default-page-navigation-main
 spec:
   content: |
-    {{- define "navigation" -}}
+    [[- define "navigation" -]]
       <ul class="navigation pages">
-        {{- range $value := .PageMap | values | sortBy "Weight" true }}
-          <li class="navigation page{{ if eq $value.BasePath $.RequestedBasePath }} selected{{ end }}">
-            {{- if ne $value.Href "" -}}
+        [[- range $value := .PageMap | values | sortBy "Weight" true ]]
+          <li class="navigation page[[ if eq $value.BasePath $.RequestedBasePath ]] selected[[ end ]]">
+            [[- if ne $value.Href "" -]]
               <a
-                class="navigation page-link{{ if eq $value.BasePath $.RequestedBasePath }} selected{{ end }}"
-                href="{{ $value.Href }}"
-              >{{ l10n $value.Label }}</a>
-            {{- else -}}
+                class="navigation page-link[[ if eq $value.BasePath $.RequestedBasePath ]] selected[[ end ]]"
+                href="[[ $value.Href ]]"
+              >[[ l10n $value.Label ]]</a>
+            [[- else -]]
               <span
-                class="navigation page-entry{{ if eq $value.BasePath $.RequestedBasePath }} selected{{ end }}"
-              >{{ l10n $value.Label }}</span>
-            {{- end -}}
+                class="navigation page-entry[[ if eq $value.BasePath $.RequestedBasePath ]] selected[[ end ]]"
+              >[[ l10n $value.Label ]]</span>
+            [[- end -]]
             
-            {{- if ne $value.Children nil -}}
-              {{- template "navigation" dict "PageMap" $value.Children "RequestedBasePath" $.RequestedBasePath -}}
-            {{- end -}}
+            [[- if ne $value.Children nil -]]
+              [[- template "navigation" dict "PageMap" $value.Children "RequestedBasePath" $.RequestedBasePath -]]
+            [[- end -]]
           </li>
-        {{- end -}}
+        [[- end -]]
       </ul>
-    {{- end -}}
-    {{- template "navigation" dict "PageMap" .PageMap "RequestedBasePath" .BasePath -}}
+    [[- end -]]
+    [[- template "navigation" dict "PageMap" .PageMap "RequestedBasePath" .BasePath -]]

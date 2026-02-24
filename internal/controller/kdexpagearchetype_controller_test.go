@@ -42,7 +42,7 @@ var _ = Describe("KDexPageArchetype Controller", func() {
 					Namespace: namespace,
 				},
 				Spec: kdexv1alpha1.KDexPageArchetypeSpec{
-					Content: "<h1>{{ !?$ }}</h1>",
+					Content: "<h1>[[ !?$ ]]</h1>",
 				},
 			}
 

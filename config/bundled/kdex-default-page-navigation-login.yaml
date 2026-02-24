@@ -5,32 +5,32 @@ metadata:
 spec:
   content: |
     <ul class="navigation login-status">
-    {{- if .Extra.Identity -}}
+    [[- if .Extra.Identity -]]
       <li class="navigation user-profile dropdown">
         <div class="user-trigger dropdown-trigger">
           <div class="user-avatar">
-            {{- if .Extra.Identity.picture -}}
-              <img src="{{ .Extra.Identity.picture }}" alt="{{ .Extra.Identity.email }}" class="avatar-image">
-            {{- else -}}
+            [[- if .Extra.Identity.picture -]]
+              <img src="[[ .Extra.Identity.picture ]]" alt="[[ .Extra.Identity.email ]]" class="avatar-image">
+            [[- else -]]
               <div class="avatar-initials">
-                {{- if .Extra.Identity.given_name -}}
-                  {{ .Extra.Identity.given_name | trunc 1 | upper }}{{ if .Extra.Identity.family_name }}{{ .Extra.Identity.family_name | trunc 1 | upper }}{{ end }}
-                {{- else -}}
-                  {{ .Extra.Identity.email | default (.Extra.Identity.sub | default "U") | trunc 2 | upper }}
-                {{- end -}}
+                [[- if .Extra.Identity.given_name -]]
+                  [[ .Extra.Identity.given_name | trunc 1 | upper ]][[ if .Extra.Identity.family_name ]][[ .Extra.Identity.family_name | trunc 1 | upper ]][[ end ]]
+                [[- else -]]
+                  [[ .Extra.Identity.email | default (.Extra.Identity.sub | default "U") | trunc 2 | upper ]]
+                [[- end -]]
               </div>
-            {{- end -}}
+            [[- end -]]
           </div>
           <div class="user-info">
             <span class="user-name">
-              {{- .Extra.Identity.nickname | default (.Extra.Identity.name | default (.Extra.Identity.email | default (.Extra.Identity.sub | default "User"))) -}}
+              [[- .Extra.Identity.nickname | default (.Extra.Identity.name | default (.Extra.Identity.email | default (.Extra.Identity.sub | default "User"))) -]]
             </span>
           </div>
         </div>
         <div class="dropdown-content">
            <div class="dropdown-header">
-             <div class="user-name" style="font-weight: 600;">{{ .Extra.Identity.name | default (.Extra.Identity.email | default .Extra.Identity.sub) }}</div>
-             <div class="header-email">{{ .Extra.Identity.email }}</div>
+             <div class="user-name" style="font-weight: 600;">[[ .Extra.Identity.name | default (.Extra.Identity.email | default .Extra.Identity.sub) ]]</div>
+             <div class="header-email">[[ .Extra.Identity.email ]]</div>
            </div>
            <form action="/-/logout" method="POST" id="logout-form">
               <button type="submit" class="logout-button">
@@ -39,11 +39,11 @@ spec:
            </form>
         </div>
       </li>
-    {{- else -}}
+    [[- else -]]
       <li class="navigation login-link">
         <a href="/-/login" class="login-button">
-          {{ l10n "login.signin" }}
+          [[ l10n "login.signin" ]]
         </a>
       </li>
-    {{- end -}}
+    [[- end -]]
     </ul>

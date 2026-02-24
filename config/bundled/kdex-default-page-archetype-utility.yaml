@@ -5,15 +5,15 @@ metadata:
 spec:
   content: |
     <!DOCTYPE html>
-    <html lang="{{ .Language }}">
+    <html lang="[[ .Language ]]">
       <head>
-        {{ .Meta }}
-        <title>{{l10n .BrandName}}</title>
-        {{ .Theme }}
+        [[ .Meta ]]
+        <title>[[l10n .BrandName]]</title>
+        [[ .Theme ]]
       </head>
       <body class="utility-page">
         <main>
-          {{ .Content.main }}
+          [[ .Content.main ]]
         </main>
       </body>
     </html>

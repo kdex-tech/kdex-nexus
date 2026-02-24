@@ -265,7 +265,7 @@ var _ = Describe("KDexHost Controller", func() {
 					Namespace: namespace,
 				},
 				Spec: kdexv1alpha1.KDexPageArchetypeSpec{
-					Content: "{{ .Content.main }}",
+					Content: "[[ .Content.main ]]",
 				},
 			}
 
@@ -331,7 +331,7 @@ var _ = Describe("KDexHost Controller", func() {
 					Name: "kdex-default-page-archetype",
 				},
 				Spec: kdexv1alpha1.KDexPageArchetypeSpec{
-					Content: "{{ .Content.main }}",
+					Content: "[[ .Content.main ]]",
 				},
 			}
 

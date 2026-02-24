@@ -1,110 +1,110 @@
 apiVersion: kdex.dev/v1alpha1
 kind: KDexClusterUtilityPage
 metadata:
-  name: kdex-default-utility-page-announcement
+    name: kdex-default-utility-page-announcement
 spec:
-  contentEntries:
-  - rawHTML: |
-      <div class="container">
-          <h1>{{l10n "announcement.title" .BrandName}}</h1>
+    contentEntries:
+      - rawHTML: |
+            <div class="container">
+                <h1>[[l10n "announcement.title" .BrandName]]</h1>
 
-          <p class="message">{{l10n "announcement.message"}}</p>
+                <p class="message">[[l10n "announcement.message"]]</p>
 
-          <div class="code-container">
-              <div class="code-header">
-                  <div class="dot dot-1"></div>
-                  <div class="dot dot-2"></div>
-                  <div class="dot dot-3"></div>
-                  <span
-                      style="color: #888; font-size: 0.75rem; margin-left: auto; font-family: sans-serif;">example.yaml</span>
-              </div>
-              <kdex-highlight>
-                  <pre><code class="language-yaml">apiVersion: kdex.dev/v1alpha1
-      kind: KDexPageBinding
-      metadata:
-        name: my-home-page
-        namespace: {{.Host.Namespace}}
-      spec:
-        basePath: /
-        contentEntries:
-          - rawHTML: &lt;p&gt;{{"{{"}} l10n .BrandName {{"}}"}}&lt;/p&gt;
-            slot: main
-        hostRef:
-          name: {{.Host.Name}}
-        label: home
-        pageArchetypeRef:
-          kind: KDexClusterPageArchetype
-          name: kdex-default-page-archetype-standard</code></pre>
-              </kdex-highlight>
-          </div>
+                <div class="code-container">
+                    <div class="code-header">
+                        <div class="dot dot-1"></div>
+                        <div class="dot dot-2"></div>
+                        <div class="dot dot-3"></div>
+                        <span
+                            style="color: #888; font-size: 0.75rem; margin-left: auto; font-family: sans-serif;">example.yaml</span>
+                    </div>
+                    <kdex-highlight>
+                        <pre><code class="language-yaml">apiVersion: kdex.dev/v1alpha1
+            kind: KDexPageBinding
+            metadata:
+              name: my-home-page
+              namespace: [[.Host.Namespace]]
+            spec:
+              basePath: /
+              contentEntries:
+                - rawHTML: &lt;p&gt;[["[["]] l10n .BrandName [["]]"]]&lt;/p&gt;
+                  slot: main
+              hostRef:
+                name: [[.Host.Name]]
+              label: home
+              pageArchetypeRef:
+                kind: KDexClusterPageArchetype
+                name: kdex-default-page-archetype-standard</code></pre>
+                    </kdex-highlight>
+                </div>
 
-          <div class="footer-organization">
-              <p>{{l10n "announcement.organization" .Organization}}</p>
-          </div>
-      </div>
+                <div class="footer-organization">
+                    <p>[[l10n "announcement.organization" .Organization]]</p>
+                </div>
+            </div>
 
-      <script type="module">
-      class KdexHighlightCode extends HTMLElement {
-          constructor() {
-              super();
-              this.attachShadow({ mode: 'open' });
-          }
+            <script type="module">
+            class KdexHighlightCode extends HTMLElement {
+                constructor() {
+                    super();
+                    this.attachShadow({ mode: 'open' });
+                }
 
-          connectedCallback() {
-              const rawCode = this.querySelector('code');
-              if (!rawCode) return;
+                connectedCallback() {
+                    const rawCode = this.querySelector('code');
+                    if (!rawCode) return;
 
-              const content = rawCode.textContent;
-              const lang = rawCode.className || 'language-yaml';
-              this.innerHTML = '';
+                    const content = rawCode.textContent;
+                    const lang = rawCode.className || 'language-yaml';
+                    this.innerHTML = '';
 
-              const link1 = document.createElement('link');
-              link1.rel = 'stylesheet';
-              link1.href = 'https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap';
+                    const link1 = document.createElement('link');
+                    link1.rel = 'stylesheet';
+                    link1.href = 'https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap';
 
-              const link2 = document.createElement('link');
-              link2.rel = 'stylesheet';
-              link2.href = 'https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@latest/build/styles/monokai-sublime.min.css';
+                    const link2 = document.createElement('link');
+                    link2.rel = 'stylesheet';
+                    link2.href = 'https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@latest/build/styles/monokai-sublime.min.css';
 
-              const style = document.createElement('style');
-              style.textContent = 'pre { margin: 0; background: #23241f !important; overflow-x: auto; border-radius: 0 0 1rem 1rem; } ' +
-                  'code { font-family: "Fira Code", monospace !important; font-size: 0.95rem; line-height: 1.6; color: #f8f8f2; }';
+                    const style = document.createElement('style');
+                    style.textContent = 'pre { margin: 0; background: #23241f !important; overflow-x: auto; border-radius: 0 0 1rem 1rem; } ' +
+                        'code { font-family: "Fira Code", monospace !important; font-size: 0.95rem; line-height: 1.6; color: #f8f8f2; }';
 
-              const pre = document.createElement('pre');
-              const code = document.createElement('code');
-              code.className = lang;
-              code.textContent = content;
+                    const pre = document.createElement('pre');
+                    const code = document.createElement('code');
+                    code.className = lang;
+                    code.textContent = content;
 
-              pre.appendChild(code);
-              this.shadowRoot.append(link1, link2, style, pre);
+                    pre.appendChild(code);
+                    this.shadowRoot.append(link1, link2, style, pre);
 
-              requestAnimationFrame(() => this.highlight(code));
-          }
+                    requestAnimationFrame(() => this.highlight(code));
+                }
 
-          async highlight(code) {
-              try {
-                  const [hljs, yaml] = await Promise.all([
-                      import('https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@latest/build/es/highlight.min.js').then(m => m.default),
-                      import('https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@latest/build/es/languages/yaml.min.js').then(m => m.default)
-                  ]);
+                async highlight(code) {
+                    try {
+                        const [hljs, yaml] = await Promise.all([
+                            import('https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@latest/build/es/highlight.min.js').then(m => m.default),
+                            import('https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@latest/build/es/languages/yaml.min.js').then(m => m.default)
+                        ]);
 
-                  if (!window.hljsYamlRegistered) {
-                      hljs.registerLanguage('yaml', yaml);
-                      window.hljsYamlRegistered = true;
-                  }
-                  hljs.highlightElement(code);
-              } catch (e) {
-                  console.error('Shadow highlighting failed', e);
-              }
-          }
-      }
+                        if (!window.hljsYamlRegistered) {
+                            hljs.registerLanguage('yaml', yaml);
+                            window.hljsYamlRegistered = true;
+                        }
+                        hljs.highlightElement(code);
+                    } catch (e) {
+                        console.error('Shadow highlighting failed', e);
+                    }
+                }
+            }
 
-      if (!customElements.get('kdex-highlight')) {
-          customElements.define('kdex-highlight', KdexHighlightCode);
-      }
-      </script>
-    slot: main
-  pageArchetypeRef:
-    kind: KDexClusterPageArchetype
-    name: kdex-default-page-archetype-utility
-  type: Announcement
+            if (!customElements.get('kdex-highlight')) {
+                customElements.define('kdex-highlight', KdexHighlightCode);
+            }
+            </script>
+        slot: main
+    pageArchetypeRef:
+        kind: KDexClusterPageArchetype
+        name: kdex-default-page-archetype-utility
+    type: Announcement

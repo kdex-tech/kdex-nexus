@@ -102,7 +102,7 @@ var _ = Describe("KDexHost Validator", func() {
 				Spec: kdexv1alpha1.KDexHostSpec{
 					Assets: kdexv1alpha1.Assets{
 						{
-							LinkHref: "http://{{",
+							LinkHref: "http://[[",
 						},
 					},
 					BrandName:    "valid",

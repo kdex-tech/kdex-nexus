@@ -226,7 +226,7 @@ var _ = Describe("KDexUtilityPage Controller", func() {
 					Namespace: namespace,
 				},
 				Spec: kdexv1alpha1.KDexPageArchetypeSpec{
-					Content: "<html><body>{{.Content.main}}</body></html>",
+					Content: "<html><body>[[.Content.main]]</body></html>",
 				},
 			}
 

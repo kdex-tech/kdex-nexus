@@ -6,24 +6,24 @@ spec:
   content: |
     <div class="language-dropdown dropdown">
       <div class="language-trigger dropdown-trigger">
-        <span class="language-code current-flag-{{ .Language }}">{{ .Language }}</span>
+        <span class="language-code current-flag-[[ .Language ]]">[[ .Language ]]</span>
       </div>
       <div class="dropdown-content">
         <ul class="languages">
-        {{- range $language := .Languages }}
-          {{ $langPath := "" }}
-          {{ if ne $language $.DefaultLanguage }}
-            {{ $langPath = print "/" $language }}
-          {{ end }}
-          <li class="language{{ if eq $language $.Language }} selected{{ end }}">
+        [[- range $language := .Languages ]]
+          [[ $langPath := "" ]]
+          [[ if ne $language $.DefaultLanguage ]]
+            [[ $langPath = print "/" $language ]]
+          [[ end ]]
+          <li class="language[[ if eq $language $.Language ]] selected[[ end ]]">
             <a
-              class="language-link flag-{{ $language }}{{ if eq $language $.Language }} selected{{ end }}"
-              href="{{ print $langPath $.BasePath }}"
+              class="language-link flag-[[ $language ]][[ if eq $language $.Language ]] selected[[ end ]]"
+              href="[[ print $langPath $.BasePath ]]"
             >
-              <span class="language-label">{{ l10n $language }}</span>
+              <span class="language-label">[[ l10n $language ]]</span>
             </a>
           </li>
-        {{- end -}}
+        [[- end -]]
         </ul>
       </div>
     </div>

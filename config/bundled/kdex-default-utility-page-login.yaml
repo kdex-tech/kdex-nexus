@@ -6,25 +6,25 @@ spec:
   contentEntries:
   - rawHTML: |
       <div class="login-container">
-        <strong>{{ l10n "login.title" .BrandName }}</strong>
+        <strong>[[ l10n "login.title" .BrandName ]]</strong>
 
         <form action="/-/login" method="POST" class="login-form">
           <input id="return" type="hidden" name="return" value="">
           <p id="error-message" class="error-message" style="display: none;"></p>
 
           <div class="form-group">
-            <input type="text" id="username" name="username" required placeholder="{{ l10n "login.username" }}">
+            <input type="text" id="username" name="username" required placeholder="[[ l10n "login.username" ]]">
           </div>
 
           <div class="form-group">
-            <input type="password" id="password" name="password" required placeholder="{{ l10n "login.password" }}">
+            <input type="password" id="password" name="password" required placeholder="[[ l10n "login.password" ]]">
           </div>
 
-          <button type="submit">{{ l10n "login.signin" }}</button>
+          <button type="submit">[[ l10n "login.signin" ]]</button>
         </form>
 
         <div class="footer-organization">
-          <p>{{l10n "announcement.organization" .Organization}}</p>
+          <p>[[l10n "announcement.organization" .Organization]]</p>
         </div>
       </div>
 

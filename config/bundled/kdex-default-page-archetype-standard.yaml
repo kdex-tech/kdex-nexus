@@ -5,37 +5,37 @@ metadata:
 spec:
   content: |
     <!DOCTYPE html>
-    <html lang="{{ .Language }}">
+    <html lang="[[ .Language ]]">
       <head>
-        {{ .Meta }}
-        <title>{{ l10n .Title }}</title>
-        {{ .Theme }}
-        {{ .HeadScript }}
+        [[ .Meta ]]
+        <title>[[ l10n .Title ]]</title>
+        [[ .Theme ]]
+        [[ .HeadScript ]]
       </head>
       <body>
-        {{ .Header }}
-        {{/* use 'pop' to both render a slot in place and remove it from the Navigation map */}}
-        {{ pop .Navigation "main" }}
+        [[ .Header ]]
+        [[/* use 'pop' to both render a slot in place and remove it from the Navigation map */]]
+        [[ pop .Navigation "main" ]]
         <main>
-          {{/* use 'pop' to both render a slot in place and remove it from the Content map */}}
-          {{ pop .Content "main" }}
+          [[/* use 'pop' to both render a slot in place and remove it from the Content map */]]
+          [[ pop .Content "main" ]]
         </main>
-        {{ .Footer }}
-        {{ .FootScript }}
+        [[ .Footer ]]
+        [[ .FootScript ]]
 
-        {{/* render any remaining slots in the Content map as HTML templates */}}
-        {{- range $slot, $content := .Content }}
-          <template id="content-{{ $slot }}">
-            {{ $content }}
+        [[/* render any remaining slots in the Content map as HTML templates */]]
+        [[- range $slot, $content := .Content ]]
+          <template id="content-[[ $slot ]]">
+            [[ $content ]]
           </template>
-        {{- end -}}
+        [[- end -]]
 
-        {{/* render any remaining slots in the Navigation map as HTML templates */}}
-        {{- range $slot, $content := .Navigation }}
-          <template id="navigation-{{ $slot }}">
-            {{ $content }}
+        [[/* render any remaining slots in the Navigation map as HTML templates */]]
+        [[- range $slot, $content := .Navigation ]]
+          <template id="navigation-[[ $slot ]]">
+            [[ $content ]]
           </template>
-        {{- end -}}
+        [[- end -]]
       </body>
     </html>
   defaultFooterRef:
