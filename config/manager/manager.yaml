@@ -117,15 +117,14 @@ metadata:
 data:
   config.yaml: |
     backendDefault:
-      serverImage: registry.kube-system.svc.cluster.local:5000/kdex-tech/kdex-themeserver:latest
-      serverImagePullPolicy: Always
+      serverImage: ghcr.io/kdex-tech/backend-static:0.1.2
 
     defaultImageRegistry:
       host: registry.kube-system.svc.cluster.local:5000
       insecure: true
 
     defaultNpmRegistry:
-      host: npm-registry-verdaccio.npm-registry:4873
+      host: npm.test
       insecure: true
 
     hostDefault:

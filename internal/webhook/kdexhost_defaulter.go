@@ -6,12 +6,14 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
+	"kdex.dev/crds/configuration"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:webhook:path=/mutate-kdex-dev-v1alpha1-kdexhost,mutating=true,failurePolicy=Ignore,sideEffects=None,groups=kdex.dev,resources=kdexhosts,verbs=create;update,versions=v1alpha1,name=mutate.kdexhost.kdex.dev,admissionReviewVersions=v1
 
 type KDexHostDefaulter[T runtime.Object] struct {
+	Configuration configuration.NexusConfiguration
 }
 
 var _ admission.Defaulter[*kdexv1alpha1.KDexHost] = &KDexHostDefaulter[*kdexv1alpha1.KDexHost]{}
@@ -44,6 +46,16 @@ func (a *KDexHostDefaulter[T]) Default(ctx context.Context, obj T) error {
 
 	if spec.ScriptLibraryRef != nil && spec.ScriptLibraryRef.Kind == "" {
 		spec.ScriptLibraryRef.Kind = KDexScriptLibrary
+	}
+
+	if spec.Registries.ImageRegistry.Host == "" {
+		spec.Registries.ImageRegistry.Host = a.Configuration.DefaultImageRegistry.Host
+		spec.Registries.ImageRegistry.Insecure = a.Configuration.DefaultImageRegistry.InSecure
+	}
+
+	if spec.Registries.NpmRegistry.Host == "" {
+		spec.Registries.NpmRegistry.Host = a.Configuration.DefaultNpmRegistry.Host
+		spec.Registries.NpmRegistry.Insecure = a.Configuration.DefaultNpmRegistry.InSecure
 	}
 
 	if spec.UtilityPages == nil {

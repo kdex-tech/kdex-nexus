@@ -412,7 +412,9 @@ func (r *KDexHostReconciler) Reconcile(ctx context.Context, req ctrl.Request) (r
 func (r *KDexHostReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	if os.Getenv("ENABLE_WEBHOOKS") != FALSE {
 		err := ctrl.NewWebhookManagedBy(mgr, &kdexv1alpha1.KDexHost{}).
-			WithDefaulter(&nexuswebhook.KDexHostDefaulter[*kdexv1alpha1.KDexHost]{}).
+			WithDefaulter(&nexuswebhook.KDexHostDefaulter[*kdexv1alpha1.KDexHost]{
+				Configuration: r.Configuration,
+			}).
 			WithValidator(&nexuswebhook.KDexHostValidator[*kdexv1alpha1.KDexHost]{}).
 			Complete()
 

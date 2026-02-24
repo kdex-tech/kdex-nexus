@@ -206,7 +206,7 @@ func main() {
 	requeueDelay := time.Duration(requeueDelaySeconds) * time.Second
 
 	registryFactory := func(secret *corev1.Secret) (npm.Registry, error) {
-		return npm.NewRegistry(&conf, secret)
+		return npm.NewRegistry(&conf.DefaultNpmRegistry, secret)
 	}
 
 	if err := (&controller.KDexAppReconciler{
