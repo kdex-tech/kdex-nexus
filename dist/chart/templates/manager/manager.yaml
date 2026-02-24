@@ -3,6 +3,8 @@ kind: Deployment
 metadata:
   name: kdex-nexus-controller-manager
   namespace: {{ .Release.Namespace }}
+  annotations:
+    checksum/config: {{ .Values.controllerConfig | toJson | sha256sum }}
   labels:
     {{- include "chart.labels" . | nindent 4 }}
     control-plane: controller-manager
