@@ -17,7 +17,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /mutate-kdex-dev-v1alpha1-kdexapp
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -37,7 +37,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /mutate-kdex-dev-v1alpha1-kdexclusterapp
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -57,7 +57,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /mutate-kdex-dev-v1alpha1-kdexclusterpagearchetype
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -77,7 +77,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /mutate-kdex-dev-v1alpha1-kdexclusterpagefooter
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -97,7 +97,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /mutate-kdex-dev-v1alpha1-kdexclusterpageheader
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -117,7 +117,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /mutate-kdex-dev-v1alpha1-kdexclusterpagenavigation
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -137,7 +137,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /mutate-kdex-dev-v1alpha1-kdexclusterscriptlibrary
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -157,7 +157,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /mutate-kdex-dev-v1alpha1-kdexclustertheme
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -177,7 +177,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /mutate-kdex-dev-v1alpha1-kdexclusterutilitypage
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -197,7 +197,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /mutate-kdex-dev-v1alpha1-kdexfunction
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -218,7 +218,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /mutate-kdex-dev-v1alpha1-kdexhost
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -238,7 +238,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /mutate-kdex-dev-v1alpha1-kdexpagearchetype
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -258,7 +258,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /mutate-kdex-dev-v1alpha1-kdexpagebinding
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -278,7 +278,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /mutate-kdex-dev-v1alpha1-kdexpagefooter
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -298,7 +298,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /mutate-kdex-dev-v1alpha1-kdexpageheader
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -318,7 +318,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /mutate-kdex-dev-v1alpha1-kdexpagenavigation
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -338,7 +338,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /mutate-kdex-dev-v1alpha1-kdexscriptlibrary
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -358,7 +358,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /mutate-kdex-dev-v1alpha1-kdextheme
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -378,7 +378,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /mutate-kdex-dev-v1alpha1-kdexutilitypage
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -411,7 +411,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /validate-kdex-dev-v1alpha1-kdexapp
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -431,7 +431,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /validate-kdex-dev-v1alpha1-kdexclusterapp
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -451,7 +451,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /validate-kdex-dev-v1alpha1-kdexclusterscriptlibrary
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -471,7 +471,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /validate-kdex-dev-v1alpha1-kdexclustertheme
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -491,7 +491,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /validate-kdex-dev-v1alpha1-kdexclustertranslation
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -511,7 +511,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /validate-kdex-dev-v1alpha1-kdexclusterutilitypage
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -531,7 +531,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /validate-kdex-dev-v1alpha1-kdexfunction
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -552,7 +552,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /validate-kdex-dev-v1alpha1-kdexhost
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -572,7 +572,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /validate-kdex-dev-v1alpha1-kdexpagebinding
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -592,7 +592,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /validate-kdex-dev-v1alpha1-kdexscriptlibrary
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -612,7 +612,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /validate-kdex-dev-v1alpha1-kdextheme
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -632,7 +632,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /validate-kdex-dev-v1alpha1-kdextranslation
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -652,7 +652,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /validate-kdex-dev-v1alpha1-kdexutilitypage
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -672,7 +672,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /validate-kdex-dev-v1alpha1-kdexclusterpagearchetype
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -692,7 +692,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /validate-kdex-dev-v1alpha1-kdexclusterpagefooter
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -712,7 +712,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /validate-kdex-dev-v1alpha1-kdexclusterpageheader
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -732,7 +732,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /validate-kdex-dev-v1alpha1-kdexclusterpagenavigation
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -752,7 +752,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /validate-kdex-dev-v1alpha1-kdexpagearchetype
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -772,7 +772,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /validate-kdex-dev-v1alpha1-kdexpagefooter
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -792,7 +792,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /validate-kdex-dev-v1alpha1-kdexpageheader
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1
@@ -812,7 +812,7 @@ webhooks:
         name: kdex-nexus-webhook-service
         namespace: {{ .Release.Namespace }}
         path: /validate-kdex-dev-v1alpha1-kdexpagenavigation
-    failurePolicy: Fail
+    failurePolicy: Ignore
     sideEffects: None
     admissionReviewVersions:
       - v1

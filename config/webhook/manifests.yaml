@@ -11,7 +11,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /mutate-kdex-dev-v1alpha1-kdexapp
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: mutate.kdexapp.kdex.dev
   rules:
   - apiGroups:
@@ -31,7 +31,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /mutate-kdex-dev-v1alpha1-kdexclusterapp
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: mutate.kdexclusterapp.kdex.dev
   rules:
   - apiGroups:
@@ -51,7 +51,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /mutate-kdex-dev-v1alpha1-kdexclusterpagearchetype
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: mutate.kdexclusterpagearchetype.kdex.dev
   rules:
   - apiGroups:
@@ -71,7 +71,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /mutate-kdex-dev-v1alpha1-kdexclusterpagefooter
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: mutate.kdexclusterpagefooter.kdex.dev
   rules:
   - apiGroups:
@@ -91,7 +91,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /mutate-kdex-dev-v1alpha1-kdexclusterpageheader
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: mutate.kdexclusterpageheader.kdex.dev
   rules:
   - apiGroups:
@@ -111,7 +111,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /mutate-kdex-dev-v1alpha1-kdexclusterpagenavigation
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: mutate.kdexclusterpagenavigation.kdex.dev
   rules:
   - apiGroups:
@@ -131,7 +131,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /mutate-kdex-dev-v1alpha1-kdexclusterscriptlibrary
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: mutate.kdexclusterscriptlibrary.kdex.dev
   rules:
   - apiGroups:
@@ -151,7 +151,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /mutate-kdex-dev-v1alpha1-kdexclustertheme
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: mutate.kdexclustertheme.kdex.dev
   rules:
   - apiGroups:
@@ -171,7 +171,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /mutate-kdex-dev-v1alpha1-kdexclusterutilitypage
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: mutate.kdexclusterutilitypage.kdex.dev
   rules:
   - apiGroups:
@@ -191,7 +191,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /mutate-kdex-dev-v1alpha1-kdexfunction
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: mutate.kdexfunction.kdex.dev
   rules:
   - apiGroups:
@@ -212,7 +212,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /mutate-kdex-dev-v1alpha1-kdexhost
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: mutate.kdexhost.kdex.dev
   rules:
   - apiGroups:
@@ -232,7 +232,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /mutate-kdex-dev-v1alpha1-kdexpagearchetype
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: mutate.kdexpagearchetype.kdex.dev
   rules:
   - apiGroups:
@@ -252,7 +252,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /mutate-kdex-dev-v1alpha1-kdexpagebinding
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: mutate.kdexpagebinding.kdex.dev
   rules:
   - apiGroups:
@@ -272,7 +272,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /mutate-kdex-dev-v1alpha1-kdexpagefooter
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: mutate.kdexpagefooter.kdex.dev
   rules:
   - apiGroups:
@@ -292,7 +292,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /mutate-kdex-dev-v1alpha1-kdexpageheader
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: mutate.kdexpageheader.kdex.dev
   rules:
   - apiGroups:
@@ -312,7 +312,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /mutate-kdex-dev-v1alpha1-kdexpagenavigation
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: mutate.kdexpagenavigation.kdex.dev
   rules:
   - apiGroups:
@@ -332,7 +332,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /mutate-kdex-dev-v1alpha1-kdexscriptlibrary
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: mutate.kdexscriptlibrary.kdex.dev
   rules:
   - apiGroups:
@@ -352,7 +352,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /mutate-kdex-dev-v1alpha1-kdextheme
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: mutate.kdextheme.kdex.dev
   rules:
   - apiGroups:
@@ -372,7 +372,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /mutate-kdex-dev-v1alpha1-kdexutilitypage
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: mutate.kdexutilitypage.kdex.dev
   rules:
   - apiGroups:
@@ -398,7 +398,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /validate-kdex-dev-v1alpha1-kdexapp
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: validate.kdexapp.kdex.dev
   rules:
   - apiGroups:
@@ -418,7 +418,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /validate-kdex-dev-v1alpha1-kdexclusterapp
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: validate.kdexclusterapp.kdex.dev
   rules:
   - apiGroups:
@@ -438,7 +438,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /validate-kdex-dev-v1alpha1-kdexclusterscriptlibrary
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: validate.kdexclusterscriptlibrary.kdex.dev
   rules:
   - apiGroups:
@@ -458,7 +458,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /validate-kdex-dev-v1alpha1-kdexclustertheme
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: validate.kdexclustertheme.kdex.dev
   rules:
   - apiGroups:
@@ -478,7 +478,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /validate-kdex-dev-v1alpha1-kdexclustertranslation
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: validate.kdexclustertranslation.kdex.dev
   rules:
   - apiGroups:
@@ -498,7 +498,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /validate-kdex-dev-v1alpha1-kdexclusterutilitypage
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: validate.kdexclusterutilitypage.kdex.dev
   rules:
   - apiGroups:
@@ -518,7 +518,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /validate-kdex-dev-v1alpha1-kdexfunction
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: validate.kdexfunction.kdex.dev
   rules:
   - apiGroups:
@@ -539,7 +539,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /validate-kdex-dev-v1alpha1-kdexhost
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: validate.kdexhost.kdex.dev
   rules:
   - apiGroups:
@@ -559,7 +559,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /validate-kdex-dev-v1alpha1-kdexpagebinding
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: validate.kdexpagebinding.kdex.dev
   rules:
   - apiGroups:
@@ -579,7 +579,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /validate-kdex-dev-v1alpha1-kdexscriptlibrary
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: validate.kdexscriptlibrary.kdex.dev
   rules:
   - apiGroups:
@@ -599,7 +599,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /validate-kdex-dev-v1alpha1-kdextheme
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: validate.kdextheme.kdex.dev
   rules:
   - apiGroups:
@@ -619,7 +619,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /validate-kdex-dev-v1alpha1-kdextranslation
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: validate.kdextranslation.kdex.dev
   rules:
   - apiGroups:
@@ -639,7 +639,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /validate-kdex-dev-v1alpha1-kdexutilitypage
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: validate.kdexutilitypage.kdex.dev
   rules:
   - apiGroups:
@@ -659,7 +659,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /validate-kdex-dev-v1alpha1-kdexclusterpagearchetype
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: validation.kdexclusterpagearchetype.kdex.dev
   rules:
   - apiGroups:
@@ -679,7 +679,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /validate-kdex-dev-v1alpha1-kdexclusterpagefooter
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: validation.kdexclusterpagefooter.kdex.dev
   rules:
   - apiGroups:
@@ -699,7 +699,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /validate-kdex-dev-v1alpha1-kdexclusterpageheader
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: validation.kdexclusterpageheader.kdex.dev
   rules:
   - apiGroups:
@@ -719,7 +719,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /validate-kdex-dev-v1alpha1-kdexclusterpagenavigation
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: validation.kdexclusterpagenavigation.kdex.dev
   rules:
   - apiGroups:
@@ -739,7 +739,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /validate-kdex-dev-v1alpha1-kdexpagearchetype
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: validation.kdexpagearchetype.kdex.dev
   rules:
   - apiGroups:
@@ -759,7 +759,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /validate-kdex-dev-v1alpha1-kdexpagefooter
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: validation.kdexpagefooter.kdex.dev
   rules:
   - apiGroups:
@@ -779,7 +779,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /validate-kdex-dev-v1alpha1-kdexpageheader
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: validation.kdexpageheader.kdex.dev
   rules:
   - apiGroups:
@@ -799,7 +799,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /validate-kdex-dev-v1alpha1-kdexpagenavigation
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: validation.kdexpagenavigation.kdex.dev
   rules:
   - apiGroups:
