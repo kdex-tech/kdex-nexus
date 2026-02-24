@@ -30,13 +30,14 @@ jobs:
     - name: Create kind cluster
       run: kind create cluster
 
-    - name: Prepare kdex-nexus
+    - name: Run Go mod tidy
       run: |
         go mod tidy
-        make copy-crds-for-chart
-        make copy-bundled-for-chart
-        make docker-build IMG=kdex-nexus:ci
-        kind load docker-image kdex-nexus:ci
+
+    - name: Install the KDex CRDs
+      run: |
+        CRDS_DIR=$(go list -m -f '{{.Dir}}' kdex.dev/crds)
+        kubectl apply -f $CRDS_DIR/config/crd/bases
 
     - name: Install Helm
       run: |
@@ -48,6 +49,11 @@ jobs:
     - name: Lint Helm Chart
       run: |
         helm lint ./dist/chart
+
+    - name: Build and load kdex-nexus image
+      run: |
+        make docker-build IMG=kdex-nexus:ci
+        kind load docker-image kdex-nexus:ci
 
     - name: Install cert-manager via Helm
       run: |
@@ -80,6 +86,7 @@ jobs:
 
     - name: Install Helm chart for project
       run: |
+        make copy-bundled-for-chart
         helm install my-release ./dist/chart \
           --create-namespace \
           --namespace kdex-nexus-system \
