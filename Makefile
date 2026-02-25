@@ -1,10 +1,15 @@
-# Image URL to use all building/pushing image targets
-IMG ?= kdex-tech/nexus-manager:latest
+REPOSITORY ?=
+IMG ?= kdex-tech/nexus-manager
+TAG ?= $(shell git describe --dirty='-d' --tags)
 
-REPOSITORY ?= 
 # if REPOSITORY is set make sure it ends with a /
 ifneq ($(REPOSITORY),)
 override REPOSITORY := $(REPOSITORY)/
+endif
+
+# if TAG is set make sure it starts with a :
+ifneq ($(TAG),)
+override TAG := :$(TAG)
 endif
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
@@ -144,19 +149,12 @@ run: manifests generate fmt vet ## Run a controller from your host.
 # More info: https://docs.docker.com/develop/develop-images/build_enhancements/
 .PHONY: docker-build
 docker-build: ## Build docker image with the manager.
-	$(CONTAINER_TOOL) build -t ${REPOSITORY}${IMG} .
+	$(CONTAINER_TOOL) build -t ${REPOSITORY}${IMG}${TAG} .
 
 .PHONY: docker-push
 docker-push: ## Push docker image with the manager.
-	$(CONTAINER_TOOL) push ${REPOSITORY}${IMG}
+	$(CONTAINER_TOOL) push ${REPOSITORY}${IMG}${TAG}
 
-# PLATFORMS defines the target platforms for the manager image be built to provide support to multiple
-# architectures. (i.e. make docker-buildx IMG=myregistry/mypoperator:0.0.1). To use this option you need to:
-# - be able to use docker buildx. More info: https://docs.docker.com/build/buildx/
-# - have enabled BuildKit. More info: https://docs.docker.com/develop/develop-images/build_enhancements/
-# - be able to push the image to your registry (i.e. if you do not set a valid value via IMG=<myregistry/image:<tag>> then the export will fail)
-# To adequately provide solutions that are compatible with multiple platforms, you should consider using this option.
-#
 # If your build fails to push to the k3d registry you may have to do this:
 #
 # # 1. Create a buildkit configuration to allow the insecure registry
@@ -180,13 +178,13 @@ docker-buildx: ## Build and push docker image for the manager for cross-platform
 	# copy existing Dockerfile and insert --platform=${BUILDPLATFORM} into Dockerfile.cross, and preserve the original Dockerfile
 	sed -e '1 s/\(^FROM\)/FROM --platform=\$$\{BUILDPLATFORM\}/; t' -e ' 1,// s//FROM --platform=\$$\{BUILDPLATFORM\}/' Dockerfile > Dockerfile.cross
 	$(CONTAINER_TOOL) buildx inspect kdex-builder >/dev/null 2>&1 || $(CONTAINER_TOOL) buildx create --name kdex-builder --use
-	$(CONTAINER_TOOL) buildx build --push --platform=$(PLATFORMS) --tag ${REPOSITORY}${IMG} -f Dockerfile.cross .
+	$(CONTAINER_TOOL) buildx build --push --platform=$(PLATFORMS) --tag ${REPOSITORY}${IMG}${TAG} --tag ${REPOSITORY}${IMG}:latest -f Dockerfile.cross .
 	rm Dockerfile.cross
 
 .PHONY: build-installer
 build-installer: manifests generate kustomize ## Generate a consolidated YAML with CRDs and deployment.
 	mkdir -p dist
-	cd config/manager && $(KUSTOMIZE) edit set image controller=${REPOSITORY}${IMG}
+	cd config/manager && $(KUSTOMIZE) edit set image controller=${REPOSITORY}${IMG}${TAG}
 	$(KUSTOMIZE) build config/default > dist/install.yaml
 
 ##@ Deployment
@@ -215,7 +213,7 @@ uninstall: kustomize ## Uninstall CRDs from the kdex-crds module.
 
 .PHONY: deploy
 deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	cd config/manager && $(KUSTOMIZE) edit set image controller=${REPOSITORY}${IMG}
+	cd config/manager && $(KUSTOMIZE) edit set image controller=${REPOSITORY}${IMG}${TAG}
 	$(KUSTOMIZE) build config/default | $(KUBECTL) apply -f -
 
 .PHONY: undeploy
@@ -238,12 +236,12 @@ deploy-chart: copy-bundled-for-chart ## Deploy controller to the K8s cluster spe
 		--create-namespace \
 		--install \
 		--namespace kdex-nexus-system \
-		--set "controllerManager.container.image.repository=${REPOSITORY}${IMG}" \
+		--set "controllerManager.container.image.repository=${REPOSITORY}${IMG}:latest" \
 		--set "controllerManager.container.image.tag=latest" \
 		--set "config.defaultNpmRegistry.host=npm.test" \
 		--set "config.defaultNpmRegistry.insecure=true" \
-		--set "config.hostDefault.deployment.template.spec.containers[0].image=${REPOSITORY}kdex-tech/kdex-host:latest" \
-		--set "packageBuilder.image=${REPOSITORY}kdex-tech/kdex-cli-tools:latest"
+		--set "config.hostDefault.deployment.template.spec.containers[0].image=${REPOSITORY}kdex-tech/host-manager:latest" \
+		--set "config.packageBuilder.image=${REPOSITORY}kdex-tech/cli-tools:latest"
 
 .PHONY: undeploy-chart
 undeploy-chart: ## Deploy controller to the K8s cluster specified in ~/.kube/config.
