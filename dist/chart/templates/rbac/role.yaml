@@ -1,4 +1,5 @@
 {{- if .Values.rbac.enable }}
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -44,6 +45,7 @@ rules:
 - apiGroups:
   - batch
   resources:
+  - cronjobs
   - jobs
   verbs:
   - create
@@ -169,6 +171,15 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - kdex.dev
+  resources:
+  - kdexrolebindings
+  - kdexroles
+  verbs:
+  - get
+  - list
+  - watch
 - apiGroups:
   - kpack.io
   resources:

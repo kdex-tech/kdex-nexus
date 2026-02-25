@@ -2,6 +2,7 @@ package controller
 
 // +kubebuilder:rbac:groups=apps,resources=deployments,                                 verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=batch,resources=jobs,                                       verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=batch,resources=cronjobs,                                   verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=configmaps,                                  verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=pods,                                        verbs=get;list;watch
 // +kubebuilder:rbac:groups=core,resources=secrets,                                     verbs=get;list;watch;create;update;patch;delete
@@ -77,6 +78,8 @@ package controller
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagenavigations,                     verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagenavigations/finalizers,          verbs=update
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexpagenavigations/status,              verbs=get;update;patch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexrolebindings,                        verbs=get;list;watch
+// +kubebuilder:rbac:groups=kdex.dev,resources=kdexroles,                               verbs=get;list;watch
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexscriptlibraries,                     verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexscriptlibraries/finalizers,          verbs=update
 // +kubebuilder:rbac:groups=kdex.dev,resources=kdexscriptlibraries/status,              verbs=get;update;patch

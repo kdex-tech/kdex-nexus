@@ -42,6 +42,7 @@ rules:
 - apiGroups:
   - batch
   resources:
+  - cronjobs
   - jobs
   verbs:
   - create
@@ -167,6 +168,15 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - kdex.dev
+  resources:
+  - kdexrolebindings
+  - kdexroles
+  verbs:
+  - get
+  - list
+  - watch
 - apiGroups:
   - kpack.io
   resources:
