@@ -7,10 +7,10 @@ spec:
     env:
     - name: DEBUG_SECURITY
       value: "true"
-    image: ghcr.io/kdex-tech/knative-deployer:0.1.0
+    image: ghcr.io/kdex-tech/knative-deployer:0.1.1
     command: ["/deployer", "deploy"]
   observer:
-    image: ghcr.io/kdex-tech/knative-deployer:0.1.0
+    image: ghcr.io/kdex-tech/knative-deployer:0.1.1
     command: ["/deployer", "observe"]
     schedule: "*/5 * * * *"
   defaultBuilderGenerator: tiny/go
@@ -24,9 +24,9 @@ spec:
   generators:
   - entrypoint: "./cmd/main.go"
     git:
-      image: ghcr.io/kdex-tech/kdex-cli-tools:0.1.2
+      image: ghcr.io/kdex-tech/cli-tools:0.3.4
       committerEmail: test@kdex.dev
       committerName: KDex Codegen Bot
-    image: ghcr.io/kdex-tech/fngogen:0.1.0
+    image: ghcr.io/kdex-tech/fngogen:0.1.1
     language: go
   provider: knative
