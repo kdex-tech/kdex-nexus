@@ -167,8 +167,8 @@ docker-push: ## Push docker image with the manager.
 # EOF
 #
 # # 2. Recreate the builder with the network AND the config
-# docker buildx rm kdex-nexus-builder || true
-# docker buildx create --name kdex-nexus-builder \
+# docker buildx rm kdex-builder || true
+# docker buildx create --name kdex-builder \
 #   --driver docker-container \
 #   --driver-opt network=k3d-playground \
 #   --config buildkitd.toml \
@@ -179,7 +179,7 @@ PLATFORMS ?= linux/arm64,linux/amd64,linux/s390x,linux/ppc64le
 docker-buildx: ## Build and push docker image for the manager for cross-platform support
 	# copy existing Dockerfile and insert --platform=${BUILDPLATFORM} into Dockerfile.cross, and preserve the original Dockerfile
 	sed -e '1 s/\(^FROM\)/FROM --platform=\$$\{BUILDPLATFORM\}/; t' -e ' 1,// s//FROM --platform=\$$\{BUILDPLATFORM\}/' Dockerfile > Dockerfile.cross
-	$(CONTAINER_TOOL) buildx inspect kdex-nexus-builder >/dev/null 2>&1 || $(CONTAINER_TOOL) buildx create --name kdex-nexus-builder --use
+	$(CONTAINER_TOOL) buildx inspect kdex-builder >/dev/null 2>&1 || $(CONTAINER_TOOL) buildx create --name kdex-builder --use
 	$(CONTAINER_TOOL) buildx build --push --platform=$(PLATFORMS) --tag ${REPOSITORY}${IMG} -f Dockerfile.cross .
 	rm Dockerfile.cross
 
@@ -241,7 +241,9 @@ deploy-chart: copy-bundled-for-chart ## Deploy controller to the K8s cluster spe
 		--set "controllerManager.container.image.repository=${REPOSITORY}${IMG}" \
 		--set "controllerManager.container.image.tag=latest" \
 		--set "config.defaultNpmRegistry.host=npm.test" \
-		--set "config.defaultNpmRegistry.insecure=true"
+		--set "config.defaultNpmRegistry.insecure=true" \
+		--set "config.hostDefault.deployment.template.spec.containers[0].image=${REPOSITORY}kdex-tech/kdex-host:latest" \
+		--set "packageBuilder.image=${REPOSITORY}kdex-tech/kdex-cli-tools:latest"
 
 .PHONY: undeploy-chart
 undeploy-chart: ## Deploy controller to the K8s cluster specified in ~/.kube/config.
