@@ -236,7 +236,7 @@ deploy-chart: copy-bundled-for-chart ## Deploy controller to the K8s cluster spe
 		--create-namespace \
 		--install \
 		--namespace kdex-nexus-system \
-		--set "controllerManager.container.image.repository=${REPOSITORY}${IMG}:latest" \
+		--set "controllerManager.container.image.repository=${REPOSITORY}${IMG}" \
 		--set "controllerManager.container.image.tag=latest" \
 		--set "config.defaultNpmRegistry.host=npm.test" \
 		--set "config.defaultNpmRegistry.insecure=true" \
