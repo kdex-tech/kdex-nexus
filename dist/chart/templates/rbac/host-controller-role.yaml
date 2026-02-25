@@ -1,11 +1,10 @@
 {{- if .Values.rbac.enable }}
----
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   labels:
     {{- include "chart.labels" . | nindent 4 }}
-  name: host-controller-role
+  name: kdex-nexus-host-controller-role
 rules:
 - apiGroups:
   - ""

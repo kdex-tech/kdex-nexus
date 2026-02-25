@@ -31,6 +31,10 @@ spec:
   issuerRef:
     kind: Issuer
     name: selfsigned-issuer
+  privateKey:
+    rotationPolicy: Always
+    algorithm: ECDSA
+    size: 256
   secretName: webhook-server-cert
 {{- end }}
 {{- if .Values.metrics.enable }}
@@ -55,6 +59,10 @@ spec:
   issuerRef:
     kind: Issuer
     name: selfsigned-issuer
+  privateKey:
+    rotationPolicy: Always
+    algorithm: ECDSA
+    size: 256
   secretName: metrics-server-cert
 {{- end }}
 {{- end }}

@@ -117,7 +117,7 @@ metadata:
 data:
   config.yaml: |
     backendDefault:
-      serverImage: ghcr.io/kdex-tech/backend-static:0.1.2
+      serverImage: ghcr.io/kdex-tech/backend-static:latest
 
     defaultImageRegistry:
       host: registry.kube-system.svc.cluster.local:5000
@@ -138,3 +138,6 @@ data:
         apiGroup: rbac.authorization.k8s.io
         kind: ClusterRole
         name: kdex-nexus-host-controller-role
+
+    packageBuilder:
+      image: ghcr.io/kdex-tech/cli-tools:latest
