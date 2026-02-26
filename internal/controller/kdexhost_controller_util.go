@@ -22,10 +22,10 @@ import (
 	"maps"
 	"strings"
 
+	"github.com/kdex-tech/nexus-manager/internal/webhook"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
-	"kdex.dev/nexus/internal/webhook"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )

@@ -32,8 +32,8 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
+	nexuswebhook "github.com/kdex-tech/nexus-manager/internal/webhook"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
-	nexuswebhook "kdex.dev/nexus/internal/webhook"
 )
 
 // KDexPageHeaderReconciler reconciles a KDexPageHeader object

@@ -30,7 +30,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"kdex.dev/nexus/test/utils"
+	"github.com/kdex-tech/nexus-manager/test/utils"
 )
 
 // namespace where the project is deployed in

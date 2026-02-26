@@ -50,7 +50,7 @@ jobs:
       run: |
         helm lint ./dist/chart
 
-    - name: Build and load kdex-nexus image
+    - name: Build and load nexus-manager image
       run: |
         make docker-build TAG=ci
         kind load docker-image kdex-tech/nexus-manager:ci

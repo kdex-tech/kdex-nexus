@@ -8,8 +8,8 @@ layout:
 - go.kubebuilder.io/v4
 plugins:
   helm.kubebuilder.io/v1-alpha: {}
-projectName: kdex-nexus
-repo: kdex.dev/nexus
+projectName: nexus-manager
+repo: github.com/kdex-tech/nexus-manager
 resources:
 - controller: true
   domain: kdex.dev

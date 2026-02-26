@@ -28,7 +28,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"kdex.dev/nexus/test/utils"
+	"github.com/kdex-tech/nexus-manager/test/utils"
 )
 
 var (
@@ -52,7 +52,7 @@ var (
 // CertManager.
 func TestE2E(t *testing.T) {
 	RegisterFailHandler(Fail)
-	_, _ = fmt.Fprintf(GinkgoWriter, "Starting kdex-nexus integration test suite\n")
+	_, _ = fmt.Fprintf(GinkgoWriter, "Starting nexus-manager integration test suite\n")
 	RunSpecs(t, "e2e suite")
 }
 

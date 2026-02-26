@@ -5,10 +5,10 @@
   {{- else if .Values.nameOverride }}
     {{ .Values.nameOverride | trunc 63 | trimSuffix "-" }}
   {{- else }}
-    kdex-nexus
+    nexus-manager
   {{- end }}
 {{- else }}
-  kdex-nexus
+  nexus-manager
 {{- end }}
 {{- end }}
 

@@ -1,4 +1,4 @@
-module kdex.dev/nexus
+module github.com/kdex-tech/nexus-manager
 
 go 1.26.0
 

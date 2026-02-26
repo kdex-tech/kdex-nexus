@@ -83,7 +83,7 @@ endif
 # The default setup assumes Kind is pre-installed and builds/loads the Manager Docker image locally.
 # CertManager is installed by default; skip with:
 # - CERT_MANAGER_INSTALL_SKIP=true
-KIND_CLUSTER ?= kdex-nexus-test-e2e
+KIND_CLUSTER ?= nexus-manager-test-e2e
 
 .PHONY: setup-test-e2e
 setup-test-e2e: ## Set up a Kind cluster for e2e tests if it does not exist
@@ -232,7 +232,7 @@ lint-chart: copy-bundled-for-chart ## Lint chart.
 
 .PHONY: deploy-chart
 deploy-chart: copy-bundled-for-chart ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	$(HELM) upgrade kdex-nexus ./dist/chart \
+	$(HELM) upgrade nexus-manager ./dist/chart \
 		--create-namespace \
 		--install \
 		--namespace kdex-nexus-system \
@@ -246,7 +246,7 @@ deploy-chart: copy-bundled-for-chart ## Deploy controller to the K8s cluster spe
 
 .PHONY: undeploy-chart
 undeploy-chart: ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	$(HELM) uninstall kdex-nexus \
+	$(HELM) uninstall nexus-manager \
 		--namespace kdex-nexus-system
 
 ##@ Dependencies

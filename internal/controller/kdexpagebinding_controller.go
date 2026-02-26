@@ -20,10 +20,10 @@ import (
 	"os"
 	"time"
 
+	nexuswebhook "github.com/kdex-tech/nexus-manager/internal/webhook"
 	"k8s.io/apimachinery/pkg/runtime"
 	kdexv1alpha1 "kdex.dev/crds/api/v1alpha1"
 	"kdex.dev/crds/configuration"
-	nexuswebhook "kdex.dev/nexus/internal/webhook"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
