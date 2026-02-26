@@ -205,8 +205,14 @@ func main() {
 	conf := configuration.LoadConfiguration(configFile, scheme)
 	requeueDelay := time.Duration(requeueDelaySeconds) * time.Second
 
-	registryFactory := func(secret *corev1.Secret) (npm.Registry, error) {
-		return npm.NewRegistry(&conf.DefaultNpmRegistry, secret)
+	registryFactory := func(registry string, secret *corev1.Secret) (npm.Registry, error) {
+		reg, err := npm.NewRegistry(registry, secret)
+		if err == nil {
+			return reg, nil
+		}
+		return &npm.RegistryImpl{
+			Config: &conf.DefaultNpmRegistry,
+		}, nil
 	}
 
 	if err := (&controller.KDexAppReconciler{

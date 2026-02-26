@@ -40,7 +40,7 @@ import (
 // KDexAppReconciler reconciles a KDexApp object
 type KDexAppReconciler struct {
 	client.Client
-	RegistryFactory func(secret *corev1.Secret) (npm.Registry, error)
+	RegistryFactory func(registry string, secret *corev1.Secret) (npm.Registry, error)
 	RequeueDelay    time.Duration
 	Scheme          *runtime.Scheme
 }
