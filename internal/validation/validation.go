@@ -15,9 +15,9 @@ import (
 func ValidatePackageReference(
 	packageReference *kdexv1alpha1.PackageReference,
 	secret *corev1.Secret,
-	registryFactory func(secret *corev1.Secret) (npm.Registry, error),
+	registryFactory npm.RegistryFactory,
 ) error {
-	registry, err := registryFactory(secret)
+	registry, err := registryFactory(packageReference.Registry, secret)
 	if err != nil {
 		return err
 	}

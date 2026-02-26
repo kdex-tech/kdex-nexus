@@ -181,7 +181,7 @@ var _ = BeforeSuite(func() {
 	})
 	Expect(err).NotTo(HaveOccurred())
 
-	registryFactory := func(secret *corev1.Secret) (npm.Registry, error) {
+	registryFactory := func(registry string, secret *corev1.Secret) (npm.Registry, error) {
 		return &MockRegistry{}, nil
 	}
 
