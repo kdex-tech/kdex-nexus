@@ -33,7 +33,7 @@ var _ = Describe("KDexApp Validator", func() {
 
 			err := k8sClient.Create(ctx, resource)
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("invalid package name"))
+			Expect(err.Error()).To(ContainSubstring("spec.packageReference.name in body should match"))
 		})
 
 		It("should fail with relative URL and no image", func() {
