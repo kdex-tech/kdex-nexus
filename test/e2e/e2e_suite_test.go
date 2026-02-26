@@ -42,8 +42,8 @@ var (
 
 	// projectImage is the name of the image which will be build and loaded
 	// with the code source changes to be tested.
-	tag          = "test-e2e"
-	projectImage = "kdex-tech/nexus-manager:" + tag
+	projectTag   = "test-e2e"
+	projectImage = "kdex-tech/nexus-manager:" + projectTag
 )
 
 // TestE2E runs the end-to-end (e2e) test suite for the project. These tests execute in an isolated,
@@ -58,7 +58,7 @@ func TestE2E(t *testing.T) {
 
 var _ = BeforeSuite(func() {
 	By("building the manager(Operator) image")
-	cmd := exec.Command("make", "docker-build", "TAG="+tag)
+	cmd := exec.Command("make", "docker-build", "TAG="+projectTag)
 	_, err := utils.Run(cmd)
 	ExpectWithOffset(1, err).NotTo(HaveOccurred(), "Failed to build the manager(Operator) image")
 
