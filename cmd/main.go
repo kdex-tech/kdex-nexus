@@ -205,11 +205,14 @@ func main() {
 	conf := configuration.LoadConfiguration(configFile, scheme)
 	requeueDelay := time.Duration(requeueDelaySeconds) * time.Second
 
+	registryLog := logger.WithName("registry")
+
 	registryFactory := func(registry string, secret *corev1.Secret) (npm.Registry, error) {
 		reg, err := npm.NewRegistry(registry, secret)
 		if err == nil {
 			return reg, nil
 		}
+		registryLog.V(2).Info("using default registry", "requested", registry, "default", conf.DefaultNpmRegistry.Host)
 		return &npm.RegistryImpl{
 			Config: &conf.DefaultNpmRegistry,
 		}, nil
