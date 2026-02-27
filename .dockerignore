@@ -2,3 +2,16 @@
 # Ignore build and test binaries.
 bin/
 dist/
+config/
+test/
+hack/
+.git/
+.github/
+.gitignore
+.golangci.yaml
+cover.html
+cover.out
+.vscode/
+*~
+PROJECT
+Makefile
