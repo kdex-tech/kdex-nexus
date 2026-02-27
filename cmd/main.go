@@ -205,7 +205,7 @@ func main() {
 	conf := configuration.LoadConfiguration(configFile, scheme)
 	requeueDelay := time.Duration(requeueDelaySeconds) * time.Second
 
-	registryLog := logger.WithName("registry")
+	registryLog := logger.WithName("npm-registry")
 
 	registryFactory := func(registry string, secret *corev1.Secret) (npm.Registry, error) {
 		reg, err := npm.NewRegistry(registry, secret)
