@@ -239,11 +239,8 @@ deploy-chart: copy-bundled-for-chart ## Deploy controller to the K8s cluster spe
 		--namespace kdex-nexus-system \
 		--set "controllerManager.container.image.repository=${REPOSITORY}${IMG}" \
 		--set "controllerManager.container.image.tag=latest" \
-		--set "config.backendDefault.serverImage=${REPOSITORY}kdex-tech/backend-static:latest" \
-		--set "config.defaultNpmRegistry.host=npm.test" \
-		--set "config.defaultNpmRegistry.insecure=true" \
-		--set "config.hostDefault.deployment.template.spec.containers[0].image=${REPOSITORY}kdex-tech/host-manager:latest" \
-		--set "config.packageBuilder.image=${REPOSITORY}kdex-tech/cli-tools:latest"
+		--set "controllerManager.container.imagePullPolicy=Always" \
+		--set "config.hostDefault.deployment.template.spec.containers[0].image=${REPOSITORY}kdex-tech/host-manager:latest"
 
 .PHONY: undeploy-chart
 undeploy-chart: ## Deploy controller to the K8s cluster specified in ~/.kube/config.
