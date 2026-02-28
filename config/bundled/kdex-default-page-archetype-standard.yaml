@@ -31,6 +31,7 @@ spec:
             [[ $content ]]
           </template>
         [[- end -]]
+        <template id="swapped-content"></template>
 
         [[/* render any remaining slots in the Navigation map as HTML templates */]]
         [[- range $slot, $content := .Navigation ]]
