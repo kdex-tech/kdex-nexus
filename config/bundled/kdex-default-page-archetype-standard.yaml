@@ -17,8 +17,10 @@ spec:
         [[/* use 'pop' to both render a slot in place and remove it from the Navigation map */]]
         [[ pop .Navigation "main" ]]
         <main>
-          [[/* use 'pop' to both render a slot in place and remove it from the Content map */]]
-          [[ pop .Content "main" ]]
+          <div data-viewport="main">
+            [[/* use 'pop' to both render a slot in place and remove it from the Content map */]]
+            [[ pop .Content "main" ]]
+          </div>
         </main>
         [[ .Footer ]]
         [[ .FootScript ]]
