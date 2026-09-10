@@ -108,6 +108,8 @@ rules:
   - kdexpageheaders
   - kdexpagenavigations
   - kdexpages
+  - kdexrolebindings
+  - kdexroles
   - kdexscriptlibraries
   - kdexthemes
   - kdextranslations
@@ -186,15 +188,6 @@ rules:
   - get
   - patch
   - update
-- apiGroups:
-  - kdex.dev
-  resources:
-  - kdexrolebindings
-  - kdexroles
-  verbs:
-  - get
-  - list
-  - watch
 - apiGroups:
   - kpack.io
   resources:
